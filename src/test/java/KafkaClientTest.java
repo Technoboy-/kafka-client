@@ -20,7 +20,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 
 /**
- * create by WangTao on 2018/11/23
+ * @Author: Tboy
  */
 public class KafkaClientTest {
 
