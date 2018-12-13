@@ -1,0 +1,206 @@
+package com.tt.kafka.consumer;
+
+import com.tt.kafka.serializer.Serializer;
+
+import java.util.HashMap;
+
+/**
+ * @Author: Tboy
+ */
+public class ConsumerConfig extends HashMap<String, Object> {
+
+    public ConsumerConfig(String bootstrapServers, String topic, String groupId) {
+        this.bootstrapServers = bootstrapServers;
+        this.topic = topic;
+        this.groupId = groupId;
+    }
+
+    /**
+     * 服务器列表
+     */
+    private String bootstrapServers;
+
+    /**
+     * 消费主题
+     */
+    private String topic;
+
+    /**
+     * 消费组
+     */
+    private String groupId;
+
+    /**
+     * key的序列化
+     */
+    private Serializer keySerializer;
+
+    /**
+     * value的序列化
+     */
+    private Serializer valueSerializer;
+
+    /**
+     * 手动提交batch大小
+     */
+    private int acknowledgeCommitBatchSize = 10000;
+
+    /**
+     * 内部定时手动提交的间隔，单位s
+     */
+    private int acknowledgeCommitInterval = 30;
+
+    /**
+     * 默认offset重置策略，earliest，latest
+     */
+    private String autoOffsetReset = "latest";
+
+    /**
+     * 自动提交间隔时间，毫秒
+     */
+    private int autoCommitInterval = 5000;
+
+    /**
+     * 自动提交
+     */
+    private boolean autoCommit = false;
+
+    /**
+     * 分区有序，适用于自动提交和手动提交
+     */
+    private boolean partitionOrderly = false;
+
+    /**
+     * 自动提交下，分区无序的并发消费线程数
+     */
+    private int concurrentNum = 0;
+
+    /**
+     * poll线程每次的拉取超时时间
+     */
+    private long pollTimeout = 100;
+
+    /**
+     * 默认队列大小
+     * 在多线程消费下(手动下的分区有序，自动下的多线程无序，自动下的分区有序)，poll线程会不断向队列中
+     * 存放拉去到的消息，当业务方消费慢时，就会卡住poll线程，防止消息过度挤压。
+     */
+    private int handlerQueueSize = 100;
+
+    public int getHandlerQueueSize() {
+        return handlerQueueSize;
+    }
+
+    public void setHandlerQueueSize(int handlerQueueSize) {
+        this.handlerQueueSize = handlerQueueSize;
+    }
+
+    public long getPollTimeout() {
+        return pollTimeout;
+    }
+
+    public int getConcurrentNum() {
+        return concurrentNum;
+    }
+
+    public void setConcurrentNum(int concurrentNum) {
+        this.concurrentNum = concurrentNum;
+    }
+
+    public boolean isPartitionOrderly() {
+        return partitionOrderly;
+    }
+
+    public void setPartitionOrderly(boolean partitionOrderly) {
+        this.partitionOrderly = partitionOrderly;
+    }
+
+    public boolean isAutoCommit() {
+        return autoCommit;
+    }
+
+    public void setAutoCommit(boolean autoCommit) {
+        this.autoCommit = autoCommit;
+        put("enable.auto.commit", autoCommit);
+    }
+
+    public int getAcknowledgeCommitBatchSize() {
+        return acknowledgeCommitBatchSize;
+    }
+
+    public void setAcknowledgeCommitBatchSize(int acknowledgeCommitBatchSize) {
+        this.acknowledgeCommitBatchSize = acknowledgeCommitBatchSize;
+    }
+
+    public Serializer getKeySerializer() {
+        return keySerializer;
+    }
+
+    public void setKeySerializer(Serializer keySerializer) {
+        this.keySerializer = keySerializer;
+    }
+
+    public Serializer getValueSerializer() {
+        return valueSerializer;
+    }
+
+    public void setValueSerializer(Serializer valueSerializer) {
+        this.valueSerializer = valueSerializer;
+    }
+
+    public int getAcknowledgeCommitInterval() {
+        return acknowledgeCommitInterval;
+    }
+
+    public void setAcknowledgeCommitInterval(int acknowledgeCommitInterval) {
+        this.acknowledgeCommitInterval = acknowledgeCommitInterval;
+    }
+
+    public void setPollTimeout(long pollTimeout) {
+        this.pollTimeout = pollTimeout;
+    }
+
+    public String getBootstrapServers() {
+        return bootstrapServers;
+    }
+
+    public void setBootstrapServers(String bootstrapServers) {
+        this.bootstrapServers = bootstrapServers;
+        put("bootstrap.servers", bootstrapServers);
+    }
+
+    public String getTopic() {
+        return topic;
+    }
+
+    public void setTopic(String topic) {
+        this.topic = topic;
+    }
+
+    public String getGroupId() {
+        return groupId;
+    }
+
+    public void setGroupId(String groupId) {
+        this.groupId = groupId;
+        put("group.id", groupId);
+    }
+
+    public String getAutoOffsetReset() {
+        return autoOffsetReset;
+    }
+
+    public void setAutoOffsetReset(String autoOffsetReset) {
+        this.autoOffsetReset = autoOffsetReset;
+        put("auto.offset.reset", autoOffsetReset);
+    }
+
+    public int getAutoCommitInterval() {
+        return autoCommitInterval;
+    }
+
+    public void setAutoCommitInterval(int autoCommitInterval) {
+        this.autoCommitInterval = autoCommitInterval;
+        put("auto.commit.interval.ms", autoCommitInterval);
+    }
+}

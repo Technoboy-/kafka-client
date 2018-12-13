@@ -1,0 +1,145 @@
+package com.tt.kafka.consumer.service;
+
+import com.tt.kafka.consumer.DefaultKafkaConsumerImpl;
+import com.tt.kafka.consumer.listener.AutoCommitMessageListener;
+import com.tt.kafka.metric.Monitor;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.common.TopicPartition;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+/**
+ * @Author: Tboy
+ */
+public class PartitionOrderlyAutoCommitMessageService<K, V> extends ReblanceMessageListenerService<K, V> {
+
+    private static final Logger LOG = LoggerFactory.getLogger(PartitionOrderlyAutoCommitMessageService.class);
+
+    private final ConcurrentMap<TopicPartition, TopicPartitionHandler<K, V>> handlers;
+
+    private final DefaultKafkaConsumerImpl<K, V> consumer;
+
+    private final AutoCommitMessageListener<K, V> messageListener;
+
+    public PartitionOrderlyAutoCommitMessageService(DefaultKafkaConsumerImpl<K, V> consumer, AutoCommitMessageListener<K, V> messageListener) {
+        this.handlers = new ConcurrentHashMap<>();
+        this.consumer = consumer;
+        this.messageListener = messageListener;
+    }
+
+    @Override
+    public void onPartitionsAssigned(Collection<TopicPartition> partitions) {
+        super.onPartitionsAssigned(partitions);
+        for (TopicPartition partition : handlers.keySet()) {
+            if (!partitions.contains(partition)) {
+                handlers.get(partition).stop();
+                handlers.remove(partition);
+                Monitor.getInstance().recordConsumeHandlerCount(-1);
+            }
+        }
+    }
+
+    @Override
+    public void onMessage(ConsumerRecord<byte[], byte[]> record) {
+        TopicPartition topicPartition = new TopicPartition(record.topic(), record.partition());
+        TopicPartitionHandler<K, V> handler = getOrCreateHandler(topicPartition);
+        handler.handle(record);
+    }
+
+    private TopicPartitionHandler<K, V> getOrCreateHandler(TopicPartition topicPartition) {
+        if (handlers.containsKey(topicPartition)) {
+            return handlers.get(topicPartition);
+        } else {
+            TopicPartitionHandler<K, V> handler = new TopicPartitionHandler<>(topicPartition.topic(), topicPartition.partition());
+            TopicPartitionHandler<K, V> preHandler = handlers.putIfAbsent(topicPartition, handler);
+            if (preHandler != null) {
+                // can not be happened.
+                preHandler.stop();
+            } else {
+                Monitor.getInstance().recordConsumeHandlerCount(1);
+            }
+            return handler;
+        }
+    }
+
+    @Override
+    public void close() {
+        for (TopicPartitionHandler handler : handlers.values()) {
+            handler.stop();
+        }
+    }
+
+    class TopicPartitionHandler<K, V> implements Runnable {
+
+        private Thread worker;
+
+        private final BlockingQueue<ConsumerRecord<byte[], byte[]>> queue = new LinkedBlockingQueue<>(consumer.getConfigs().getHandlerQueueSize());
+
+        private final AtomicBoolean start = new AtomicBoolean(false);
+
+        public TopicPartitionHandler(String topic, int partition) {
+            worker = new Thread(this, "consumer-partition-handler-" + topic + "-" + partition);
+            worker.setDaemon(true);
+            worker.start();
+            start.compareAndSet(false, true);
+        }
+
+        public void stop() {
+            start.compareAndSet(true, false);
+            worker.interrupt();
+        }
+
+        public void handle(final ConsumerRecord<byte[], byte[]> record) {
+            try {
+                queue.put(record);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        private void flush() {
+            if (queue.size() > 0) {
+                List<ConsumerRecord<byte[], byte[]>> records = new ArrayList<>(queue.size());
+                queue.drainTo(records);
+                for (ConsumerRecord record : records) {
+                    PartitionOrderlyAutoCommitMessageService.this.messageListener.onMessage(consumer.toRecord(record));
+                }
+            }
+        }
+
+        public void run() {
+            LOG.info("TopicPartitionHandler-{} start.", worker.getName());
+            while (start.get() || !Thread.currentThread().isInterrupted()) {
+                long now = 0;
+                ConsumerRecord r = null;
+                try {
+                    r = queue.take();
+                    now = System.currentTimeMillis();
+                    messageListener.onMessage(consumer.toRecord(r));
+                } catch (InterruptedException iex) {
+                    LOG.error("InterruptedException onMessage ", iex);
+                    Thread.currentThread().interrupt();
+                } catch (Throwable ex) {
+                    Monitor.getInstance().recordConsumeProcessErrorCount(1);
+                    LOG.error("onMessage error", ex);
+                } finally {
+                    if (now > 0) {
+                        Monitor.getInstance().recordConsumeProcessCount(1);
+                        Monitor.getInstance().recordConsumeProcessTime(System.currentTimeMillis() - now);
+                    }
+                }
+            }
+            flush();
+            LOG.info("TopicPartitionHandler-{} stop.", worker.getName());
+        }
+    }
+}

@@ -1,0 +1,4 @@
+jackson=com.tt.kafka.serializer.JacksonSerializer
+hessian=com.tt.kafka.serializer.HessianSerializer
+bytearray=com.tt.kafka.serializer.ByteArraySerializer
+string=com.tt.kafka.serializer.StringSerializer
