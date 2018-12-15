@@ -1,10 +1,10 @@
-####一. 版本
+#### 一. 版本
 目前Kafka client SDK基于官方kafka-clients 0.11.0.3开发，要求broker版本为0.11及之后，低于该版本不予以支持。
 
-####二. 依赖
+#### 二. 依赖
 自行下载源码，进行mvn install或通过mvn deploy私服。
 
-####三. Producer
+#### 三. Producer
 对于生产者，提供了同步发送，异步发送。
 ```java
 public class ProducerExample {
@@ -77,10 +77,10 @@ public class ProducerExample {
 4. batch.size与linger.ms配置项与延迟吞吐的选择，默认情形producer发送的messge会立即发送，如果配置了linger.ms，则会将message放到batch中，当batch到达batch.size或batch存活了linger.ms时，发送batch。
 5. 对于kafka原生的属性设置，可通过put方法设置。默认只封装了常用属性。
 
-####四. Consumer
+#### 四. Consumer
 对于消费者，提供自动提交offset和手动提交offset。对于自动提交offset，通过参数可以实现单线程消费自动提交offset，多线程消费自动提交offset，分区有序消费自动提交offset。对于手动提交，通过参数，可以实现单线程消费手动提交offset，分区有序手动提交offset。两种方式，都通过设置listner模式回调业务。
 ```java
-自动提交offset
+//自动提交offset
 public class AutoCommitConsumerExample {
 
     public static void main(String[] args) {
@@ -158,7 +158,7 @@ public class AutoCommitConsumerExample {
 
 
 ```java
-手动提交offset
+//手动提交offset
 public class AcknowledgeConsumerExample {
 
     public static void main(String[] args) {
@@ -236,13 +236,13 @@ public class AcknowledgeConsumerExample {
 1. KafkaConsumer为线程安全。
 2. 设置setPartitionOrderly(true)后，内部消费线程数为当前consumer获取的分区数。 当kafka发生relance后，线程数会随着新分配的分区进行增加或减少。
 
-####五. 序列化
+#### 五. 序列化
 1. 默认提供了六种序列化方式，JacksonSerializer，HessianSerializer，ByteArraySerializer， StringSerializer，FastJsonSerializer，ProtoStuffSerializer。
 2. 使用内部的序列化方式，可以SerializerImpl.serializerImpl()获取，SPI式，默认为bytearray。或者使用SerializerImpl.getHessianSerializer()等获取其他序列化方式; 
 3. ByteArraySerializer为空实现，当consumer/producer的key或value为byte数组时，请使用此序列化方式。
 4. 如想实现其他序列化方式，实现Serializer接口即可。
 
-####六. 注意项
+#### 六. 注意项
 1. MessageListener 接口必须保证是无状态的，内部会有多个线程同时调用onMessage方法。
 2. MessageListener#onMessage方法使用时必须要做异常捕获与处理，在抛出throwable后不会停止整个处理流程。
 3. AutoCommitMessageListener不适合对数据可靠性要求非常高的处理场景，在日志数据等容忍少量丢失的情况下可以使用该类型，如果不要求分区有序性，建议使用AutoCommitMessageListener同时配置多个处理线程，能保证每个处理线程负载相同。
