@@ -12,23 +12,23 @@ public class SerializerImpl {
 		return SPILoader.getSPIClass(Serializer.class).getExtension();
 	}
 
-	public static Serializer getSerializaer(String name){
+	public static Serializer getSerializer(String name){
 		return SPILoader.getSPIClass(Serializer.class).getExtension(name);
 	}
 
-	public static Serializer getByteArraySerializaer(){
+	public static Serializer getByteArraySerializer(){
 		return SPILoader.getSPIClass(Serializer.class).getExtension("bytearray");
 	}
 
-	public static Serializer getHessianSerializaer(){
+	public static Serializer getHessianSerializer(){
 		return SPILoader.getSPIClass(Serializer.class).getExtension("hessian");
 	}
 
-	public static Serializer getJacksonSerializaer(){
+	public static Serializer getJacksonSerializer(){
 		return SPILoader.getSPIClass(Serializer.class).getExtension("jackson");
 	}
 
-	public static Serializer getStringSerializaer(){
+	public static Serializer getStringSerializer(){
 		return SPILoader.getSPIClass(Serializer.class).getExtension("string");
 	}
 }
