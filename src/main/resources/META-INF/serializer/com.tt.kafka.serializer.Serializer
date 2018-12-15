@@ -2,3 +2,5 @@ jackson=com.tt.kafka.serializer.JacksonSerializer
 hessian=com.tt.kafka.serializer.HessianSerializer
 bytearray=com.tt.kafka.serializer.ByteArraySerializer
 string=com.tt.kafka.serializer.StringSerializer
+fastjson=com.tt.kafka.serializer.FastJsonSerializer
+protostuff=com.tt.kafka.serializer.ProtoStuffSerializer

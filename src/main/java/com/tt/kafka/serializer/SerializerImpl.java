@@ -28,7 +28,15 @@ public class SerializerImpl {
 		return SPILoader.getSPIClass(Serializer.class).getExtension("jackson");
 	}
 
+	public static Serializer getFastJsonSerializer(){
+		return SPILoader.getSPIClass(Serializer.class).getExtension("fastjson");
+	}
+
 	public static Serializer getStringSerializer(){
 		return SPILoader.getSPIClass(Serializer.class).getExtension("string");
+	}
+
+	public static Serializer getProtoStuffSerializer(){
+		return SPILoader.getSPIClass(Serializer.class).getExtension("protostuff");
 	}
 }
