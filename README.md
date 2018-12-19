@@ -113,7 +113,7 @@ public class AutoCommitConsumerExample {
 
         /* 如果要求并发处理，配置如下选项 */
         // 设置并发处理的线程数，增加该值可以增加处理能力
-        configs.setConcurrentNum(2);
+        configs.setParallelism(2);
 
         /* 如果要求分区有序性，配置如下选项 */
         // 指定是否分区有序性消费，消费线程数为当前consumer分配的分区数，如发生rebalance，内部会自动增加或减少线程数。
@@ -154,7 +154,7 @@ public class AutoCommitConsumerExample {
 ```
 **注意事项**
 1. KafkaConsumer为线程安全。
-2. configs.setConcurrentNum()和setPartitionOrderly()同时设置时，和setPartitionOrderly优先级更高，即内部消费线程数为当前consumer获取的分区数。当kafka发生relance后，线程数会随着新分配的分区进行增加或减少。
+2. configs.setParallelism()和setPartitionOrderly()同时设置时，和setPartitionOrderly优先级更高，即内部消费线程数为当前consumer获取的分区数。当kafka发生relance后，线程数会随着新分配的分区进行增加或减少。
 
 
 ```java
