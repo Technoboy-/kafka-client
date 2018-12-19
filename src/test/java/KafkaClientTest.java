@@ -29,8 +29,8 @@ public class KafkaClientTest {
     @Test
     public void testSyncProducer() throws Exception {
         ProducerConfig configs = new ProducerConfig("localhost:9092");
-        configs.setKeySerializer(SerializerImpl.getJacksonSerializaer());
-        configs.setValueSerializer(SerializerImpl.getJacksonSerializaer());
+        configs.setKeySerializer(SerializerImpl.getJacksonSerializer());
+        configs.setValueSerializer(SerializerImpl.getJacksonSerializer());
         KafkaProducer<String, String> producer = TTKafkaClient.createProducer(configs);
 
         final AtomicBoolean alive = new AtomicBoolean(true);
@@ -133,11 +133,11 @@ public class KafkaClientTest {
     @Test
     public void testConcurrentAutoCommitConsumer() throws Exception {
         ConsumerConfig configs = new ConsumerConfig("localhost:9092", "test-topic","test-group");
-        configs.setKeySerializer(SerializerImpl.getJacksonSerializaer());
-        configs.setValueSerializer(SerializerImpl.getJacksonSerializaer());
+        configs.setKeySerializer(SerializerImpl.getJacksonSerializer());
+        configs.setValueSerializer(SerializerImpl.getJacksonSerializer());
         configs.setAutoCommit(true);
         configs.put("auto.commit.interval.ms", "5000");
-        configs.setConcurrentNum(2);
+        configs.setParallelism(2);
         configs.put("auto.offset.reset", "latest");
 
         MessageListener<String, String> messageListener = new AutoCommitMessageListener<String, String>() {

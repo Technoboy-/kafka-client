@@ -24,13 +24,13 @@ public class ConcurrentAutoCommitMessageListenerService<K, V> extends ReblanceMe
 
     private final DefaultKafkaConsumerImpl<K, V> consumer;
 
-    public ConcurrentAutoCommitMessageListenerService(int num, DefaultKafkaConsumerImpl<K, V> consumer, AutoCommitMessageListener<K, V> listener) {
-        BlockingQueue<Runnable> queue = new LinkedBlockingQueue<>(consumer.getConfigs().getHandlerQueueSize());
-        executor = new ThreadPoolExecutor(num, num, 1, TimeUnit.MINUTES, queue,
-                new NamedThreadFactory("concurrent-consumer-worker"), new CallerWaitPolicy(queue));
+    public ConcurrentAutoCommitMessageListenerService(DefaultKafkaConsumerImpl<K, V> consumer, AutoCommitMessageListener<K, V> listener) {
+        int parallelism = consumer.getConfigs().getParallelism();
+        executor = new ThreadPoolExecutor(parallelism, parallelism, 1, TimeUnit.MINUTES, new LinkedBlockingQueue<>(consumer.getConfigs().getHandlerQueueSize()),
+                new NamedThreadFactory("concurrent-consumer-worker"), new CallerWaitPolicy());
         this.consumer = consumer;
         this.messageListener = listener;
-        Monitor.getInstance().recordConsumeHandlerCount(num);
+        Monitor.getInstance().recordConsumeHandlerCount(parallelism);
     }
 
     @Override

@@ -73,7 +73,7 @@ public class ConsumerConfig extends HashMap<String, Object> {
     /**
      * 自动提交下，分区无序的并发消费线程数
      */
-    private int concurrentNum = 0;
+    private int parallelism = 0;
 
     /**
      * poll线程每次的拉取超时时间
@@ -99,12 +99,13 @@ public class ConsumerConfig extends HashMap<String, Object> {
         return pollTimeout;
     }
 
-    public int getConcurrentNum() {
-        return concurrentNum;
+
+    public int getParallelism() {
+        return parallelism;
     }
 
-    public void setConcurrentNum(int concurrentNum) {
-        this.concurrentNum = concurrentNum;
+    public void setParallelism(int parallelism) {
+        this.parallelism = parallelism;
     }
 
     public boolean isPartitionOrderly() {

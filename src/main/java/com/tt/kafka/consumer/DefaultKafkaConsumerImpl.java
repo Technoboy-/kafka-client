@@ -107,13 +107,13 @@ public class DefaultKafkaConsumerImpl<K, V> implements Runnable, KafkaConsumer<K
             }
         } else if (messageListener instanceof AutoCommitMessageListener) {
             AutoCommitMessageListener autoCommitMessageListener = (AutoCommitMessageListener) messageListener;
-            int parallel = configs.getConcurrentNum();
+            int parallelism = configs.getParallelism();
             if(partitionOrderly){
                 messageListenerService = new PartitionOrderlyAutoCommitMessageService(this, autoCommitMessageListener);
-            } else if(parallel <= 0){
+            } else if(parallelism <= 0){
                 messageListenerService = new AutoCommitMessageListenerService(this, autoCommitMessageListener);
             } else{
-                messageListenerService = new ConcurrentAutoCommitMessageListenerService(parallel, this, autoCommitMessageListener);
+                messageListenerService = new ConcurrentAutoCommitMessageListenerService(this, autoCommitMessageListener);
             }
         }
         this.messageListener = messageListener;

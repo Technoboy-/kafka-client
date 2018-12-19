@@ -60,6 +60,7 @@ public class PartitionOrderlyAcknowledgeMessageListenerService<K, V> extends Ack
         for (TopicPartitionHandler handler : handlers.values()) {
             handler.stop();
         }
+        super.close();
     }
 
     private TopicPartitionHandler getOrCreateHandler(TopicPartition topicPartition) {
