@@ -87,6 +87,32 @@ public class ConsumerConfig extends HashMap<String, Object> {
      */
     private int handlerQueueSize = 100;
 
+    /**
+     * 手动提交下，批量消费的大小
+     */
+    private int batchConsumeSize = 200;
+
+    /**
+     * 手动提交下，批量消费的间隔时间, 单位秒
+     */
+    private int batchConsumeTime = 2;
+
+    public int getBatchConsumeSize() {
+        return batchConsumeSize;
+    }
+
+    public void setBatchConsumeSize(int batchConsumeSize) {
+        this.batchConsumeSize = batchConsumeSize;
+    }
+
+    public int getBatchConsumeTime() {
+        return batchConsumeTime;
+    }
+
+    public void setBatchConsumeTime(int batchConsumeTime) {
+        this.batchConsumeTime = batchConsumeTime;
+    }
+
     public int getHandlerQueueSize() {
         return handlerQueueSize;
     }

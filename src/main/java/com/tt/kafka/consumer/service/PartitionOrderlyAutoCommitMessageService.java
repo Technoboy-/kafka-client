@@ -88,9 +88,9 @@ public class PartitionOrderlyAutoCommitMessageService<K, V> extends ReblanceMess
 
         public TopicPartitionHandler(String topic, int partition) {
             worker = new Thread(this, "consumer-partition-handler-" + topic + "-" + partition);
+            start.compareAndSet(false, true);
             worker.setDaemon(true);
             worker.start();
-            start.compareAndSet(false, true);
         }
 
         public void stop() {
@@ -111,7 +111,7 @@ public class PartitionOrderlyAutoCommitMessageService<K, V> extends ReblanceMess
                 List<ConsumerRecord<byte[], byte[]>> records = new ArrayList<>(queue.size());
                 queue.drainTo(records);
                 for (ConsumerRecord record : records) {
-                    PartitionOrderlyAutoCommitMessageService.this.messageListener.onMessage(consumer.toRecord(record));
+                    messageListener.onMessage(consumer.toRecord(record));
                 }
             }
         }

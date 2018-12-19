@@ -2,6 +2,7 @@ package com.tt.kafka.consumer;
 
 import com.tt.kafka.consumer.listener.AcknowledgeMessageListener;
 import com.tt.kafka.consumer.listener.AutoCommitMessageListener;
+import com.tt.kafka.consumer.listener.BatchAcknowledgeMessageListener;
 import com.tt.kafka.consumer.listener.MessageListener;
 import com.tt.kafka.consumer.service.*;
 import com.tt.kafka.serializer.Serializer;
@@ -85,9 +86,21 @@ public class DefaultKafkaConsumerImpl<K, V> implements Runnable, KafkaConsumer<K
 
     @Override
     public void setMessageListener(final MessageListener<K, V> messageListener) {
+        if(this.messageListener != null){
+            throw new IllegalArgumentException("messageListener has already set");
+        }
         if (configs.isAutoCommit()
                 && (messageListener instanceof AcknowledgeMessageListener)) {
             throw new IllegalArgumentException("AcknowledgeMessageListener must be mannual commit");
+        }
+
+        if (configs.isAutoCommit()
+                && (messageListener instanceof BatchAcknowledgeMessageListener)) {
+            throw new IllegalArgumentException("BatchAcknowledgeMessageListener must be mannual commit");
+        }
+
+        if (messageListener instanceof BatchAcknowledgeMessageListener && configs.isPartitionOrderly()) {
+            throw new IllegalArgumentException("BatchAcknowledgeMessageListener not support partitionOrderly ");
         }
 
         if (!configs.isAutoCommit()
@@ -105,6 +118,9 @@ public class DefaultKafkaConsumerImpl<K, V> implements Runnable, KafkaConsumer<K
             } else {
                 messageListenerService = new AcknowledgeMessageListenerService(this, acknowledgeMessageListener);
             }
+        } else if(messageListener instanceof BatchAcknowledgeMessageListener){
+            BatchAcknowledgeMessageListener batchAcknowledgeMessageListener = (BatchAcknowledgeMessageListener) messageListener;
+            messageListenerService = new BatchAcknowledgeMessageListenerService(this, batchAcknowledgeMessageListener);
         } else if (messageListener instanceof AutoCommitMessageListener) {
             AutoCommitMessageListener autoCommitMessageListener = (AutoCommitMessageListener) messageListener;
             int parallelism = configs.getParallelism();
