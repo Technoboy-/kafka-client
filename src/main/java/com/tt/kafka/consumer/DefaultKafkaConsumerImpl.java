@@ -5,6 +5,7 @@ import com.tt.kafka.consumer.listener.AutoCommitMessageListener;
 import com.tt.kafka.consumer.listener.BatchAcknowledgeMessageListener;
 import com.tt.kafka.consumer.listener.MessageListener;
 import com.tt.kafka.consumer.service.*;
+import com.tt.kafka.metric.MonitorImpl;
 import com.tt.kafka.serializer.Serializer;
 import com.tt.kafka.util.Preconditions;
 import com.tt.kafka.metric.Monitor;
@@ -149,8 +150,8 @@ public class DefaultKafkaConsumerImpl<K, V> implements Runnable, KafkaConsumer<K
             synchronized (consumer) {
                 records = consumer.poll(configs.getPollTimeout());
             }
-            Monitor.getInstance().recordConsumePollTime(System.currentTimeMillis() - now);
-            Monitor.getInstance().recordConsumePollCount(1);
+            MonitorImpl.getDefault().recordConsumePollTime(System.currentTimeMillis() - now);
+            MonitorImpl.getDefault().recordConsumePollCount(1);
 
             if (LOG.isTraceEnabled() && records != null && !records.isEmpty()) {
                 LOG.trace("Received: " + records.count() + " records");
@@ -185,7 +186,7 @@ public class DefaultKafkaConsumerImpl<K, V> implements Runnable, KafkaConsumer<K
             if (LOG.isTraceEnabled()) {
                 LOG.trace("Processing " + record);
             }
-            Monitor.getInstance().recordConsumeRecvCount(1);
+            MonitorImpl.getDefault().recordConsumeRecvCount(1);
 
             try {
                 messageListenerService.onMessage(record);

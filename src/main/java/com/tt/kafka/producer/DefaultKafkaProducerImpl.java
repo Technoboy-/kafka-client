@@ -1,6 +1,7 @@
 package com.tt.kafka.producer;
 
 import com.tt.kafka.metric.Monitor;
+import com.tt.kafka.metric.MonitorImpl;
 import com.tt.kafka.serializer.Serializer;
 import com.tt.kafka.util.Preconditions;
 import org.apache.kafka.clients.producer.Producer;
@@ -62,11 +63,11 @@ public class DefaultKafkaProducerImpl<K, V> implements KafkaProducer<K, V> {
         try {
             return doSend(topic, partition, key, value, null).get();
         } catch (Exception ex) {
-            Monitor.getInstance().recordProduceSendError(1);
+            MonitorImpl.getDefault().recordProduceSendError(1);
             throw new RuntimeException(ex);
         } finally {
-            Monitor.getInstance().recordProduceSendCount(1);
-            Monitor.getInstance().recordProduceSendTime(System.currentTimeMillis() - now);
+            MonitorImpl.getDefault().recordProduceSendCount(1);
+            MonitorImpl.getDefault().recordProduceSendTime(System.currentTimeMillis() - now);
         }
     }
 
@@ -83,11 +84,11 @@ public class DefaultKafkaProducerImpl<K, V> implements KafkaProducer<K, V> {
         try {
             return doSend(topic, partition, key, value, callback);
         } catch (Exception ex) {
-            Monitor.getInstance().recordProduceSendError(1);
+            MonitorImpl.getDefault().recordProduceSendError(1);
             throw new RuntimeException(ex);
         } finally {
-            Monitor.getInstance().recordProduceSendCount(1);
-            Monitor.getInstance().recordProduceSendTime(System.currentTimeMillis() - now);
+            MonitorImpl.getDefault().recordProduceSendCount(1);
+            MonitorImpl.getDefault().recordProduceSendTime(System.currentTimeMillis() - now);
         }
     }
 

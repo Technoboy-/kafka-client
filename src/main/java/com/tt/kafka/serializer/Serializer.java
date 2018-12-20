@@ -1,6 +1,6 @@
 package com.tt.kafka.serializer;
 
-import com.tt.kafka.serializer.extension.SPI;
+import com.tt.kafka.common.spi.SPI;
 
 /**
  * @Author: Tboy

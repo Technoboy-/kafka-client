@@ -3,6 +3,7 @@ package com.tt.kafka.consumer.service;
 import com.tt.kafka.consumer.DefaultKafkaConsumerImpl;
 import com.tt.kafka.consumer.Record;
 import com.tt.kafka.metric.Monitor;
+import com.tt.kafka.metric.MonitorImpl;
 import com.tt.kafka.util.NamedThreadFactory;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.TopicPartition;
@@ -75,8 +76,8 @@ abstract class BaseAcknowledgeMessageListenerService<K, V> extends ReblanceMessa
             } catch (Throwable ex) {
                 LOG.error("Commit consumer offset error.", ex);
             } finally {
-                Monitor.getInstance().recordCommitCount(1L);
-                Monitor.getInstance().recordCommitTime(System.currentTimeMillis() - now);
+                MonitorImpl.getDefault().recordCommitCount(1L);
+                MonitorImpl.getDefault().recordCommitTime(System.currentTimeMillis() - now);
             }
         }
     }

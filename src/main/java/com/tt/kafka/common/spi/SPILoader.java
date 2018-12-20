@@ -1,11 +1,13 @@
-package com.tt.kafka.serializer.extension;
+package com.tt.kafka.common.spi;
 
+import com.tt.kafka.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.lang.annotation.Annotation;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
@@ -16,52 +18,33 @@ import java.util.concurrent.ConcurrentMap;
  * @Author: Tboy
  */
 @SuppressWarnings("unchecked")
-public class SPILoader<T> {
+public abstract class SPILoader<T> {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(SPILoader.class);
 
-	private static final String SERIALIZER_DIRECTORY = "META-INF/serializer/";
-	
-	private static final ConcurrentMap<Class<?>, SPILoader<?>> EXTENSION_LOADERS = new ConcurrentHashMap<Class<?>, SPILoader<?>>();
-	
-	private final Class<?> type;
-	
-	private final Map<String, Object> extensionClasses;
+	private static final String SPI_DIRECTORY = "META-INF/spiconfig/";
 
-	private SPILoader(Class<?> type) {
-		this.type = type;
-		extensionClasses = new HashMap<String, Object>();
-		loadExtensionClasses();
-	}
-	
-	public T getExtension() {
-		return getExtension(this.type.getAnnotation(SPI.class).value());
-	} 
+	protected static final ConcurrentMap<Class<?>, SPILoader<?>> EXTENSION_LOADERS = new ConcurrentHashMap<Class<?>, SPILoader<?>>();
+
+	protected final Map<String, Object> extensionClasses = new HashMap<>();
 	
 	public T getExtension(String name) {
-		if (name == null || name.length() == 0)
-		    throw new IllegalArgumentException("Extension name == null");
+		if (StringUtils.isBlank(name))
+		    throw new IllegalArgumentException("Extension name is null");
 		return (T) extensionClasses.get(name);
-	} 
-	
-	public static <T> SPILoader<T> getSPIClass(Class<T> clazz){
-		SPILoader<T> spiLoader = (SPILoader<T>)EXTENSION_LOADERS.get(clazz);
-		if(spiLoader == null){
-			EXTENSION_LOADERS.putIfAbsent(clazz, new SPILoader<T>(clazz));
-			spiLoader = (SPILoader<T>)EXTENSION_LOADERS.get(clazz);
-		}
-		return spiLoader;
 	}
 
-	private void loadExtensionClasses() {
+	protected <T> void loadExtensionClasses(Class<T> clazz) {
 		try {
-			loadFile(extensionClasses, SERIALIZER_DIRECTORY);
+			loadFile(clazz, extensionClasses, SPI_DIRECTORY);
 		} catch (Exception e) {
-			e.printStackTrace();
+			LOGGER.error("loadExtensionClasses error", e);
 		}
 	}
 
-	private void loadFile(Map<String, Object> extensionClasses, String dir) throws Exception{
+	protected abstract T newInstance(Class<?> type);
+
+	private <T> void loadFile(Class<T> type, Map<String, Object> extensionClasses, String dir) throws Exception{
 		String fileName = dir + type.getName();
 		Enumeration<java.net.URL> urls;
 		ClassLoader classLoader = SPILoader.class.getClassLoader();
@@ -95,7 +78,7 @@ public class SPILoader<T> {
 									if (!type.isAssignableFrom(clazz)) {
 										throw new IllegalStateException("Error when load extension class(interface: " + type + ", class line: " + clazz.getName() + "), class " + clazz.getName() + "is not subtype of interface.");
 									} else {
-										extensionClasses.put(name, clazz.newInstance());
+										extensionClasses.put(name, newInstance(clazz));
 									}
 								}
 							} catch (Throwable t) {
@@ -111,7 +94,7 @@ public class SPILoader<T> {
 						try {
 							reader.close();
 						} catch (IOException e) {
-							e.printStackTrace();
+							LOGGER.error("close reader error", e);
 						}
 					}
 				}

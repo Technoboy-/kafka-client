@@ -1,85 +1,36 @@
 package com.tt.kafka.metric;
 
-import com.tt.kafka.util.NamedThreadFactory;
-
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import com.tt.kafka.common.spi.MonitorConfig;
 
 /**
  * @Author: Tboy
  */
-public class Monitor {
+@MonitorConfig(value = "file", name = "kafka-stat.log", enable = true)
+public interface Monitor {
 
-    private ScheduledExecutorService executor;
+    void recordProduceSendCount(int count);
 
-    private final Stat stat;
+    void recordProduceSendTime(long time);
 
-    private OutputLog log;
+    void recordProduceSendError(int count);
 
-    public Monitor(String path, String name, boolean isEnable){
-        stat = new Stat();
-        if(isEnable){
-            log = new OutputLog(path, name);
-            executor = Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory("monitor-thread"));
-            executor.scheduleAtFixedRate(() -> log.info(stat.getStat()), 2, 1, TimeUnit.SECONDS);
-        }
-    }
+    void recordConsumeRecvCount(int count) ;
 
-    private static class MonitorHolder{
-        private static final Monitor INSTANCE = new Monitor(Monitor.class.getResource(".").getPath(),"monitor.log", true);
-    }
+    void recordConsumeProcessCount(long count);
 
-    public static Monitor getInstance() {
-        return MonitorHolder.INSTANCE;
-    }
+    void recordConsumeProcessTime(long time);
 
-    public void recordProduceSendCount(int count) {
-        stat.recordProduceSendCount(count);
-    }
+    void recordConsumeProcessErrorCount(long count);
 
-    public void recordProduceSendTime(long time) {
-        stat.recordProduceSendTime(time);
-    }
+    void recordConsumePollCount(int count);
 
-    public void recordProduceSendError(int count) {
-        stat.recordProduceSendError(count);
-    }
+    void recordConsumePollTime(long time);
 
-    public void recordConsumeRecvCount(int count) {
-        stat.recordConsumeRecvCount(count);
-    }
+    void recordCommitCount(long count);
 
-    public void recordConsumeProcessCount(long count) {
-        stat.recordConsumeProcessCount(count);
-    }
+    void recordCommitTime(long time);
 
-    public void recordConsumeProcessTime(long time) {
-        stat.recordConsumeProcessTime(time);
-    }
+    void recordConsumeHandlerCount(int count);
 
-    public void recordConsumeProcessErrorCount(long count) {
-        stat.recordConsumeProcessErrorCount(count);
-    }
-
-    public void recordConsumePollCount(int count) {
-        stat.recordConsumePollCount(count);
-    }
-
-    public void recordConsumePollTime(long time) {
-        stat.recordConsumePollTime(time);
-    }
-
-    public void recordCommitCount(long count) {
-        stat.recordCommitCount(count);
-    }
-
-    public void recordCommitTime(long time) {
-        stat.recordCommitTime(time);
-    }
-
-    public void recordConsumeHandlerCount(int count) {
-        stat.recordConsumeHandlerCount(count);
-    }
-
+    void stat();
 }

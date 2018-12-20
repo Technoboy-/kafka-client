@@ -3,6 +3,7 @@ package com.tt.kafka.consumer.service;
 import com.tt.kafka.consumer.DefaultKafkaConsumerImpl;
 import com.tt.kafka.consumer.listener.AutoCommitMessageListener;
 import com.tt.kafka.metric.Monitor;
+import com.tt.kafka.metric.MonitorImpl;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.TopicPartition;
 import org.slf4j.Logger;
@@ -43,7 +44,7 @@ public class PartitionOrderlyAutoCommitMessageService<K, V> extends ReblanceMess
             if (!partitions.contains(partition)) {
                 handlers.get(partition).stop();
                 handlers.remove(partition);
-                Monitor.getInstance().recordConsumeHandlerCount(-1);
+                MonitorImpl.getDefault().recordConsumeHandlerCount(-1);
             }
         }
     }
@@ -65,7 +66,7 @@ public class PartitionOrderlyAutoCommitMessageService<K, V> extends ReblanceMess
                 // can not be happened.
                 preHandler.stop();
             } else {
-                Monitor.getInstance().recordConsumeHandlerCount(1);
+                MonitorImpl.getDefault().recordConsumeHandlerCount(1);
             }
             return handler;
         }
@@ -129,12 +130,12 @@ public class PartitionOrderlyAutoCommitMessageService<K, V> extends ReblanceMess
                     LOG.error("InterruptedException onMessage ", iex);
                     Thread.currentThread().interrupt();
                 } catch (Throwable ex) {
-                    Monitor.getInstance().recordConsumeProcessErrorCount(1);
+                    MonitorImpl.getDefault().recordConsumeProcessErrorCount(1);
                     LOG.error("onMessage error", ex);
                 } finally {
                     if (now > 0) {
-                        Monitor.getInstance().recordConsumeProcessCount(1);
-                        Monitor.getInstance().recordConsumeProcessTime(System.currentTimeMillis() - now);
+                        MonitorImpl.getDefault().recordConsumeProcessCount(1);
+                        MonitorImpl.getDefault().recordConsumeProcessTime(System.currentTimeMillis() - now);
                     }
                 }
             }

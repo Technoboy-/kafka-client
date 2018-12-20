@@ -1,7 +1,8 @@
 package com.tt.kafka.serializer;
 
 
-import com.tt.kafka.serializer.extension.SPILoader;
+import com.tt.kafka.common.spi.SPI;
+import com.tt.kafka.common.spi.SerializerLoader;
 
 /**
  * @Author: Tboy
@@ -9,34 +10,34 @@ import com.tt.kafka.serializer.extension.SPILoader;
 public class SerializerImpl {
 	
 	public static Serializer serializerImpl(){
-		return SPILoader.getSPIClass(Serializer.class).getExtension();
+		return SerializerLoader.getSPIClass(Serializer.class, SPI.class).getExtension();
 	}
 
 	public static Serializer getSerializer(String name){
-		return SPILoader.getSPIClass(Serializer.class).getExtension(name);
+		return SerializerLoader.getSPIClass(Serializer.class, SPI.class).getExtension(name);
 	}
 
 	public static Serializer getByteArraySerializer(){
-		return SPILoader.getSPIClass(Serializer.class).getExtension("bytearray");
+		return SerializerLoader.getSPIClass(Serializer.class, SPI.class).getExtension("bytearray");
 	}
 
 	public static Serializer getHessianSerializer(){
-		return SPILoader.getSPIClass(Serializer.class).getExtension("hessian");
+		return SerializerLoader.getSPIClass(Serializer.class, SPI.class).getExtension("hessian");
 	}
 
 	public static Serializer getJacksonSerializer(){
-		return SPILoader.getSPIClass(Serializer.class).getExtension("jackson");
+		return SerializerLoader.getSPIClass(Serializer.class, SPI.class).getExtension("jackson");
 	}
 
 	public static Serializer getFastJsonSerializer(){
-		return SPILoader.getSPIClass(Serializer.class).getExtension("fastjson");
+		return SerializerLoader.getSPIClass(Serializer.class, SPI.class).getExtension("fastjson");
 	}
 
 	public static Serializer getStringSerializer(){
-		return SPILoader.getSPIClass(Serializer.class).getExtension("string");
+		return SerializerLoader.getSPIClass(Serializer.class, SPI.class).getExtension("string");
 	}
 
 	public static Serializer getProtoStuffSerializer(){
-		return SPILoader.getSPIClass(Serializer.class).getExtension("protostuff");
+		return SerializerLoader.getSPIClass(Serializer.class, SPI.class).getExtension("protostuff");
 	}
 }

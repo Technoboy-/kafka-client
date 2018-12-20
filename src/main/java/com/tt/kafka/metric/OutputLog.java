@@ -15,20 +15,16 @@ public class OutputLog {
 
     private final RollingFileAppender appender;
 
-    private final String path;
-
     private final String name;
 
-    public OutputLog(String path, String name){
-        this.path = path.endsWith("/") ? path : path + "/";
-        this.name = name.endsWith(".log") ? name : name + ".log";
-
+    public OutputLog(String name){
+        this.name = name;
         try {
-            this.appender = new RollingFileAppender(new PatternLayout("%m%n"), this.path + this.name,  true);
+            this.appender = new RollingFileAppender(new PatternLayout("%m%n"), this.name,  true);
             this.appender.setBufferedIO(false);
             this.appender.setMaxFileSize("10MB");
             this.appender.setMaxBackupIndex(1);
-            this.logger = Logger.getLogger(name);
+            this.logger = Logger.getLogger("monitor");
             this.logger.removeAllAppenders();
             this.logger.addAppender(this.appender);
             this.logger.setAdditivity(false);

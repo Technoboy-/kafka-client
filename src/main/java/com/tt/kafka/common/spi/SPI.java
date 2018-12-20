@@ -1,4 +1,4 @@
-package com.tt.kafka.serializer.extension;
+package com.tt.kafka.common.spi;
 
 import java.lang.annotation.*;
 

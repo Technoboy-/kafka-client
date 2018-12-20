@@ -1,0 +1,2 @@
+file=com.tt.kafka.metric.FileMonitor
+console=com.tt.kafka.metric.ConsoleMonitor

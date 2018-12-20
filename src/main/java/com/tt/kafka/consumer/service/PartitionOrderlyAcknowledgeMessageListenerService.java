@@ -3,6 +3,7 @@ package com.tt.kafka.consumer.service;
 import com.tt.kafka.consumer.DefaultKafkaConsumerImpl;
 import com.tt.kafka.consumer.listener.AcknowledgeMessageListener;
 import com.tt.kafka.metric.Monitor;
+import com.tt.kafka.metric.MonitorImpl;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.TopicPartition;
 import org.slf4j.Logger;
@@ -32,7 +33,7 @@ public class PartitionOrderlyAcknowledgeMessageListenerService<K, V> extends Ack
                                                              AcknowledgeMessageListener<K, V> messageListener) {
         super(consumer, messageListener);
         this.consumer = consumer;
-        Monitor.getInstance().recordConsumeHandlerCount(-1);
+        MonitorImpl.getDefault().recordConsumeHandlerCount(-1);
         this.handlers =  new ConcurrentHashMap<>();
     }
 
@@ -43,7 +44,7 @@ public class PartitionOrderlyAcknowledgeMessageListenerService<K, V> extends Ack
             if (!partitions.contains(partition)) {
                 handlers.get(partition).stop();
                 handlers.remove(partition);
-                Monitor.getInstance().recordConsumeHandlerCount(-1);
+                MonitorImpl.getDefault().recordConsumeHandlerCount(-1);
             }
         }
     }
@@ -73,7 +74,7 @@ public class PartitionOrderlyAcknowledgeMessageListenerService<K, V> extends Ack
                 // can not be happened.
                 preHandler.stop();
             } else {
-                Monitor.getInstance().recordConsumeHandlerCount(1);
+                MonitorImpl.getDefault().recordConsumeHandlerCount(1);
             }
             return handler;
         }
