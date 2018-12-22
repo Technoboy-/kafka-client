@@ -67,6 +67,9 @@ public class DefaultKafkaConsumerImpl<K, V> implements Runnable, KafkaConsumer<K
         Preconditions.checkArgument(messageListener != null , "messageListener should not be null");
         Preconditions.checkArgument(messageListenerService != null, "messageListener implementation error");
 
+        Preconditions.checkArgument(configs.getAcknowledgeCommitBatchSize() > 0, "AcknowledgeCommitBatchSize should be greater than 0");
+        Preconditions.checkArgument(configs.getBatchConsumeSize() > 0, "BatchConsumeSize should be greater than 0");
+
         if (start.compareAndSet(false, true)) {
             if (messageListenerService instanceof ConsumerRebalanceListener) {
                 consumer.subscribe(Arrays.asList(configs.getTopic()), (ConsumerRebalanceListener) messageListenerService);
