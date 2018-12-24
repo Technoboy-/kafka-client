@@ -20,9 +20,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * @Author: Tboy
  */
-public class PartitionOrderlyAutoCommitMessageService<K, V> extends RebalanceMessageListenerService<K, V> {
+public class PartitionOrderlyAutoCommitMessageListenerService<K, V> extends RebalanceMessageListenerService<K, V> {
 
-    private static final Logger LOG = LoggerFactory.getLogger(PartitionOrderlyAutoCommitMessageService.class);
+    private static final Logger LOG = LoggerFactory.getLogger(PartitionOrderlyAutoCommitMessageListenerService.class);
 
     private final ConcurrentMap<TopicPartition, TopicPartitionHandler<K, V>> handlers;
 
@@ -30,7 +30,7 @@ public class PartitionOrderlyAutoCommitMessageService<K, V> extends RebalanceMes
 
     private final AutoCommitMessageListener<K, V> messageListener;
 
-    public PartitionOrderlyAutoCommitMessageService(DefaultKafkaConsumerImpl<K, V> consumer, AutoCommitMessageListener<K, V> messageListener) {
+    public PartitionOrderlyAutoCommitMessageListenerService(DefaultKafkaConsumerImpl<K, V> consumer, AutoCommitMessageListener<K, V> messageListener) {
         this.handlers = new ConcurrentHashMap<>();
         this.consumer = consumer;
         this.messageListener = messageListener;

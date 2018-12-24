@@ -8,7 +8,6 @@ import com.tt.kafka.consumer.service.*;
 import com.tt.kafka.metric.MonitorImpl;
 import com.tt.kafka.serializer.Serializer;
 import com.tt.kafka.util.Preconditions;
-import com.tt.kafka.metric.Monitor;
 import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.serialization.ByteArrayDeserializer;
@@ -129,7 +128,7 @@ public class DefaultKafkaConsumerImpl<K, V> implements Runnable, KafkaConsumer<K
             AutoCommitMessageListener autoCommitMessageListener = (AutoCommitMessageListener) messageListener;
             int parallelism = configs.getParallelism();
             if(partitionOrderly){
-                messageListenerService = new PartitionOrderlyAutoCommitMessageService(this, autoCommitMessageListener);
+                messageListenerService = new PartitionOrderlyAutoCommitMessageListenerService(this, autoCommitMessageListener);
             } else if(parallelism <= 0){
                 messageListenerService = new AutoCommitMessageListenerService(this, autoCommitMessageListener);
             } else{
