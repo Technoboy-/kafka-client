@@ -4,7 +4,6 @@ import com.tt.kafka.consumer.DefaultKafkaConsumerImpl;
 import com.tt.kafka.consumer.Record;
 import com.tt.kafka.consumer.listener.AcknowledgeMessageListener;
 import com.tt.kafka.consumer.listener.MessageListener;
-import com.tt.kafka.metric.Monitor;
 import com.tt.kafka.metric.MonitorImpl;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.slf4j.Logger;
@@ -13,15 +12,15 @@ import org.slf4j.LoggerFactory;
 /**
  * @Author: Tboy
  */
-public class AcknowledgeMessageListenerService<K, V> extends RebalanceAcknowledgeMessageListenerService<K, V> {
+public class AssignAcknowledgeMessageListenerService<K, V> extends CommonAcknowledgeMessageListenerService<K, V> {
 
-    private static final Logger LOG = LoggerFactory.getLogger(AcknowledgeMessageListenerService.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AssignAcknowledgeMessageListenerService.class);
 
     private final DefaultKafkaConsumerImpl<K, V> consumer;
 
     private final AcknowledgeMessageListener<K, V> messageListener;
 
-    public AcknowledgeMessageListenerService(DefaultKafkaConsumerImpl<K, V> consumer, MessageListener<K, V> messageListener) {
+    public AssignAcknowledgeMessageListenerService(DefaultKafkaConsumerImpl<K, V> consumer, MessageListener<K, V> messageListener) {
         super(consumer);
         this.consumer = consumer;
         this.messageListener = (AcknowledgeMessageListener)messageListener;
@@ -33,10 +32,10 @@ public class AcknowledgeMessageListenerService<K, V> extends RebalanceAcknowledg
         long now = System.currentTimeMillis();
         try {
             final Record<K, V> r = consumer.toRecord(record);
-            messageListener.onMessage(r, new AcknowledgeMessageListener.Acknowledgment() {
+            this.messageListener.onMessage(r, new AcknowledgeMessageListener.Acknowledgment() {
                 @Override
                 public void acknowledge() {
-                    AcknowledgeMessageListenerService.super.acknowledge(r);
+                    AssignAcknowledgeMessageListenerService.super.acknowledge(r);
                 }
             });
         } catch (Throwable ex) {
@@ -51,6 +50,7 @@ public class AcknowledgeMessageListenerService<K, V> extends RebalanceAcknowledg
     @Override
     public void close() {
         super.close();
-        LOG.debug("AcknowledgeMessageListenerService stop.");
+        LOG.debug("AssignAcknowledgeMessageListenerService stop.");
+        MonitorImpl.getDefault().recordConsumeHandlerCount(-1);
     }
 }

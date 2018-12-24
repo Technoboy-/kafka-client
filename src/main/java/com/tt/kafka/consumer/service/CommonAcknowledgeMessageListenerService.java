@@ -17,9 +17,9 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * @Author: Tboy
  */
-abstract class BaseAcknowledgeMessageListenerService<K, V> extends RebalanceMessageListenerService<K, V> {
+abstract class CommonAcknowledgeMessageListenerService<K, V> implements MessageListenerService<K, V>{
 
-    private static final Logger LOG = LoggerFactory.getLogger(BaseAcknowledgeMessageListenerService.class);
+    private static final Logger LOG = LoggerFactory.getLogger(CommonAcknowledgeMessageListenerService.class);
 
     protected final ScheduledExecutorService commitScheduler = Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory("commit-scheduler"));
 
@@ -29,7 +29,7 @@ abstract class BaseAcknowledgeMessageListenerService<K, V> extends RebalanceMess
 
     protected final DefaultKafkaConsumerImpl<K, V> consumer;
 
-    public BaseAcknowledgeMessageListenerService(DefaultKafkaConsumerImpl<K, V> consumer){
+    public CommonAcknowledgeMessageListenerService(DefaultKafkaConsumerImpl<K, V> consumer){
         this.consumer = consumer;
         long initialDelay = consumer.getConfigs().getAcknowledgeCommitInterval();
         long period = consumer.getConfigs().getAcknowledgeCommitInterval();

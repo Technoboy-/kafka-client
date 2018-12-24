@@ -2,6 +2,7 @@ package com.tt.kafka.consumer.service;
 
 import com.tt.kafka.consumer.DefaultKafkaConsumerImpl;
 import com.tt.kafka.consumer.listener.AutoCommitMessageListener;
+import com.tt.kafka.consumer.listener.MessageListener;
 import com.tt.kafka.metric.MonitorImpl;
 import com.tt.kafka.util.CallerWaitPolicy;
 import com.tt.kafka.util.NamedThreadFactory;
@@ -24,12 +25,12 @@ public class ConcurrentAutoCommitMessageListenerService<K, V> extends RebalanceM
 
     private final DefaultKafkaConsumerImpl<K, V> consumer;
 
-    public ConcurrentAutoCommitMessageListenerService(DefaultKafkaConsumerImpl<K, V> consumer, AutoCommitMessageListener<K, V> listener) {
+    public ConcurrentAutoCommitMessageListenerService(DefaultKafkaConsumerImpl<K, V> consumer, MessageListener<K, V> listener) {
         int parallelism = consumer.getConfigs().getParallelism();
         executor = new ThreadPoolExecutor(parallelism, parallelism, 1, TimeUnit.MINUTES, new LinkedBlockingQueue<>(consumer.getConfigs().getHandlerQueueSize()),
                 new NamedThreadFactory("concurrent-consumer-worker"), new CallerWaitPolicy());
         this.consumer = consumer;
-        this.messageListener = listener;
+        this.messageListener = (AutoCommitMessageListener)listener;
         MonitorImpl.getDefault().recordConsumeHandlerCount(parallelism);
     }
 

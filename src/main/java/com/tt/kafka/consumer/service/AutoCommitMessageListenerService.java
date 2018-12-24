@@ -2,6 +2,7 @@ package com.tt.kafka.consumer.service;
 
 import com.tt.kafka.consumer.DefaultKafkaConsumerImpl;
 import com.tt.kafka.consumer.listener.AutoCommitMessageListener;
+import com.tt.kafka.consumer.listener.MessageListener;
 import com.tt.kafka.metric.MonitorImpl;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.slf4j.Logger;
@@ -18,9 +19,9 @@ public class AutoCommitMessageListenerService<K, V> extends RebalanceMessageList
 
     private final AutoCommitMessageListener<K, V> messageListener;
 
-    public AutoCommitMessageListenerService(DefaultKafkaConsumerImpl<K, V> consumer, AutoCommitMessageListener<K, V> listener) {
+    public AutoCommitMessageListenerService(DefaultKafkaConsumerImpl<K, V> consumer, MessageListener<K, V> listener) {
         this.consumer = consumer;
-        this.messageListener = listener;
+        this.messageListener = (AutoCommitMessageListener)listener;
         MonitorImpl.getDefault().recordConsumeHandlerCount(1);
     }
 

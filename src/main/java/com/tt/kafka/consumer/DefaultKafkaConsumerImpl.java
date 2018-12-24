@@ -7,6 +7,7 @@ import com.tt.kafka.consumer.listener.MessageListener;
 import com.tt.kafka.consumer.service.*;
 import com.tt.kafka.metric.MonitorImpl;
 import com.tt.kafka.serializer.Serializer;
+import com.tt.kafka.util.CollectionUtils;
 import com.tt.kafka.util.Preconditions;
 import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.common.TopicPartition;
@@ -14,9 +15,7 @@ import org.apache.kafka.common.serialization.ByteArrayDeserializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -42,6 +41,8 @@ public class DefaultKafkaConsumerImpl<K, V> implements Runnable, KafkaConsumer<K
     private Serializer keySerializer;
 
     private Serializer valueSerializer;
+
+    private MessageListenerServiceRegistry serviceRegistry;
 
     public DefaultKafkaConsumerImpl(ConsumerConfig configs) {
         this.configs = configs;
@@ -69,12 +70,24 @@ public class DefaultKafkaConsumerImpl<K, V> implements Runnable, KafkaConsumer<K
         Preconditions.checkArgument(configs.getAcknowledgeCommitBatchSize() > 0, "AcknowledgeCommitBatchSize should be greater than 0");
         Preconditions.checkArgument(configs.getBatchConsumeSize() > 0, "BatchConsumeSize should be greater than 0");
 
+        boolean isAssignTopicPartition = !CollectionUtils.isEmpty(configs.getAssignTopicPartitions());
+
         if (start.compareAndSet(false, true)) {
-            if (messageListenerService instanceof ConsumerRebalanceListener) {
-                consumer.subscribe(Arrays.asList(configs.getTopic()), (ConsumerRebalanceListener) messageListenerService);
-            } else {
-                consumer.subscribe(Arrays.asList(configs.getTopic()));
+            if(isAssignTopicPartition){
+                Collection<com.tt.kafka.consumer.TopicPartition> assignTopicPartitions = configs.getAssignTopicPartitions();
+                ArrayList<TopicPartition> topicPartitions = new ArrayList<>(assignTopicPartitions.size());
+                for(com.tt.kafka.consumer.TopicPartition topicPartition : assignTopicPartitions){
+                    topicPartitions.add(new TopicPartition(topicPartition.getTopic(), topicPartition.getPartition()));
+                }
+                consumer.assign(topicPartitions);
+            } else{
+                if (messageListenerService instanceof ConsumerRebalanceListener) {
+                    consumer.subscribe(Arrays.asList(configs.getTopic()), (ConsumerRebalanceListener) messageListenerService);
+                } else {
+                    consumer.subscribe(Arrays.asList(configs.getTopic()));
+                }
             }
+            //
             worker.setDaemon(true);
             worker.setUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
                 public void uncaughtException(Thread t, Throwable e) {
@@ -112,29 +125,9 @@ public class DefaultKafkaConsumerImpl<K, V> implements Runnable, KafkaConsumer<K
         }
 
         //
-        boolean partitionOrderly = configs.isPartitionOrderly();
-
-        if (messageListener instanceof AcknowledgeMessageListener) {
-            AcknowledgeMessageListener acknowledgeMessageListener = (AcknowledgeMessageListener) messageListener;
-            if (partitionOrderly) {
-                messageListenerService = new PartitionOrderlyAcknowledgeMessageListenerService(this, acknowledgeMessageListener);
-            } else {
-                messageListenerService = new AcknowledgeMessageListenerService(this, acknowledgeMessageListener);
-            }
-        } else if(messageListener instanceof BatchAcknowledgeMessageListener){
-            BatchAcknowledgeMessageListener batchAcknowledgeMessageListener = (BatchAcknowledgeMessageListener) messageListener;
-            messageListenerService = new BatchAcknowledgeMessageListenerService(this, batchAcknowledgeMessageListener);
-        } else if (messageListener instanceof AutoCommitMessageListener) {
-            AutoCommitMessageListener autoCommitMessageListener = (AutoCommitMessageListener) messageListener;
-            int parallelism = configs.getParallelism();
-            if(partitionOrderly){
-                messageListenerService = new PartitionOrderlyAutoCommitMessageListenerService(this, autoCommitMessageListener);
-            } else if(parallelism <= 0){
-                messageListenerService = new AutoCommitMessageListenerService(this, autoCommitMessageListener);
-            } else{
-                messageListenerService = new ConcurrentAutoCommitMessageListenerService(this, autoCommitMessageListener);
-            }
-        }
+        this.serviceRegistry = new MessageListenerServiceRegistry(this, messageListener);
+        this.serviceRegistry.registry(configs.getMessageListenerService());
+        this.messageListenerService = this.serviceRegistry.getMessageListenerService(true);
         this.messageListener = messageListener;
     }
 
@@ -159,7 +152,7 @@ public class DefaultKafkaConsumerImpl<K, V> implements Runnable, KafkaConsumer<K
                 LOG.trace("Received: " + records.count() + " records");
             }
             if (records != null && !records.isEmpty()) {
-                invokeMessageHandler(records);
+                invokeMessageService(records);
             }
         }
         LOG.info(worker.getName() + " stop.");
@@ -181,7 +174,7 @@ public class DefaultKafkaConsumerImpl<K, V> implements Runnable, KafkaConsumer<K
         }
     }
 
-    private void invokeMessageHandler(ConsumerRecords<byte[], byte[]> records) {
+    private void invokeMessageService(ConsumerRecords<byte[], byte[]> records) {
         Iterator<ConsumerRecord<byte[], byte[]>> iterator = records.iterator();
         while (iterator.hasNext()) {
             ConsumerRecord<byte[], byte[]> record = iterator.next();

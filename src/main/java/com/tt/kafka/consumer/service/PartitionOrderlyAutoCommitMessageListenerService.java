@@ -2,6 +2,7 @@ package com.tt.kafka.consumer.service;
 
 import com.tt.kafka.consumer.DefaultKafkaConsumerImpl;
 import com.tt.kafka.consumer.listener.AutoCommitMessageListener;
+import com.tt.kafka.consumer.listener.MessageListener;
 import com.tt.kafka.metric.MonitorImpl;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.TopicPartition;
@@ -30,10 +31,10 @@ public class PartitionOrderlyAutoCommitMessageListenerService<K, V> extends Reba
 
     private final AutoCommitMessageListener<K, V> messageListener;
 
-    public PartitionOrderlyAutoCommitMessageListenerService(DefaultKafkaConsumerImpl<K, V> consumer, AutoCommitMessageListener<K, V> messageListener) {
+    public PartitionOrderlyAutoCommitMessageListenerService(DefaultKafkaConsumerImpl<K, V> consumer, MessageListener<K, V> messageListener) {
         this.handlers = new ConcurrentHashMap<>();
         this.consumer = consumer;
-        this.messageListener = messageListener;
+        this.messageListener = (AutoCommitMessageListener)messageListener;
     }
 
     @Override

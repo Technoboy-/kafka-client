@@ -1,7 +1,9 @@
 package com.tt.kafka.consumer;
 
+import com.tt.kafka.consumer.service.MessageListenerService;
 import com.tt.kafka.serializer.Serializer;
 
+import java.util.Collection;
 import java.util.HashMap;
 
 /**
@@ -96,6 +98,33 @@ public class ConsumerConfig extends HashMap<String, Object> {
      * 手动提交下，批量消费的间隔时间, 单位秒
      */
     private int batchConsumeTime = 2;
+
+    /**
+     * 支持自定义订阅TopicPartition
+     */
+    private Collection<TopicPartition> assignTopicPartitions;
+
+    /**
+     * poll线程获取消息后，会传递给messageListenerService，然后再调用listener。增加messageListenerService可以实现多并发，分区有序，批处理等功能。
+     * messageListenerService的onMessage方法为原生kafka的record，而listener为封装后的record，请注意。
+     */
+    private MessageListenerService messageListenerService;
+
+    public Collection<TopicPartition> getAssignTopicPartitions() {
+        return assignTopicPartitions;
+    }
+
+    public void setAssignTopicPartitions(Collection<TopicPartition> assignTopicPartitions) {
+        this.assignTopicPartitions = assignTopicPartitions;
+    }
+
+    public MessageListenerService getMessageListenerService() {
+        return messageListenerService;
+    }
+
+    public void setMessageListenerService(MessageListenerService messageListenerService) {
+        this.messageListenerService = messageListenerService;
+    }
 
     public int getBatchConsumeSize() {
         return batchConsumeSize;

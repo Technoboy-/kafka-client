@@ -5,7 +5,6 @@ import com.tt.kafka.consumer.DefaultKafkaConsumerImpl;
 import com.tt.kafka.consumer.Record;
 import com.tt.kafka.consumer.listener.BatchAcknowledgeMessageListener;
 import com.tt.kafka.consumer.listener.MessageListener;
-import com.tt.kafka.metric.Monitor;
 import com.tt.kafka.metric.MonitorImpl;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.slf4j.Logger;
@@ -19,9 +18,9 @@ import java.util.concurrent.TimeUnit;
 /**
  * @Author: Tboy
  */
-public class BatchAcknowledgeMessageListenerService<K, V> extends RebalanceAcknowledgeMessageListenerService<K, V>{
+public class AssignBatchAcknowledgeMessageListenerService<K, V> extends CommonAcknowledgeMessageListenerService<K, V> {
 
-    private static final Logger LOG = LoggerFactory.getLogger(BatchAcknowledgeMessageListenerService.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AssignBatchAcknowledgeMessageListenerService.class);
 
     private final BatchAcknowledgeMessageListener<K, V> messageListener;
 
@@ -35,7 +34,7 @@ public class BatchAcknowledgeMessageListenerService<K, V> extends RebalanceAckno
 
     private final Semaphore semaphore = new Semaphore(1);
 
-    public BatchAcknowledgeMessageListenerService(DefaultKafkaConsumerImpl<K, V> consumer, MessageListener<K, V> messageListener) {
+    public AssignBatchAcknowledgeMessageListenerService(DefaultKafkaConsumerImpl<K, V> consumer, MessageListener<K, V> messageListener) {
         super(consumer);
         this.messageListener = (BatchAcknowledgeMessageListener)messageListener;
         this.batchConsumeSize = consumer.getConfigs().getBatchConsumeSize();
@@ -55,10 +54,10 @@ public class BatchAcknowledgeMessageListenerService<K, V> extends RebalanceAckno
             semaphore.acquire();
             final List<Record<K, V>> records = this.container;
             this.container = new ArrayList<>(this.batchConsumeSize);
-            messageListener.onMessage(records, new BatchAcknowledgeMessageListener.Acknowledgment() {
+            this.messageListener.onMessage(records, new BatchAcknowledgeMessageListener.Acknowledgment() {
                 @Override
                 public void acknowledge() {
-                    BatchAcknowledgeMessageListenerService.super.acknowledge(records);
+                    AssignBatchAcknowledgeMessageListenerService.super.acknowledge(records);
                     semaphore.release();
                 }
             });
@@ -68,7 +67,7 @@ public class BatchAcknowledgeMessageListenerService<K, V> extends RebalanceAckno
             MonitorImpl.getDefault().recordConsumeProcessErrorCount(this.batchConsumeSize);
             LOG.error("onMessage error", ex);
         } finally {
-            MonitorImpl.getDefault().recordConsumeProcessCount(this.batchConsumeSize);
+            MonitorImpl.getDefault().recordConsumeProcessCount(1);
             MonitorImpl.getDefault().recordConsumeProcessTime(System.currentTimeMillis() - now);
         }
     }
@@ -76,6 +75,7 @@ public class BatchAcknowledgeMessageListenerService<K, V> extends RebalanceAckno
     @Override
     public void close() {
         super.close();
-        LOG.debug("BatchAcknowledgeMessageListenerService stop.");
+        LOG.debug("AssignBatchAcknowledgeMessageListenerService stop.");
+        MonitorImpl.getDefault().recordConsumeHandlerCount(-1);
     }
 }

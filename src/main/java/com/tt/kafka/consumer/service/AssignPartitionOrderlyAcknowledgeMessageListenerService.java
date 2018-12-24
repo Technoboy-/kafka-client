@@ -1,9 +1,7 @@
 package com.tt.kafka.consumer.service;
 
 import com.tt.kafka.consumer.DefaultKafkaConsumerImpl;
-import com.tt.kafka.consumer.listener.AcknowledgeMessageListener;
 import com.tt.kafka.consumer.listener.MessageListener;
-import com.tt.kafka.metric.Monitor;
 import com.tt.kafka.metric.MonitorImpl;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.TopicPartition;
@@ -11,7 +9,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
@@ -22,32 +19,20 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * @Author: Tboy
  */
-public class PartitionOrderlyAcknowledgeMessageListenerService<K, V> extends AcknowledgeMessageListenerService<K, V> {
+public class AssignPartitionOrderlyAcknowledgeMessageListenerService<K, V> extends AssignAcknowledgeMessageListenerService<K, V> {
 
-    private static final Logger LOG = LoggerFactory.getLogger(PartitionOrderlyAcknowledgeMessageListenerService.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AssignPartitionOrderlyAcknowledgeMessageListenerService.class);
 
     private final ConcurrentMap<TopicPartition, TopicPartitionHandler> handlers;
 
     private final DefaultKafkaConsumerImpl<K, V> consumer;
 
-    public PartitionOrderlyAcknowledgeMessageListenerService(DefaultKafkaConsumerImpl<K, V> consumer,
-                                                             MessageListener<K, V> messageListener) {
+    public AssignPartitionOrderlyAcknowledgeMessageListenerService(DefaultKafkaConsumerImpl<K, V> consumer,
+                                                                   MessageListener<K, V> messageListener) {
         super(consumer, messageListener);
         this.consumer = consumer;
-        MonitorImpl.getDefault().recordConsumeHandlerCount(-1);
         this.handlers =  new ConcurrentHashMap<>();
-    }
-
-    @Override
-    public void onPartitionsAssigned(Collection<TopicPartition> partitions) {
-        super.onPartitionsAssigned(partitions);
-        for (TopicPartition partition : handlers.keySet()) {
-            if (!partitions.contains(partition)) {
-                handlers.get(partition).stop();
-                handlers.remove(partition);
-                MonitorImpl.getDefault().recordConsumeHandlerCount(-1);
-            }
-        }
+        MonitorImpl.getDefault().recordConsumeHandlerCount(0);
     }
 
     @Override
@@ -61,6 +46,7 @@ public class PartitionOrderlyAcknowledgeMessageListenerService<K, V> extends Ack
     public void close() {
         for (TopicPartitionHandler handler : handlers.values()) {
             handler.stop();
+            MonitorImpl.getDefault().recordConsumeHandlerCount(-1);
         }
         super.close();
     }
@@ -74,6 +60,7 @@ public class PartitionOrderlyAcknowledgeMessageListenerService<K, V> extends Ack
             if (preHandler != null) {
                 // can not be happened.
                 preHandler.stop();
+                MonitorImpl.getDefault().recordConsumeHandlerCount(-1);
             } else {
                 MonitorImpl.getDefault().recordConsumeHandlerCount(1);
             }
@@ -91,9 +78,9 @@ public class PartitionOrderlyAcknowledgeMessageListenerService<K, V> extends Ack
 
         public TopicPartitionHandler(String topic, int partition) {
             worker = new Thread(this, "consumer-partition-handler-" + topic + "-" + partition);
+            start.compareAndSet(false, true);
             worker.setDaemon(true);
             worker.start();
-            start.compareAndSet(false, true);
         }
 
         public void stop() {
@@ -114,7 +101,7 @@ public class PartitionOrderlyAcknowledgeMessageListenerService<K, V> extends Ack
                 List<ConsumerRecord<byte[], byte[]>> records = new ArrayList<>(queue.size());
                 queue.drainTo(records);
                 for (ConsumerRecord record : records) {
-                    PartitionOrderlyAcknowledgeMessageListenerService.super.onMessage(record);
+                    AssignPartitionOrderlyAcknowledgeMessageListenerService.super.onMessage(record);
                 }
             }
         }
@@ -125,7 +112,7 @@ public class PartitionOrderlyAcknowledgeMessageListenerService<K, V> extends Ack
                 ConsumerRecord r = null;
                 try {
                     r = queue.take();
-                    PartitionOrderlyAcknowledgeMessageListenerService.super.onMessage(r);
+                    AssignPartitionOrderlyAcknowledgeMessageListenerService.super.onMessage(r);
                 } catch (InterruptedException iex) {
                     LOG.error("InterruptedException onMessage ", iex);
                     Thread.currentThread().interrupt();
