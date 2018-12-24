@@ -2,7 +2,6 @@ package com.tt.kafka.consumer.service;
 
 import com.tt.kafka.consumer.DefaultKafkaConsumerImpl;
 import com.tt.kafka.consumer.listener.AutoCommitMessageListener;
-import com.tt.kafka.metric.Monitor;
 import com.tt.kafka.metric.MonitorImpl;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.TopicPartition;
@@ -21,7 +20,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * @Author: Tboy
  */
-public class PartitionOrderlyAutoCommitMessageService<K, V> extends ReblanceMessageListenerService<K, V> {
+public class PartitionOrderlyAutoCommitMessageService<K, V> extends RebalanceMessageListenerService<K, V> {
 
     private static final Logger LOG = LoggerFactory.getLogger(PartitionOrderlyAutoCommitMessageService.class);
 

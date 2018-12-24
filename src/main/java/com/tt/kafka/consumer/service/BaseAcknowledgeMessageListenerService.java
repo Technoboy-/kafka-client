@@ -2,7 +2,6 @@ package com.tt.kafka.consumer.service;
 
 import com.tt.kafka.consumer.DefaultKafkaConsumerImpl;
 import com.tt.kafka.consumer.Record;
-import com.tt.kafka.metric.Monitor;
 import com.tt.kafka.metric.MonitorImpl;
 import com.tt.kafka.util.NamedThreadFactory;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
@@ -18,7 +17,7 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * @Author: Tboy
  */
-abstract class BaseAcknowledgeMessageListenerService<K, V> extends ReblanceMessageListenerService<K, V>{
+abstract class BaseAcknowledgeMessageListenerService<K, V> extends RebalanceMessageListenerService<K, V> {
 
     private static final Logger LOG = LoggerFactory.getLogger(BaseAcknowledgeMessageListenerService.class);
 

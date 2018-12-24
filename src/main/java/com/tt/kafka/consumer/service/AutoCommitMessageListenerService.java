@@ -2,7 +2,6 @@ package com.tt.kafka.consumer.service;
 
 import com.tt.kafka.consumer.DefaultKafkaConsumerImpl;
 import com.tt.kafka.consumer.listener.AutoCommitMessageListener;
-import com.tt.kafka.metric.Monitor;
 import com.tt.kafka.metric.MonitorImpl;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.slf4j.Logger;
@@ -11,7 +10,7 @@ import org.slf4j.LoggerFactory;
 /**
  * @Author: Tboy
  */
-public class AutoCommitMessageListenerService<K, V> extends ReblanceMessageListenerService<K, V> {
+public class AutoCommitMessageListenerService<K, V> extends RebalanceMessageListenerService<K, V> {
 
     private static final Logger LOG = LoggerFactory.getLogger(AutoCommitMessageListenerService.class);
 

@@ -10,9 +10,9 @@ import java.util.Collection;
 /**
  * @Author: Tboy
  */
-public abstract class ReblanceMessageListenerService<K, V> implements MessageListenerService<K, V>, ConsumerRebalanceListener{
+public abstract class RebalanceMessageListenerService<K, V> implements MessageListenerService<K, V>, ConsumerRebalanceListener{
 
-    private static final Logger LOG = LoggerFactory.getLogger(ReblanceMessageListenerService.class);
+    private static final Logger LOG = LoggerFactory.getLogger(RebalanceMessageListenerService.class);
 
     @Override
     public void onPartitionsRevoked(Collection<TopicPartition> partitions) {

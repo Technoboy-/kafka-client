@@ -2,7 +2,6 @@ package com.tt.kafka.consumer.service;
 
 import com.tt.kafka.consumer.DefaultKafkaConsumerImpl;
 import com.tt.kafka.consumer.listener.AutoCommitMessageListener;
-import com.tt.kafka.metric.Monitor;
 import com.tt.kafka.metric.MonitorImpl;
 import com.tt.kafka.util.CallerWaitPolicy;
 import com.tt.kafka.util.NamedThreadFactory;
@@ -15,7 +14,7 @@ import java.util.concurrent.*;
 /**
  * @Author: Tboy
  */
-public class ConcurrentAutoCommitMessageListenerService<K, V> extends ReblanceMessageListenerService<K, V> {
+public class ConcurrentAutoCommitMessageListenerService<K, V> extends RebalanceMessageListenerService<K, V> {
 
     private static final Logger LOG = LoggerFactory.getLogger(ConcurrentAutoCommitMessageListenerService.class);
 
