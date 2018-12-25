@@ -253,7 +253,7 @@ public class AcknowledgeConsumerExample {
 
 ```java
 /**
- * batch模式下，收到消息单位为一组，而不是一个。
+ * 手动提交batch模式下，收到消息单位为一组，而不是一个。
  */
 public class BatchAcknowledgeConsumerExample {
 
