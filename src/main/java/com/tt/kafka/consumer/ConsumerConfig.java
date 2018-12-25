@@ -1,6 +1,5 @@
 package com.tt.kafka.consumer;
 
-import com.tt.kafka.consumer.service.MessageListenerService;
 import com.tt.kafka.serializer.Serializer;
 
 import java.util.Collection;
