@@ -1,5 +1,6 @@
 package com.tt.kafka.consumer.assignor;
 
+import com.tt.kafka.consumer.exceptions.TopicNotExistException;
 import org.apache.kafka.clients.consumer.StickyAssignor;
 import org.apache.kafka.common.TopicPartition;
 
@@ -17,7 +18,7 @@ public class CheckTopicStickyAssignor extends StickyAssignor {
         for (Map.Entry<String, Subscription> entry: subscriptions.entrySet()) {
             for (String topic: entry.getValue().topics()) {
                 if(partitionsPerTopic.get(topic) == null){
-                   throw new IllegalArgumentException("topic [ " + topic + " ] not exist");
+                   throw new TopicNotExistException("topic [ " + topic + " ] not exist");
                 }
             }
         }

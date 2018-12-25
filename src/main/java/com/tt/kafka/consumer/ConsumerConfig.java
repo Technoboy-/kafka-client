@@ -11,9 +11,27 @@ import java.util.HashMap;
  */
 public class ConsumerConfig extends HashMap<String, Object> {
 
+    /**
+     * subscribe模式
+     * @param bootstrapServers
+     * @param topic
+     * @param groupId
+     */
     public ConsumerConfig(String bootstrapServers, String topic, String groupId) {
         this.bootstrapServers = bootstrapServers;
         this.topic = topic;
+        this.groupId = groupId;
+    }
+
+    /**
+     * assign模式
+     * @param bootstrapServers
+     * @param topicPartitions
+     * @param groupId
+     */
+    public ConsumerConfig(String bootstrapServers, Collection<TopicPartition> topicPartitions, String groupId) {
+        this.bootstrapServers = bootstrapServers;
+        this.topicPartitions = topicPartitions;
         this.groupId = groupId;
     }
 
@@ -26,6 +44,11 @@ public class ConsumerConfig extends HashMap<String, Object> {
      * 消费主题
      */
     private String topic;
+
+    /**
+     * 消费主题分区
+     */
+    private Collection<TopicPartition> topicPartitions;
 
     /**
      * 消费组
@@ -99,31 +122,9 @@ public class ConsumerConfig extends HashMap<String, Object> {
      */
     private int batchConsumeTime = 2;
 
-    /**
-     * 支持自定义订阅TopicPartition
-     */
-    private Collection<TopicPartition> assignTopicPartitions;
 
-    /**
-     * poll线程获取消息后，会传递给messageListenerService，然后再调用listener。增加messageListenerService可以实现多并发，分区有序，批处理等功能。
-     * messageListenerService的onMessage方法为原生kafka的record，而listener为封装后的record，请注意。
-     */
-    private MessageListenerService messageListenerService;
-
-    public Collection<TopicPartition> getAssignTopicPartitions() {
-        return assignTopicPartitions;
-    }
-
-    public void setAssignTopicPartitions(Collection<TopicPartition> assignTopicPartitions) {
-        this.assignTopicPartitions = assignTopicPartitions;
-    }
-
-    public MessageListenerService getMessageListenerService() {
-        return messageListenerService;
-    }
-
-    public void setMessageListenerService(MessageListenerService messageListenerService) {
-        this.messageListenerService = messageListenerService;
+    public Collection<TopicPartition> getTopicPartitions() {
+        return topicPartitions;
     }
 
     public int getBatchConsumeSize() {
@@ -153,7 +154,6 @@ public class ConsumerConfig extends HashMap<String, Object> {
     public long getPollTimeout() {
         return pollTimeout;
     }
-
 
     public int getParallelism() {
         return parallelism;
@@ -220,26 +220,12 @@ public class ConsumerConfig extends HashMap<String, Object> {
         return bootstrapServers;
     }
 
-    public void setBootstrapServers(String bootstrapServers) {
-        this.bootstrapServers = bootstrapServers;
-        put("bootstrap.servers", bootstrapServers);
-    }
-
     public String getTopic() {
         return topic;
     }
 
-    public void setTopic(String topic) {
-        this.topic = topic;
-    }
-
     public String getGroupId() {
         return groupId;
-    }
-
-    public void setGroupId(String groupId) {
-        this.groupId = groupId;
-        put("group.id", groupId);
     }
 
     public String getAutoOffsetReset() {

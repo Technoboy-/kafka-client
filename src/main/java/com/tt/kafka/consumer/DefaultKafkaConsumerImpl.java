@@ -1,5 +1,6 @@
 package com.tt.kafka.consumer;
 
+import com.tt.kafka.consumer.exceptions.TopicNotExistException;
 import com.tt.kafka.consumer.listener.AcknowledgeMessageListener;
 import com.tt.kafka.consumer.listener.AutoCommitMessageListener;
 import com.tt.kafka.consumer.listener.BatchAcknowledgeMessageListener;
@@ -70,11 +71,11 @@ public class DefaultKafkaConsumerImpl<K, V> implements Runnable, KafkaConsumer<K
         Preconditions.checkArgument(configs.getAcknowledgeCommitBatchSize() > 0, "AcknowledgeCommitBatchSize should be greater than 0");
         Preconditions.checkArgument(configs.getBatchConsumeSize() > 0, "BatchConsumeSize should be greater than 0");
 
-        boolean isAssignTopicPartition = !CollectionUtils.isEmpty(configs.getAssignTopicPartitions());
+        boolean isAssignTopicPartition = !CollectionUtils.isEmpty(configs.getTopicPartitions());
 
         if (start.compareAndSet(false, true)) {
             if(isAssignTopicPartition){
-                Collection<com.tt.kafka.consumer.TopicPartition> assignTopicPartitions = configs.getAssignTopicPartitions();
+                Collection<com.tt.kafka.consumer.TopicPartition> assignTopicPartitions = configs.getTopicPartitions();
                 ArrayList<TopicPartition> topicPartitions = new ArrayList<>(assignTopicPartitions.size());
                 for(com.tt.kafka.consumer.TopicPartition topicPartition : assignTopicPartitions){
                     topicPartitions.add(new TopicPartition(topicPartition.getTopic(), topicPartition.getPartition()));
@@ -126,7 +127,6 @@ public class DefaultKafkaConsumerImpl<K, V> implements Runnable, KafkaConsumer<K
 
         //
         this.serviceRegistry = new MessageListenerServiceRegistry(this, messageListener);
-        this.serviceRegistry.registry(configs.getMessageListenerService());
         this.messageListenerService = this.serviceRegistry.getMessageListenerService(true);
         this.messageListener = messageListener;
     }
@@ -141,9 +141,19 @@ public class DefaultKafkaConsumerImpl<K, V> implements Runnable, KafkaConsumer<K
         LOG.info("starting subscribe topic: {}, group: {} ", configs.getTopic(), configs.getGroupId());
         while (start.get()) {
             long now = System.currentTimeMillis();
-            ConsumerRecords<byte[], byte[]> records;
-            synchronized (consumer) {
-                records = consumer.poll(configs.getPollTimeout());
+            ConsumerRecords<byte[], byte[]> records = null;
+            try {
+                synchronized (consumer) {
+                    records = consumer.poll(configs.getPollTimeout());
+                }
+            } catch (TopicNotExistException ex){
+                StringBuilder builder = new StringBuilder(100);
+                builder.append("topic not exist, will close the consumer instance in case of the scenario : ");
+                builder.append("using the same groupId for subscribe more than one topic, and one of the topic does not create in the broker, ");
+                builder.append("so it will cause the other one consumer in rebalance status for at least 5 minutes due to the kafka inner config.");
+                builder.append("To avoid this problem, close the consumer will speed up the rebalancing time");
+                LOG.error(builder.toString(), ex);
+                close();
             }
             MonitorImpl.getDefault().recordConsumePollTime(System.currentTimeMillis() - now);
             MonitorImpl.getDefault().recordConsumePollCount(1);

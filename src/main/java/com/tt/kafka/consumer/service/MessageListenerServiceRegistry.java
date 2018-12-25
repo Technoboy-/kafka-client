@@ -42,7 +42,7 @@ public class MessageListenerServiceRegistry<K, V> {
         }
         ConsumerConfig configs = this.consumer.getConfigs();
         boolean partitionOrderly = configs.isPartitionOrderly();
-        boolean isAssignTopicPartition = !CollectionUtils.isEmpty(configs.getAssignTopicPartitions());
+        boolean isAssignTopicPartition = !CollectionUtils.isEmpty(configs.getTopicPartitions());
         int parallel = configs.getParallelism();
         if (messageListener instanceof AcknowledgeMessageListener) {
             if (partitionOrderly && isAssignTopicPartition) {
@@ -78,7 +78,7 @@ public class MessageListenerServiceRegistry<K, V> {
         }
         ConsumerConfig configs = this.consumer.getConfigs();
         boolean partitionOrderly = configs.isPartitionOrderly();
-        boolean isAssignTopicPartition = !CollectionUtils.isEmpty(configs.getAssignTopicPartitions());
+        boolean isAssignTopicPartition = !CollectionUtils.isEmpty(configs.getTopicPartitions());
         int parallel = configs.getParallelism();
         StringBuilder className = new StringBuilder(50);
         if (messageListener instanceof AcknowledgeMessageListener) {
