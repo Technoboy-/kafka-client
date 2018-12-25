@@ -352,3 +352,6 @@ public class BatchAcknowledgeConsumerExample {
 4. AcknowledgeMessageListener能保证至少一次的语义，不会丢失数据，在consumer重启，reblance时，会出现重复消费的问题，使用时可以在消费端做幂等性处理。
 5. 如果配置了partitionOrderly选项，能保证对于单个partition的顺序处理，但如果各个partition的负载不同，会导致热点partition的处理线程处理能力饱和，进而影响整个consumer端处理吞吐的下降，强烈建议在producer端做好分发均衡策略。
 6. 当消费的topic不存在时，客户端会报topic [ XXX ] not exist异常并终止consumer。这是为了防止相同的groupId订阅了不同topic后，只要有一个topic未创建，就会导致发生rebalancing，只要要持续5分钟。终止consumer后，可以不影响其他topic的消费。
+
+#### 七. 性能压测
+1. 性能压测后，数据接近原生api，占用极小的应用内存。
