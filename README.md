@@ -88,13 +88,22 @@ public class AutoCommitConsumerExample {
         // Kafka集群地址
         String boostrapServers = "localhost:9092";
 
-        // 订阅topic，只支持单个topic
+        // 订阅topic，只支持单个topic。当指定topic后，内部为subscribe模式，支持rebalance操作。
         String topic = "test-topic";
+        
+        // 订阅topic和分区。当指定TopicPartition后，内部为assign模式，不支持rebalance操作。
+        List<TopicPartition> topicPartitions = new ArrayList<>();
+        topicPartitions.add(new TopicPartition("test-topic", 0));
+        topicPartitions.add(new TopicPartition("test-topic", 1));
 
         // group名称
         String groupId = "test-group";
 
+        // subscribe模式
         ConsumerConfig configs = new ConsumerConfig(boostrapServers, topic, groupId);
+        
+        // assign模式
+        ConsumerConfig configs = new ConsumerConfig(boostrapServers, topicPartitions, groupId);
 
         // key 反序列化器，必须指定
         configs.setKeySerializer(SerializerImpl.getStringSerializer());
@@ -166,13 +175,22 @@ public class AcknowledgeConsumerExample {
         // Kafka集群地址
         String boostrapServers = "localhost:9092";
 
-        // 订阅topic，只支持单个topic
+        // 订阅topic，只支持单个topic。当指定topic后，内部为subscribe模式，支持rebalance操作。
         String topic = "test-topic";
+        
+        // 订阅topic和分区。当指定TopicPartition后，内部为assign模式，不支持rebalance操作。
+        List<TopicPartition> topicPartitions = new ArrayList<>();
+        topicPartitions.add(new TopicPartition("test-topic", 0));
+        topicPartitions.add(new TopicPartition("test-topic", 1));
 
         // group名称
         String groupId = "test-group";
 
+        // subscribe模式
         ConsumerConfig configs = new ConsumerConfig(boostrapServers, topic, groupId);
+        
+        // assign模式
+        ConsumerConfig configs = new ConsumerConfig(boostrapServers, topicPartitions, groupId);
 
         // key 反序列化器，必须指定
         configs.setKeySerializer(SerializerImpl.getStringSerializer());
@@ -198,7 +216,7 @@ public class AcknowledgeConsumerExample {
          // 指定 kafka consumer配置项
         configs.put("max.poll.records", "500");
 
-        // 创建一个封装用户处理逻辑的MessageListener，注意该对象必须是无状态的
+        // 创建一个封装用户处理逻辑的MessageListener
         MessageListener<String, String> messageListener = new AcknowledgeMessageListener<String, String>() {
             @Override
             public void onMessage(Record<String, String> record, Acknowledgment acknowledgment) {
@@ -232,6 +250,91 @@ public class AcknowledgeConsumerExample {
     }
 }
 ```
+
+```java
+/**
+ * batch模式下，收到消息单位为一组，而不是一个。
+ */
+public class BatchAcknowledgeConsumerExample {
+
+    public static void main(String[] args) {
+
+        // Kafka集群地址
+        String boostrapServers = "localhost:9092";
+
+        // 订阅topic，只支持单个topic。 当指定topic后，内部为subscribe模式，支持rebalance操作。
+        String topic = "test-topic";
+        
+        // 订阅topic和分区。当指定TopicPartition后，内部为assign模式，不支持rebalance操作。
+        List<TopicPartition> topicPartitions = new ArrayList<>();
+        topicPartitions.add(new TopicPartition("test-topic", 0));
+        topicPartitions.add(new TopicPartition("test-topic", 1));
+
+        // group名称
+        String groupId = "test-group";
+
+        // subscribe模式
+        ConsumerConfig configs = new ConsumerConfig(boostrapServers, topic, groupId);
+        
+        // assign模式
+        ConsumerConfig configs = new ConsumerConfig(boostrapServers, topicPartitions, groupId);
+
+        // key 反序列化器，必须指定
+        configs.setKeySerializer(SerializerImpl.serializerImpl());
+
+        // value 反序列化器，必须指定
+        configs.setValueSerializer(SerializerImpl.serializerImpl());
+
+        // 必须设置自动提交为false
+        configs.setAutoCommit(false);
+
+        // offset 重置策略
+        configs.setAutoOffsetReset("latest");
+
+        // 设置每次commit前处理的batch size
+        configs.setAcknowledgeCommitBatchSize(1000);
+
+        // 设置commit最长提交间隔, 单位秒，如果在该间隔时间内没有commit，会自动触发一次commit
+        configs.setAcknowledgeCommitInterval(30);
+
+        // 设置收到一组消息间隔时间。
+        configs.setBatchConsumeTime(3);
+
+        // 设置收到一组消息的大小。
+        configs.setBatchConsumeSize(100);
+
+        // 指定 kafka consumer配置项
+        configs.put("max.poll.records", "500");
+
+        // 创建一个封装用户处理逻辑的MessageListener
+        MessageListener<String, String> messageListener = new BatchAcknowledgeMessageListener<String, String>() {
+            @Override
+            public void onMessage(List<Record<String, String>> records, Acknowledgment acknowledgment) {
+                // 强烈建议捕获异常
+                try {
+                    //多线程or单线程处理records
+                    //注意，只有执行完acknowledgment.acknowledge()才会再次的收到下批消息。
+                } catch (Exception e) {
+                    // log exception.
+                } finally {
+                    // 手动提交模式下必须要调用该方法
+                    acknowledgment.acknowledge();
+                }
+            }
+        };
+
+        // 构建KafkaConsumer，必须在setMessageListener后start
+        KafkaConsumer<String, String> consumer = TTKafkaClient.createConsumer(configs);
+        consumer.setMessageListener(messageListener);
+        consumer.start();
+
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            consumer.close(); //程序关闭时调用。
+        }));
+    }
+}
+```
+
 **注意事项**
 1. KafkaConsumer为线程安全。
 2. 设置setPartitionOrderly(true)后，内部消费线程数为当前consumer获取的分区数。 当kafka发生relance后，线程数会随着新分配的分区进行增加或减少。
