@@ -78,7 +78,7 @@ public class ProducerExample {
 5. 对于kafka原生的属性设置，可通过put方法设置。默认只封装了常用属性。
 
 #### 四. Consumer
-对于消费者，提供自动提交offset和手动提交offset。对于自动提交offset，通过参数可以实现单线程消费自动提交offset，多线程消费自动提交offset，分区有序消费自动提交offset。对于手动提交，通过参数，可以实现单线程消费手动提交offset，分区有序手动提交offset。两种方式，都通过设置listner模式回调业务。
+对于消费者，提供自动提交offset和手动提交offset。对于自动提交offset，通过参数可以实现单线程消费自动提交offset，多线程消费自动提交offset，分区有序消费自动提交offset。对于手动提交，通过参数，可以实现单线程消费手动提交offset，分区有序手动提交offset。两种方式，都通过设置listener模式回调业务。
 ```java
 //自动提交offset
 public class AutoCommitConsumerExample {
