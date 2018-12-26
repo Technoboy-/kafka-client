@@ -98,6 +98,8 @@ public class DefaultKafkaConsumerImpl<K, V> implements Runnable, KafkaConsumer<K
             worker.start();
             //
             Runtime.getRuntime().addShutdownHook(new Thread(() -> close()));
+
+            LOG.info("kafka consumer startup with info : {}", startupInfo());
         }
     }
 
@@ -138,7 +140,6 @@ public class DefaultKafkaConsumerImpl<K, V> implements Runnable, KafkaConsumer<K
     @Override
     public void run() {
         LOG.info(worker.getName() + " start.");
-        LOG.info("starting subscribe topic: {}, group: {} ", configs.getTopic(), configs.getGroupId());
         while (start.get()) {
             long now = System.currentTimeMillis();
             ConsumerRecords<byte[], byte[]> records = null;
@@ -229,5 +230,20 @@ public class DefaultKafkaConsumerImpl<K, V> implements Runnable, KafkaConsumer<K
             }
             LOG.info("KafkaConsumer closed.");
         }
+    }
+
+    /**
+     * 启动信息，方便日后排查问题
+     * @return
+     */
+    private String startupInfo(){
+        boolean isAssignTopicPartition = !CollectionUtils.isEmpty(configs.getTopicPartitions());
+        StringBuilder builder = new StringBuilder(200);
+        builder.append("bootstrap.servers : ").append(configs.getBootstrapServers()).append(" , ");
+        builder.append("group.id : ").append(configs.getGroupId()).append(" , ");
+        builder.append("in ").append(isAssignTopicPartition ? "[assign] : " + configs.getTopicPartitions(): "[subscribe] : " + configs.getTopic()).append(" , ");
+        builder.append("with listener : " + messageListener.getClass().getName()).append(" , ");
+        builder.append("with listener service : " + messageListenerService.getClass().getSimpleName()).append(" ");
+        return builder.toString();
     }
 }
