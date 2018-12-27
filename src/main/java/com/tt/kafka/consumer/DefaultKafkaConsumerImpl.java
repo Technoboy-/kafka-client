@@ -164,6 +164,8 @@ public class DefaultKafkaConsumerImpl<K, V> implements Runnable, KafkaConsumer<K
             }
             if (records != null && !records.isEmpty()) {
                 invokeMessageService(records);
+            } else if(records != null && messageListener instanceof BatchAcknowledgeMessageListener){
+                messageListenerService.onMessage(BatchAcknowledgeMessageListenerService.EmptyConsumerRecord.EMPTY);
             }
         }
         LOG.info(worker.getName() + " stop.");
