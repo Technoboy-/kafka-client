@@ -102,6 +102,7 @@ public class BatchAcknowledgeMessageListenerService<K, V> extends RebalanceAckno
 
     @Override
     public void close() {
+        executor.shutdown();
         super.close();
         LOG.debug("BatchAcknowledgeMessageListenerService stop.");
     }
