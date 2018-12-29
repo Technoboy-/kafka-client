@@ -121,6 +121,16 @@ public class ConsumerConfig extends HashMap<String, Object> {
      */
     private int batchConsumeTime = 2;
 
+    private boolean useProxy = false;
+
+
+    public boolean isUseProxy() {
+        return useProxy;
+    }
+
+    public void setUseProxy(boolean useProxy) {
+        this.useProxy = useProxy;
+    }
 
     public Collection<TopicPartition> getTopicPartitions() {
         return topicPartitions;

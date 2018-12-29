@@ -8,4 +8,6 @@ import java.nio.charset.Charset;
 public interface Constants {
 
     Charset UTF8 = Charset.forName("UTF-8");
+
+    int CPU_SIZE = Runtime.getRuntime().availableProcessors();
 }

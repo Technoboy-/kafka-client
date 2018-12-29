@@ -7,6 +7,7 @@ import com.tt.kafka.consumer.listener.BatchAcknowledgeMessageListener;
 import com.tt.kafka.consumer.listener.MessageListener;
 import com.tt.kafka.consumer.service.*;
 import com.tt.kafka.metric.MonitorImpl;
+import com.tt.kafka.netty.PushClient;
 import com.tt.kafka.serializer.Serializer;
 import com.tt.kafka.util.CollectionUtils;
 import com.tt.kafka.util.Preconditions;
@@ -45,6 +46,8 @@ public class DefaultKafkaConsumerImpl<K, V> implements Runnable, KafkaConsumer<K
 
     private MessageListenerServiceRegistry serviceRegistry;
 
+    private PushClient pushClient;
+
     public DefaultKafkaConsumerImpl(ConsumerConfig configs) {
         this.configs = configs;
         keySerializer = configs.getKeySerializer();
@@ -71,36 +74,49 @@ public class DefaultKafkaConsumerImpl<K, V> implements Runnable, KafkaConsumer<K
         Preconditions.checkArgument(configs.getAcknowledgeCommitBatchSize() > 0, "AcknowledgeCommitBatchSize should be greater than 0");
         Preconditions.checkArgument(configs.getBatchConsumeSize() > 0, "BatchConsumeSize should be greater than 0");
 
-        boolean isAssignTopicPartition = !CollectionUtils.isEmpty(configs.getTopicPartitions());
 
-        if (start.compareAndSet(false, true)) {
-            if(isAssignTopicPartition){
-                Collection<com.tt.kafka.consumer.TopicPartition> assignTopicPartitions = configs.getTopicPartitions();
-                ArrayList<TopicPartition> topicPartitions = new ArrayList<>(assignTopicPartitions.size());
-                for(com.tt.kafka.consumer.TopicPartition topicPartition : assignTopicPartitions){
-                    topicPartitions.add(new TopicPartition(topicPartition.getTopic(), topicPartition.getPartition()));
+        boolean useProxy = configs.isUseProxy();
+
+        if(useProxy){
+            startWithProxy();
+        } else{
+            boolean isAssignTopicPartition = !CollectionUtils.isEmpty(configs.getTopicPartitions());
+
+            if (start.compareAndSet(false, true)) {
+                if(isAssignTopicPartition){
+                    Collection<com.tt.kafka.consumer.TopicPartition> assignTopicPartitions = configs.getTopicPartitions();
+                    ArrayList<TopicPartition> topicPartitions = new ArrayList<>(assignTopicPartitions.size());
+                    for(com.tt.kafka.consumer.TopicPartition topicPartition : assignTopicPartitions){
+                        topicPartitions.add(new TopicPartition(topicPartition.getTopic(), topicPartition.getPartition()));
+                    }
+                    consumer.assign(topicPartitions);
+                } else{
+                    if (messageListenerService instanceof ConsumerRebalanceListener) {
+                        consumer.subscribe(Arrays.asList(configs.getTopic()), (ConsumerRebalanceListener) messageListenerService);
+                    } else {
+                        consumer.subscribe(Arrays.asList(configs.getTopic()));
+                    }
                 }
-                consumer.assign(topicPartitions);
-            } else{
-                if (messageListenerService instanceof ConsumerRebalanceListener) {
-                    consumer.subscribe(Arrays.asList(configs.getTopic()), (ConsumerRebalanceListener) messageListenerService);
-                } else {
-                    consumer.subscribe(Arrays.asList(configs.getTopic()));
-                }
+                //
+                worker.setDaemon(true);
+                worker.setUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
+                    public void uncaughtException(Thread t, Throwable e) {
+                        LOG.error("Uncaught exceptions in " + worker.getName() + ": ", e);
+                    }
+                });
+                worker.start();
+                //
+                Runtime.getRuntime().addShutdownHook(new Thread(() -> close()));
+
+                LOG.info("kafka consumer startup with info : {}", startupInfo());
             }
-            //
-            worker.setDaemon(true);
-            worker.setUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
-                public void uncaughtException(Thread t, Throwable e) {
-                    LOG.error("Uncaught exceptions in " + worker.getName() + ": ", e);
-                }
-            });
-            worker.start();
-            //
-            Runtime.getRuntime().addShutdownHook(new Thread(() -> close()));
-
-            LOG.info("kafka consumer startup with info : {}", startupInfo());
         }
+
+    }
+
+    private void startWithProxy(){
+        pushClient = new PushClient(this.messageListenerService);
+        pushClient.connect("localhost", 10666);
     }
 
     @Override
