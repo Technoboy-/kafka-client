@@ -119,7 +119,7 @@ public class PartitionOrderlyAutoCommitMessageListenerService<K, V> extends Reba
 
         public void run() {
             LOG.info("TopicPartitionHandler-{} start.", worker.getName());
-            while (start.get() || !Thread.currentThread().isInterrupted()) {
+            while (start.get()) {
                 long now = 0;
                 ConsumerRecord r = null;
                 try {
@@ -128,7 +128,6 @@ public class PartitionOrderlyAutoCommitMessageListenerService<K, V> extends Reba
                     messageListener.onMessage(consumer.toRecord(r));
                 } catch (InterruptedException iex) {
                     LOG.error("InterruptedException onMessage ", iex);
-                    Thread.currentThread().interrupt();
                 } catch (Throwable ex) {
                     MonitorImpl.getDefault().recordConsumeProcessErrorCount(1);
                     LOG.error("onMessage error", ex);

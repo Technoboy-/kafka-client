@@ -8,4 +8,8 @@ public class StringUtils {
     public static boolean isBlank(String str){
         return str == null || str.isEmpty();
     }
+
+    public static byte[] getBytes(String str){
+        return str.getBytes(Constants.UTF8);
+    }
 }

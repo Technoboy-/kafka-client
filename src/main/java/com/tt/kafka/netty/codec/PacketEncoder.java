@@ -1,6 +1,5 @@
 package com.tt.kafka.netty.codec;
 
-import com.sun.xml.internal.bind.v2.runtime.reflect.Lister;
 import com.tt.kafka.netty.protocol.Packet;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandler.Sharable;

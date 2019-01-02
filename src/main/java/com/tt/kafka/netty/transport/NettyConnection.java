@@ -85,6 +85,8 @@ public class NettyConnection implements Connection {
             if(listener != null){
                 future.addListener(listener);
             }
+        } else{
+            throw new RuntimeException("channel inactive exception, msg : { " + packet + " }");
         }
     }
 
