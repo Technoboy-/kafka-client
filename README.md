@@ -214,7 +214,7 @@ public class AcknowledgeConsumerExample {
         configs.setPartitionOrderly(true);
 
          // 指定 kafka consumer配置项
-        configs.put("max.poll.records", "500");
+        configs.put(consumer, "500");
 
         // 创建一个封装用户处理逻辑的MessageListener
         MessageListener<String, String> messageListener = new AcknowledgeMessageListener<String, String>() {
