@@ -108,14 +108,13 @@ public class AssignPartitionOrderlyAcknowledgeMessageListenerService<K, V> exten
 
         public void run() {
             LOG.info("TopicPartitionHandler-{} start.", worker.getName());
-            while (start.get() || !Thread.currentThread().isInterrupted()) {
+            while (start.get()) {
                 ConsumerRecord r = null;
                 try {
                     r = queue.take();
                     AssignPartitionOrderlyAcknowledgeMessageListenerService.super.onMessage(r);
                 } catch (InterruptedException iex) {
                     LOG.error("InterruptedException onMessage ", iex);
-                    Thread.currentThread().interrupt();
                 } catch (Throwable ex) {
                     LOG.error("onMessage error", ex);
                 }
