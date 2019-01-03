@@ -1,8 +1,8 @@
-package com.tt.kafka.netty.handler;
+package com.tt.kafka.client.netty.handler;
 
-import com.tt.kafka.netty.protocol.Command;
-import com.tt.kafka.netty.protocol.Packet;
-import com.tt.kafka.netty.transport.Connection;
+import com.tt.kafka.client.netty.protocol.Command;
+import com.tt.kafka.client.netty.protocol.Packet;
+import com.tt.kafka.client.netty.transport.Connection;
 import com.tt.kafka.util.NetUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

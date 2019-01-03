@@ -5,9 +5,11 @@ import com.tt.kafka.consumer.listener.AcknowledgeMessageListener;
 import com.tt.kafka.consumer.listener.AutoCommitMessageListener;
 import com.tt.kafka.consumer.listener.BatchAcknowledgeMessageListener;
 import com.tt.kafka.consumer.listener.MessageListener;
-import com.tt.kafka.consumer.service.*;
+import com.tt.kafka.consumer.service.BatchAcknowledgeMessageListenerService;
+import com.tt.kafka.consumer.service.MessageListenerService;
+import com.tt.kafka.consumer.service.MessageListenerServiceRegistry;
 import com.tt.kafka.metric.MonitorImpl;
-import com.tt.kafka.netty.PushClient;
+import com.tt.kafka.client.service.ProxyService;
 import com.tt.kafka.serializer.Serializer;
 import com.tt.kafka.util.CollectionUtils;
 import com.tt.kafka.util.Preconditions;
@@ -46,7 +48,7 @@ public class DefaultKafkaConsumerImpl<K, V> implements Runnable, KafkaConsumer<K
 
     private MessageListenerServiceRegistry serviceRegistry;
 
-    private PushClient pushClient;
+    private ProxyService proxyService;
 
     public DefaultKafkaConsumerImpl(ConsumerConfig configs) {
         this.configs = configs;
@@ -78,7 +80,8 @@ public class DefaultKafkaConsumerImpl<K, V> implements Runnable, KafkaConsumer<K
         boolean useProxy = configs.isUseProxy();
 
         if(useProxy){
-            startWithProxy();
+            proxyService = new ProxyService(messageListenerService);
+            proxyService.start();
         } else{
             boolean isAssignTopicPartition = !CollectionUtils.isEmpty(configs.getTopicPartitions());
 
@@ -112,11 +115,6 @@ public class DefaultKafkaConsumerImpl<K, V> implements Runnable, KafkaConsumer<K
             }
         }
 
-    }
-
-    private void startWithProxy(){
-        pushClient = new PushClient(this.messageListenerService);
-        pushClient.connect("localhost", 10666);
     }
 
     @Override

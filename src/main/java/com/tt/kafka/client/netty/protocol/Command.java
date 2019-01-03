@@ -1,4 +1,4 @@
-package com.tt.kafka.netty.protocol;
+package com.tt.kafka.client.netty.protocol;
 
 /**
  * @Author: Tboy

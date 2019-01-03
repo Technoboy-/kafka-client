@@ -1,13 +1,13 @@
-package com.tt.kafka.netty.codec;
+package com.tt.kafka.client.netty.codec;
 
-import com.tt.kafka.netty.protocol.Packet;
+import com.tt.kafka.client.netty.protocol.Packet;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
 
 import java.util.List;
 
-import static com.tt.kafka.netty.protocol.Packet.*;
+import static com.tt.kafka.client.netty.protocol.Packet.*;
 
 /**
  * @Author: Tboy

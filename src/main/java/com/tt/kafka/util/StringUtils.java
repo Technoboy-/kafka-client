@@ -12,4 +12,8 @@ public class StringUtils {
     public static byte[] getBytes(String str){
         return str.getBytes(Constants.UTF8);
     }
+
+    public static String getString(byte[] bytes){
+        return new String(bytes, Constants.UTF8);
+    }
 }

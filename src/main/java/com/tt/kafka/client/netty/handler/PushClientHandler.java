@@ -1,9 +1,9 @@
-package com.tt.kafka.netty.handler;
+package com.tt.kafka.client.netty.handler;
 
-import com.tt.kafka.netty.service.LoginService;
-import com.tt.kafka.netty.protocol.Packet;
-import com.tt.kafka.netty.transport.Connection;
-import com.tt.kafka.netty.transport.NettyConnection;
+import com.tt.kafka.client.netty.service.LoginService;
+import com.tt.kafka.client.netty.protocol.Packet;
+import com.tt.kafka.client.netty.transport.Connection;
+import com.tt.kafka.client.netty.transport.NettyConnection;
 import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;

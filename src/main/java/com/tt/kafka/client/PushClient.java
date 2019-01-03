@@ -1,10 +1,10 @@
-package com.tt.kafka.netty;
+package com.tt.kafka.client;
 
 import com.tt.kafka.consumer.service.MessageListenerService;
-import com.tt.kafka.netty.codec.PacketDecoder;
-import com.tt.kafka.netty.codec.PacketEncoder;
-import com.tt.kafka.netty.handler.*;
-import com.tt.kafka.netty.protocol.Command;
+import com.tt.kafka.client.netty.codec.PacketDecoder;
+import com.tt.kafka.client.netty.codec.PacketEncoder;
+import com.tt.kafka.client.netty.handler.*;
+import com.tt.kafka.client.netty.protocol.Command;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -12,6 +12,7 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.InetSocketAddress;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -55,9 +56,9 @@ public class PushClient {
         workGroup = new NioEventLoopGroup(workNum);
         bootstrap.
                 option(ChannelOption.SO_KEEPALIVE, true).
-                option(ChannelOption.TCP_NODELAY, true)
-                .group(workGroup)
-                .channel(NioSocketChannel.class).
+                option(ChannelOption.TCP_NODELAY, true).
+                group(workGroup).
+                channel(NioSocketChannel.class).
                 handler(new ChannelInitializer<NioSocketChannel>() {
 
                     protected void initChannel(NioSocketChannel ch) throws Exception {
@@ -72,18 +73,19 @@ public class PushClient {
                 });
     }
 
-    public void connect(String ip, int port) {
+    public Channel connect(String ip, int port) {
         this.ip = ip;
         this.port = port;
         try {
             if (isConnected()) {
-                return;
+                return channel;
             }
             doConnect();
             if (!isConnected()) {
                 throw new Exception("connect to server(ip:" + getIp() + ", port:" + getPort() + ") fail");
             } else {
                 LOGGER.info("connect to server(ip:" + getIp() + ", port:" + getPort() + ") success");
+                return channel;
             }
         } catch (Throwable e) {
             LOGGER.error("connect to server(ip:" + getIp() + ", port:" + getIp() + ") fail", e);
@@ -117,7 +119,6 @@ public class PushClient {
             }
         }
     }
-
 
     public String getIp() {
         return ip;
