@@ -1,5 +1,6 @@
 package com.tt.kafka.consumer;
 
+import com.tt.kafka.client.PushServerConnector;
 import com.tt.kafka.consumer.exceptions.TopicNotExistException;
 import com.tt.kafka.consumer.listener.AcknowledgeMessageListener;
 import com.tt.kafka.consumer.listener.AutoCommitMessageListener;
@@ -9,7 +10,6 @@ import com.tt.kafka.consumer.service.BatchAcknowledgeMessageListenerService;
 import com.tt.kafka.consumer.service.MessageListenerService;
 import com.tt.kafka.consumer.service.MessageListenerServiceRegistry;
 import com.tt.kafka.metric.MonitorImpl;
-import com.tt.kafka.client.service.ProxyService;
 import com.tt.kafka.serializer.Serializer;
 import com.tt.kafka.util.CollectionUtils;
 import com.tt.kafka.util.Preconditions;
@@ -48,7 +48,7 @@ public class DefaultKafkaConsumerImpl<K, V> implements Runnable, KafkaConsumer<K
 
     private MessageListenerServiceRegistry serviceRegistry;
 
-    private ProxyService proxyService;
+    private PushServerConnector pushServerConnector;
 
     public DefaultKafkaConsumerImpl(ConsumerConfig configs) {
         this.configs = configs;
@@ -80,8 +80,8 @@ public class DefaultKafkaConsumerImpl<K, V> implements Runnable, KafkaConsumer<K
         boolean useProxy = configs.isUseProxy();
 
         if(useProxy){
-            proxyService = new ProxyService(messageListenerService);
-            proxyService.start();
+            pushServerConnector = new PushServerConnector(messageListenerService);
+            pushServerConnector.start();
         } else{
             boolean isAssignTopicPartition = !CollectionUtils.isEmpty(configs.getTopicPartitions());
 

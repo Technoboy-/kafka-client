@@ -11,10 +11,12 @@ public interface Constants {
 
     int CPU_SIZE = Runtime.getRuntime().availableProcessors();
 
-    //
+    // client configs
     String PUSH_CLIENT_TOPIC = "push.client.topic";
 
-    //
+    String PUSH_CLIENT_PARALLELISM = "push.client.parallelism";
+
+    // common configs for zk
     String ZOOKEEPER_SERVER_LIST = "zookeeper.server.list";
 
     String ZOOKEEPER_NAMESPACE = "push_server";
@@ -27,9 +29,7 @@ public interface Constants {
 
     String ZOOKEEPER_CONNECTION_TIMEOUT_MS = "zookeeper.connection.timeout.ms";
 
-    String ZOOKEEPER_TOPIC = "zookeeper.topic";
-
-    //
+    // server configs
     String PUSH_SERVER_PORT = "push.server.port";
 
     String PUSH_SERVER_BOSS_NUM = "push.server.boss.num";
@@ -37,6 +37,8 @@ public interface Constants {
     String PUSH_SERVER_WORKER_NUM = "push.server.worker.num";
 
     String PUSH_SERVER_QUEUE_SIZE = "push.server.queue.size";
+
+    String PUSH_SERVER_TOPIC = "push.server.topic";
 
     String PUSH_SERVER_GROUP_ID = "push.server.group.id";
 

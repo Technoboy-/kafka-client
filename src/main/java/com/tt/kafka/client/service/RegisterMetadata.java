@@ -5,27 +5,30 @@ import java.io.Serializable;
 /**
  * @Author: Tboy
  */
-public class RegisterMetadata implements Serializable {
+public class RegisterMetadata<T> implements Serializable {
 
-    private String topic;
+    private String path;
 
     private Address address;
+
+    private T ref;
 
     public RegisterMetadata(){
         //
     }
 
-    public RegisterMetadata(String topic, Address address){
-        this.topic = topic;
+    public RegisterMetadata(String path, Address address, T ref){
+        this.path = path;
         this.address = address;
+        this.ref = ref;
     }
 
-    public String getTopic() {
-        return topic;
+    public String getPath() {
+        return path;
     }
 
-    public void setTopic(String topic) {
-        this.topic = topic;
+    public void setPath(String path) {
+        this.path = path;
     }
 
     public Address getAddress() {
@@ -36,11 +39,20 @@ public class RegisterMetadata implements Serializable {
         this.address = address;
     }
 
+    public T getRef() {
+        return ref;
+    }
+
+    public void setRef(T ref) {
+        this.ref = ref;
+    }
+
     @Override
     public String toString() {
         return "RegisterMetadata{" +
-                "topic='" + topic + '\'' +
+                "path='" + path + '\'' +
                 ", address=" + address +
+                ", ref=" + ref +
                 '}';
     }
 }

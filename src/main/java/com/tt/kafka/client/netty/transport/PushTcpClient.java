@@ -1,10 +1,14 @@
-package com.tt.kafka.client;
+package com.tt.kafka.client.netty.transport;
 
+import com.tt.kafka.client.service.Address;
+import com.tt.kafka.client.service.RegisterMetadata;
+import com.tt.kafka.client.service.RegistryService;
 import com.tt.kafka.consumer.service.MessageListenerService;
 import com.tt.kafka.client.netty.codec.PacketDecoder;
 import com.tt.kafka.client.netty.codec.PacketEncoder;
 import com.tt.kafka.client.netty.handler.*;
 import com.tt.kafka.client.netty.protocol.Command;
+import com.tt.kafka.util.Constants;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -18,9 +22,9 @@ import java.util.concurrent.TimeUnit;
 /**
  * @Author: Tboy
  */
-public class PushClient {
+public class PushTcpClient {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(PushClient.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(PushTcpClient.class);
 
     private Bootstrap bootstrap;
 
@@ -36,7 +40,10 @@ public class PushClient {
 
     private MessageListenerService messageListenerService;
 
-    public PushClient(MessageListenerService messageListenerService){
+    private final RegistryService registryService;
+
+    public PushTcpClient(RegistryService registryService, MessageListenerService messageListenerService){
+        this.registryService = registryService;
         this.messageListenerService = messageListenerService;
         initHandler();
         initClient();
@@ -73,23 +80,34 @@ public class PushClient {
                 });
     }
 
-    public Channel connect(String ip, int port) {
+    public void connect(String ip, int port) {
         this.ip = ip;
         this.port = port;
         try {
             if (isConnected()) {
-                return channel;
+                return;
             }
             doConnect();
             if (!isConnected()) {
                 throw new Exception("connect to server(ip:" + getIp() + ", port:" + getPort() + ") fail");
-            } else {
-                LOGGER.info("connect to server(ip:" + getIp() + ", port:" + getPort() + ") success");
-                return channel;
             }
         } catch (Throwable e) {
             LOGGER.error("connect to server(ip:" + getIp() + ", port:" + getIp() + ") fail", e);
             throw new RuntimeException(e);
+        }
+        LOGGER.info("connect to server(ip:" + getIp() + ", port:" + getPort() + ") success");
+        afterConnect();
+    }
+
+    private void afterConnect(){
+        if(channel != null && channel.localAddress() instanceof InetSocketAddress){
+            InetSocketAddress address = (InetSocketAddress)channel.localAddress();
+            RegisterMetadata<PushTcpClient> metadata = new RegisterMetadata();
+            metadata.setPath(String.format(Constants.ZOOKEEPER_CONSUMERS, registryService.getClientConfigs().getClientTopic()));
+            Address client = new Address(address.getHostName(), address.getPort());
+            metadata.setAddress(client);
+            metadata.setRef(this);
+            registryService.register(metadata);
         }
     }
 

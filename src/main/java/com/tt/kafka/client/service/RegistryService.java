@@ -1,9 +1,8 @@
 package com.tt.kafka.client.service;
 
-import com.tt.kafka.client.PushClientConfigs;
+import com.tt.kafka.client.PushConfigs;
 import com.tt.kafka.client.zookeeper.ZookeeperClient;
 import com.tt.kafka.util.CollectionUtils;
-import com.tt.kafka.util.Constants;
 import com.tt.kafka.util.StringUtils;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.cache.TreeCache;
@@ -18,9 +17,9 @@ import java.util.List;
 /**
  * @Author: Tboy
  */
-public class DiscoveryService implements TreeCacheListener {
+public class RegistryService implements TreeCacheListener {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(DiscoveryService.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(RegistryService.class);
 
     private final List<Address> providers = new ArrayList<>();
 
@@ -28,16 +27,22 @@ public class DiscoveryService implements TreeCacheListener {
 
     private TreeCache treeCache;
 
-    private final PushClientConfigs clientConfigs;
+    private final PushConfigs clientConfigs;
 
-    public DiscoveryService(PushClientConfigs clientConfigs){
+    private final List<RegistryListener> listeners = new ArrayList<>();
+
+    public RegistryService(PushConfigs clientConfigs){
         this.clientConfigs = clientConfigs;
         this.zookeeperClient = new ZookeeperClient(clientConfigs);
         this.zookeeperClient.start();
     }
 
-    public void subscribe(String topic){
-        this.treeCache = new TreeCache(this.zookeeperClient.getClient(), topic);
+    public void subscribe(String path){
+        for(RegistryListener listener : listeners){
+            listener.onSubscribe(path);
+        }
+        parseProviders(path);
+        this.treeCache = new TreeCache(this.zookeeperClient.getClient(), path);
         this.treeCache.getListenable().addListener(this);
         try {
             this.treeCache.start();
@@ -46,18 +51,27 @@ public class DiscoveryService implements TreeCacheListener {
         }
     }
 
+    public void addListener(RegistryListener listener){
+        listeners.add(listener);
+    }
+
     public void register(RegisterMetadata metadata){
-        String consumerPath = String.format(Constants.ZOOKEEPER_CONSUMERS, metadata.getTopic());
+        for(RegistryListener listener : listeners){
+            listener.onRegister(metadata);
+        }
         try {
-            String path = String.format("/%s:%s", metadata.getAddress().getHost(), metadata.getAddress().getPort());
-            zookeeperClient.createEPhemeral(consumerPath + path, new ZookeeperClient.BackgroundCallback(){
+            if(!zookeeperClient.checkExists(metadata.getPath())){
+                zookeeperClient.createPersistent(metadata.getPath());
+            }
+            zookeeperClient.createEPhemeral(metadata.getPath() +
+                    String.format("/%s:%s", metadata.getAddress().getHost(), metadata.getAddress().getPort()), new ZookeeperClient.BackgroundCallback() {
                 @Override
                 public void complete() {
                     //TODO
                     //for monitor use
                 }
             });
-        } catch (Exception ex){
+        } catch (Exception ex) {
             LOGGER.error("register service error", ex);
             throw new RuntimeException(ex);
         }
@@ -68,14 +82,8 @@ public class DiscoveryService implements TreeCacheListener {
     }
 
 
-    public PushClientConfigs getClientConfigs() {
+    public PushConfigs getClientConfigs() {
         return clientConfigs;
-    }
-
-    public void start(){
-        String providerPath = String.format(Constants.ZOOKEEPER_PROVIDERS, clientConfigs.getTopic());
-        parseProviders(providerPath);
-        subscribe(providerPath);
     }
 
     public void close(){

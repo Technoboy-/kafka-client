@@ -1,6 +1,6 @@
 package com.tt.kafka.client.zookeeper;
 
-import com.tt.kafka.client.PushClientConfigs;
+import com.tt.kafka.client.PushConfigs;
 import com.tt.kafka.util.Constants;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
@@ -8,6 +8,7 @@ import org.apache.curator.framework.api.CuratorEvent;
 import org.apache.curator.framework.imps.CuratorFrameworkState;
 import org.apache.curator.retry.ExponentialBackoffRetry;
 import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.data.Stat;
 
 import java.util.List;
 
@@ -19,13 +20,13 @@ public class ZookeeperClient {
 
     private final CuratorFramework client;
 
-    public ZookeeperClient(PushClientConfigs clientConfigs){
+    public ZookeeperClient(PushConfigs pushConfigs){
         this.client = CuratorFrameworkFactory.builder()
                 .namespace(Constants.ZOOKEEPER_NAMESPACE)
-                .connectString(clientConfigs.getZookeeperServerList())
+                .connectString(pushConfigs.getZookeeperServerList())
                 .retryPolicy(new ExponentialBackoffRetry(1000, 3))
-                .sessionTimeoutMs(clientConfigs.getZookeeperSessionTimeoutMs())
-                .connectionTimeoutMs(clientConfigs.getZookeeperConnectionTimeoutMs())
+                .sessionTimeoutMs(pushConfigs.getZookeeperSessionTimeoutMs())
+                .connectionTimeoutMs(pushConfigs.getZookeeperConnectionTimeoutMs())
                 .build();
     }
 
@@ -36,6 +37,17 @@ public class ZookeeperClient {
     public List<String> getChildren(String path) throws Exception {
         checkState();
         return this.client.getChildren().forPath(path);
+    }
+
+    public boolean checkExists(String path) throws Exception {
+        checkState();
+        Stat stat = this.client.checkExists().forPath(path);
+        return stat != null;
+    }
+
+    public void createPersistent(String path) throws Exception {
+        checkState();
+        this.client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT).forPath(path);
     }
 
     public void createEPhemeral(String path, BackgroundCallback callback) throws Exception {

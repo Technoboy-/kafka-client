@@ -10,15 +10,15 @@ public class RoundRobinPolicy implements LoadBalancePolicy<Address> {
 
     private final AtomicInteger index = new AtomicInteger(0);
 
-    private final DiscoveryService discoveryService;
+    private final RegistryService registryService;
 
-    public RoundRobinPolicy(DiscoveryService discoveryService){
-        this.discoveryService = discoveryService;
+    public RoundRobinPolicy(RegistryService registryService){
+        this.registryService = registryService;
     }
 
     @Override
     public Address get() {
-        List<Address> providers = discoveryService.getProviders();
+        List<Address> providers = registryService.getProviders();
         if(providers.size() <= 0){
             return null;
         }
