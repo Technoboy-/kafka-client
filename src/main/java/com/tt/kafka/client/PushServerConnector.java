@@ -24,7 +24,7 @@ public class PushServerConnector{
 
     public PushServerConnector(MessageListenerService messageListenerService){
         this.messageListenerService = messageListenerService;
-        this.pushConfigs = new PushConfigs();
+        this.pushConfigs = new PushConfigs(false);
         this.registryService = new RegistryService(pushConfigs);
         this.registryService.addListener(new RegistryListener<PushTcpClient>() {
             @Override

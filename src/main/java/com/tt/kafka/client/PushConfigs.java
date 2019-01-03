@@ -18,33 +18,35 @@ public class PushConfigs {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PushConfigs.class);
 
-    private static final String CONFIG_FILE = "push_config.properties";
+    private static final String CLIENT_CONFIG_FILE = "push_client.properties";
+
+    private static final String SERVER_CONFIG_FILE = "push_server.properties";
 
     private final Properties properties;
 
-    public PushConfigs(){
+    public PushConfigs(boolean serverSide){
         this.properties = new Properties();
-        load();
+        load(serverSide ? SERVER_CONFIG_FILE : CLIENT_CONFIG_FILE);
     }
 
-    private void load(){
+    private void load(String file){
         InputStream fis = null;
         try {
-            URL resource = PushConfigs.class.getClassLoader().getResource(CONFIG_FILE);
+            URL resource = PushConfigs.class.getClassLoader().getResource(file);
             if(resource == null){
-                resource = PushConfigs.class.getResource(CONFIG_FILE);
+                resource = PushConfigs.class.getResource(file);
             }
             if(resource != null){
                 fis = resource.openStream();
             }
             if(fis == null){
-                fis = new FileInputStream(new File(CONFIG_FILE));
+                fis = new FileInputStream(new File(file));
             }
         } catch (Exception ex) {
             LOGGER.error("error", ex);
         }
         if(fis == null){
-            throw new RuntimeException(CONFIG_FILE + " not found");
+            throw new RuntimeException(file + " not found");
         }
         try {
             properties.load(fis);
@@ -59,8 +61,8 @@ public class PushConfigs {
     }
 
     public int getClientParallelism(){
-        String parallelism = System.getProperty(Constants.PUSH_CLIENT_PARALLELISM, properties.getProperty(Constants.PUSH_CLIENT_PARALLELISM));
-        return Integer.getInteger(parallelism, 1);
+        String parallelism = System.getProperty(Constants.PUSH_CLIENT_PARALLELISM, properties.getProperty(Constants.PUSH_CLIENT_PARALLELISM, "1"));
+        return Integer.valueOf(parallelism);
     }
 
     public String getZookeeperServerList(){
@@ -68,28 +70,28 @@ public class PushConfigs {
     }
 
     public int getZookeeperSessionTimeoutMs(){
-        String sessionTimeoutMs = System.getProperty(Constants.ZOOKEEPER_SESSION_TIMEOUT_MS, properties.getProperty(Constants.ZOOKEEPER_SESSION_TIMEOUT_MS));
-        return Integer.getInteger(sessionTimeoutMs, 60 * 1000);
+        String sessionTimeoutMs = System.getProperty(Constants.ZOOKEEPER_SESSION_TIMEOUT_MS, properties.getProperty(Constants.ZOOKEEPER_SESSION_TIMEOUT_MS, "60000"));
+        return Integer.valueOf(sessionTimeoutMs);
     }
 
     public int getZookeeperConnectionTimeoutMs(){
-        String connectionTimeoutMs =  System.getProperty(Constants.ZOOKEEPER_CONNECTION_TIMEOUT_MS, properties.getProperty(Constants.ZOOKEEPER_CONNECTION_TIMEOUT_MS));
-        return Integer.getInteger(connectionTimeoutMs, 15 * 1000);
+        String connectionTimeoutMs =  System.getProperty(Constants.ZOOKEEPER_CONNECTION_TIMEOUT_MS, properties.getProperty(Constants.ZOOKEEPER_CONNECTION_TIMEOUT_MS, "15000"));
+        return Integer.valueOf(connectionTimeoutMs);
     }
 
     public int getServerBossNum(){
-        String bossNum = System.getProperty(Constants.PUSH_SERVER_BOSS_NUM, properties.getProperty(Constants.PUSH_SERVER_BOSS_NUM));
-        return Integer.getInteger(bossNum, 1);
+        String bossNum = System.getProperty(Constants.PUSH_SERVER_BOSS_NUM, properties.getProperty(Constants.PUSH_SERVER_BOSS_NUM, "1"));
+        return Integer.valueOf(bossNum);
     }
 
     public int getServerWorkerNum(){
-        String workerNum = System.getProperty(Constants.PUSH_SERVER_WORKER_NUM, properties.getProperty(Constants.PUSH_SERVER_WORKER_NUM));
-        return Integer.getInteger(workerNum, Constants.CPU_SIZE);
+        String workerNum = System.getProperty(Constants.PUSH_SERVER_WORKER_NUM, properties.getProperty(Constants.PUSH_SERVER_WORKER_NUM, String.valueOf(Constants.CPU_SIZE)));
+        return Integer.valueOf(workerNum);
     }
 
     public int getServerPort() {
-        String port = System.getProperty(Constants.PUSH_SERVER_PORT, properties.getProperty(Constants.PUSH_SERVER_PORT));
-        return Integer.getInteger(port, 10666);
+        String port = System.getProperty(Constants.PUSH_SERVER_PORT, properties.getProperty(Constants.PUSH_SERVER_PORT, "10666"));
+        return Integer.valueOf(port);
     }
 
     public String getServerGroupId() {
@@ -105,9 +107,8 @@ public class PushConfigs {
     }
 
     public int getServerQueueSize(){
-        String queueSize = System.getProperty(Constants.PUSH_SERVER_QUEUE_SIZE, properties.getProperty(Constants.PUSH_SERVER_QUEUE_SIZE));
-        return Integer.getInteger(queueSize, 100);
+        String queueSize = System.getProperty(Constants.PUSH_SERVER_QUEUE_SIZE, properties.getProperty(Constants.PUSH_SERVER_QUEUE_SIZE, "100"));
+        return Integer.valueOf(queueSize);
     }
-
 
 }
