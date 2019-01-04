@@ -1,6 +1,5 @@
 package com.tt.kafka.client.transport.handler;
 
-import com.tt.kafka.client.service.LoginService;
 import com.tt.kafka.client.transport.protocol.Packet;
 import com.tt.kafka.client.transport.Connection;
 import com.tt.kafka.client.transport.NettyConnection;
@@ -25,9 +24,7 @@ public class PushClientHandler extends ChannelInboundHandlerAdapter {
     }
 
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
-        Connection connnection = NettyConnection.attachChannel(ctx.channel());
-        final LoginService loginService = new LoginService(connnection);
-        loginService.login();
+        NettyConnection.attachChannel(ctx.channel());
     }
 
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {

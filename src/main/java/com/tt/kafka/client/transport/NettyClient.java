@@ -1,10 +1,8 @@
 package com.tt.kafka.client.transport;
 
-import com.tt.kafka.client.service.RegisterMetadata;
-import com.tt.kafka.client.service.RegistryService;
+import com.tt.kafka.client.service.*;
 import com.tt.kafka.client.transport.codec.PacketDecoder;
 import com.tt.kafka.client.transport.codec.PacketEncoder;
-import com.tt.kafka.client.transport.exceptions.RemotingException;
 import com.tt.kafka.client.transport.handler.*;
 import com.tt.kafka.client.transport.protocol.Command;
 import com.tt.kafka.consumer.service.MessageListenerService;
@@ -25,15 +23,13 @@ import java.util.concurrent.TimeUnit;
 /**
  * @Author: Tboy
  */
-public class PushTcpClient{
+public class NettyClient {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(PushTcpClient.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(NettyClient.class);
 
     private Bootstrap bootstrap;
 
     private NioEventLoopGroup workGroup;
-
-    private InetSocketAddress address;
 
     private volatile Channel channel = null;
 
@@ -45,7 +41,11 @@ public class PushTcpClient{
 
     private ScheduledFuture<?> scheduledFuture;
 
-    public PushTcpClient(RegistryService registryService, MessageListenerService messageListenerService){
+    private final LoadBalance<Address> loadBalance = new RoundRobinLoadBalance();
+
+    private final RetryPolicy retryPolicy = new DefaultRetryPolicy();
+
+    public NettyClient(RegistryService registryService, MessageListenerService messageListenerService){
         this.registryService = registryService;
         this.messageListenerService = messageListenerService;
         this.reconnectService = new ScheduledThreadPoolExecutor(1, new NamedThreadFactory("reconnect-thread"));
@@ -55,8 +55,7 @@ public class PushTcpClient{
     private void init() {
         //
         MessageDispatcher dispatcher = new MessageDispatcher();
-        dispatcher.register(Command.LOGIN, new LoginHandler());
-        dispatcher.register(Command.HEARTBEAT_ACK, new HeartbeatHandler());
+        dispatcher.register(Command.HEARTBEAT, new HeartbeatHandler());
         dispatcher.register(Command.PUSH, new PushHandler(messageListenerService));
         PushClientHandler handler = new PushClientHandler(dispatcher);
 
@@ -81,34 +80,25 @@ public class PushTcpClient{
                 });
     }
 
-    public void connect(final InetSocketAddress address) throws RemotingException{
-        this.address = address;
+    public void connect() {
         if (isConnected()) {
             return;
         }
         doConnect();
-        if (!isConnected()) {
-            throw new RemotingException("connect to server " + this.address + " fail");
-        }
-        LOGGER.info("connect to server : {} success", this.address);
         scheduledFuture = reconnectService.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
-                try {
-                    if (!isConnected()) {
-                        doConnect();
-                    }
-                } catch (Throwable ex) {
-                    LOGGER.error("connect to server " + address + " fail", ex);
+                if (!isConnected()) {
+                    doConnect();
                 }
             }
-        }, 2, 2, TimeUnit.SECONDS);
+        }, 5, 5, TimeUnit.SECONDS);
     }
 
     private void afterConnect(){
         if(channel != null && channel.localAddress() instanceof InetSocketAddress){
             InetSocketAddress address = (InetSocketAddress)channel.localAddress();
-            RegisterMetadata<PushTcpClient> metadata = new RegisterMetadata();
+            RegisterMetadata<NettyClient> metadata = new RegisterMetadata();
             metadata.setPath(String.format(Constants.ZOOKEEPER_CONSUMERS, registryService.getClientConfigs().getClientTopic()));
             Address client = new Address(address.getHostName(), address.getPort());
             metadata.setAddress(client);
@@ -120,7 +110,7 @@ public class PushTcpClient{
     private void destroy(Channel oldChannel){
         if(oldChannel != null && oldChannel.localAddress() instanceof InetSocketAddress){
             InetSocketAddress address = (InetSocketAddress)oldChannel.localAddress();
-            RegisterMetadata<PushTcpClient> metadata = new RegisterMetadata();
+            RegisterMetadata<NettyClient> metadata = new RegisterMetadata();
             metadata.setPath(String.format(Constants.ZOOKEEPER_CONSUMERS, registryService.getClientConfigs().getClientTopic()));
             Address client = new Address(address.getHostName(), address.getPort());
             metadata.setAddress(client);
@@ -145,9 +135,14 @@ public class PushTcpClient{
         }
     }
 
-    private void doConnect() throws RemotingException {
+    private void doConnect() {
         ChannelFuture future = null;
         try {
+            Address provider = loadBalance.select(registryService.getCopyProviders());
+            if(provider == null){
+                return;
+            }
+            InetSocketAddress address = new InetSocketAddress(provider.getHost(), provider.getPort());
             future = bootstrap.connect(address);
             boolean connected = future.awaitUninterruptibly(3000, TimeUnit.MILLISECONDS);
             if (connected && future.isSuccess()) {
@@ -158,10 +153,11 @@ public class PushTcpClient{
                 } finally {
                     channel = newChannel;
                 }
+                LOGGER.info("connect to server : {} success", address);
             } else if (future.cause() != null) {
-                throw new RemotingException(future.cause());
+                LOGGER.error("connect to server " + address + " fail", future.cause());
             } else {
-                throw new RemotingException("connect server " + this.address + " timeout");
+                LOGGER.error("connect to server " + address + " fail", future.cause());
             }
         } finally {
             if(isConnected()){

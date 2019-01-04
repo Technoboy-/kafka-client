@@ -7,31 +7,32 @@ import com.tt.kafka.util.CollectionUtils;
 import com.tt.kafka.util.Constants;
 import com.tt.kafka.util.StringUtils;
 import org.apache.curator.framework.CuratorFramework;
-import org.apache.curator.framework.recipes.cache.TreeCache;
-import org.apache.curator.framework.recipes.cache.TreeCacheEvent;
-import org.apache.curator.framework.recipes.cache.TreeCacheListener;
+import org.apache.curator.framework.recipes.cache.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @Author: Tboy
  */
-public class RegistryService implements TreeCacheListener {
+public class RegistryService implements PathChildrenCacheListener {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RegistryService.class);
 
-    private final List<Address> providers = new ArrayList<>();
+    private final Set<Address> providers = new HashSet<>();
 
     private final ZookeeperClient zookeeperClient;
-
-    private TreeCache treeCache;
 
     private final PushConfigs clientConfigs;
 
     private final List<RegistryListener> listeners = new ArrayList<>();
+
+    private PathChildrenCache pathChildrenCache;
 
     public RegistryService(PushConfigs clientConfigs){
         this.clientConfigs = clientConfigs;
@@ -44,10 +45,10 @@ public class RegistryService implements TreeCacheListener {
             listener.onSubscribe(path);
         }
         parseProviders(path);
-        this.treeCache = new TreeCache(this.zookeeperClient.getClient(), path);
-        this.treeCache.getListenable().addListener(this);
+        this.pathChildrenCache = new PathChildrenCache(this.zookeeperClient.getClient(), path, false);
+        this.pathChildrenCache.getListenable().addListener(this);
         try {
-            this.treeCache.start();
+            this.pathChildrenCache.start();
         } catch (Exception ex) {
             LOGGER.error("subscribe service {} error {}", path, ex);
             throw new RuntimeException(ex);
@@ -90,8 +91,8 @@ public class RegistryService implements TreeCacheListener {
         }
     }
 
-    public List<Address> getProviders() {
-        return providers;
+    public List<Address> getCopyProviders() {
+        return new ArrayList<>(providers);
     }
 
 
@@ -100,7 +101,11 @@ public class RegistryService implements TreeCacheListener {
     }
 
     public void close(){
-        this.treeCache.close();
+        try {
+            this.pathChildrenCache.close();
+        } catch (IOException e) {
+            //
+        }
         this.zookeeperClient.close();
     }
 
@@ -110,7 +115,7 @@ public class RegistryService implements TreeCacheListener {
             LOGGER.debug("get path :{} , children : {} ", path, children);
             if(!CollectionUtils.isEmpty(children)){
                 for(String child : children){
-                    parseAndAdd(child, providers);
+                    parse(providers, child, true);
                 }
             }
         } catch (Exception ex) {
@@ -118,39 +123,40 @@ public class RegistryService implements TreeCacheListener {
         }
     }
 
-    private void parseAndAdd(String node, List<Address> providers){
+    private void parse(Set<Address> providers, String child, boolean add){
         Address address = null;
-        if(node.contains(":") && node.split(":").length == 2){
-            String host = node.split(":")[0];
-            int port = Integer.valueOf(node.split(":")[1]);
+        if(!StringUtils.isBlank(child) && child.contains(":") && child.split(":").length == 2){
+            String host = child.split(":")[0];
+            int port = Integer.valueOf(child.split(":")[1]);
             address = new Address(host, port);
         }
         if(address != null){
-            providers.add(address);
+            if(add){
+                providers.add(address);
+            } else{
+                providers.remove(address);
+            }
         }
     }
 
     @Override
-    public void childEvent(CuratorFramework client, TreeCacheEvent event) throws Exception {
+    public void childEvent(CuratorFramework client, PathChildrenCacheEvent event) throws Exception {
         switch (event.getType()){
-            case NODE_ADDED:
-                String nodeAddValue = StringUtils.getString(event.getData().getData());
-                LOGGER.debug("node added : {} ", nodeAddValue);
-                parseAndAdd(nodeAddValue, providers);
+            case CHILD_ADDED:
+                String addPath = event.getData().getPath();
+                LOGGER.debug("add node path : {}, value : {} ", addPath);
+                String childAddPath = addPath.substring(addPath.lastIndexOf("/") + 1);
+                parse(providers, childAddPath,true);
                 break;
-            case NODE_REMOVED:
-                String nodeRemovedValue = StringUtils.getString(event.getData().getData());
-                LOGGER.debug("node removed : {} ", nodeRemovedValue);
-                parseAndAdd(nodeRemovedValue, providers);
+            case CHILD_REMOVED:
+                String removePath = event.getData().getPath();
+                LOGGER.debug("remove node path : {}, value : {} ", removePath);
+                String childRemovePath = removePath.substring(removePath.lastIndexOf("/") + 1);
+                parse(providers, childRemovePath,false);
                 break;
-            case NODE_UPDATED:
-                String nodeUpdatedValue = StringUtils.getString(event.getData().getData());
-                LOGGER.debug("node updated : {} ", nodeUpdatedValue);
-                parseAndAdd(nodeUpdatedValue, providers);
+            default:
+                LOGGER.debug("state ", event.getType().name());
                 break;
-                default:
-                    //just ignore
-                    break;
         }
     }
 }

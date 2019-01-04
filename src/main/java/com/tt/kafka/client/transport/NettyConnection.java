@@ -1,5 +1,7 @@
 package com.tt.kafka.client.transport;
 
+import com.tt.kafka.client.service.IdService;
+import com.tt.kafka.client.transport.protocol.Command;
 import com.tt.kafka.client.transport.protocol.Packet;
 import com.tt.kafka.util.NetUtils;
 import io.netty.channel.Channel;
@@ -13,6 +15,9 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Date;
 import java.util.Objects;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @Author: Tboy
@@ -26,6 +31,8 @@ public class NettyConnection implements Connection {
     private final Channel channel;
 
     private final long connectTime;
+
+    private final ScheduledExecutorService heartbeatService;
 
     public static NettyConnection attachChannel(Channel channel){
         Attribute<NettyConnection> attr = channel.attr(channelKey);
@@ -43,6 +50,19 @@ public class NettyConnection implements Connection {
     private NettyConnection(Channel channel){
         this.channel = channel;
         this.connectTime = new Date().getTime();
+        this.heartbeatService = Executors.newSingleThreadScheduledExecutor();
+        this.heartbeatService.scheduleAtFixedRate(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    send(heartbeatPacket());
+                } catch (Exception ex){
+                    LOGGER.error("HeartbeatTask error {}, close channel ", ex);
+                    close();
+                }
+
+            }
+        }, 10, 10, TimeUnit.SECONDS);
     }
 
     @Override
@@ -57,6 +77,7 @@ public class NettyConnection implements Connection {
 
     @Override
     public void close() {
+        this.heartbeatService.shutdown();
         this.channel.close();
     }
 
@@ -94,6 +115,16 @@ public class NettyConnection implements Connection {
     @Override
     public long getConnectTime() {
         return this.connectTime;
+    }
+
+    private Packet heartbeatPacket(){
+        Packet packet = new Packet();
+        packet.setMsgId(IdService.I.getId());
+        packet.setCmd(Command.HEARTBEAT.getCmd());
+        packet.setHeader(new byte[0]);
+        packet.setKey(new byte[0]);
+        packet.setValue(new byte[0]);
+        return packet;
     }
 
     @Override

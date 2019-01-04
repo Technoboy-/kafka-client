@@ -71,6 +71,12 @@ public class IdService {
         workerId = ((long) (((ipAddressByteArray[ipAddressByteArray.length - 2] & 0B11) << Byte.SIZE) + (ipAddressByteArray[ipAddressByteArray.length - 1] & 0xFF)));
     }
 
+    public static IdService I = new IdService();
+
+    private IdService(){
+
+    }
+
     /**
      * 最后自增量
      */

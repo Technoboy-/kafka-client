@@ -14,6 +14,9 @@ public class StringUtils {
     }
 
     public static String getString(byte[] bytes){
+        if(bytes == null){
+            return null;
+        }
         return new String(bytes, Constants.UTF8);
     }
 }
