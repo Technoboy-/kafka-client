@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Date;
+import java.util.Objects;
 
 /**
  * @Author: Tboy
@@ -95,4 +96,16 @@ public class NettyConnection implements Connection {
         return this.connectTime;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        NettyConnection that = (NettyConnection) o;
+        return Objects.equals(getChannel(), that.getChannel());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getChannel());
+    }
 }

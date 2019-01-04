@@ -4,6 +4,7 @@ import com.tt.kafka.client.service.RegisterMetadata;
 import com.tt.kafka.client.service.RegistryService;
 import com.tt.kafka.client.transport.codec.PacketDecoder;
 import com.tt.kafka.client.transport.codec.PacketEncoder;
+import com.tt.kafka.client.transport.exceptions.RemotingException;
 import com.tt.kafka.client.transport.handler.*;
 import com.tt.kafka.client.transport.protocol.Command;
 import com.tt.kafka.consumer.service.MessageListenerService;
@@ -17,6 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -40,6 +42,8 @@ public class PushTcpClient{
     private final RegistryService registryService;
 
     private final ScheduledThreadPoolExecutor reconnectService;
+
+    private ScheduledFuture<?> scheduledFuture;
 
     public PushTcpClient(RegistryService registryService, MessageListenerService messageListenerService){
         this.registryService = registryService;
@@ -77,22 +81,17 @@ public class PushTcpClient{
                 });
     }
 
-    public void connect(final InetSocketAddress address) {
+    public void connect(final InetSocketAddress address) throws RemotingException{
         this.address = address;
-        try {
-            if (isConnected()) {
-                return;
-            }
-            doConnect();
-            if (!isConnected()) {
-                throw new Exception("connect to server " + this.address + " fail");
-            }
-        } catch (Throwable e) {
-            LOGGER.error("connect to server " + this.address + " fail", e);
-            throw new RuntimeException(e);
+        if (isConnected()) {
+            return;
+        }
+        doConnect();
+        if (!isConnected()) {
+            throw new RemotingException("connect to server " + this.address + " fail");
         }
         LOGGER.info("connect to server : {} success", this.address);
-        reconnectService.scheduleAtFixedRate(new Runnable() {
+        scheduledFuture = reconnectService.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
                 try {
@@ -100,7 +99,7 @@ public class PushTcpClient{
                         doConnect();
                     }
                 } catch (Throwable ex) {
-                    LOGGER.error("connect to server " + address +" fail", ex);
+                    LOGGER.error("connect to server " + address + " fail", ex);
                 }
             }
         }, 2, 2, TimeUnit.SECONDS);
@@ -132,7 +131,21 @@ public class PushTcpClient{
         }
     }
 
-    private void doConnect() throws Throwable {
+    public void disconnect(){
+        try {
+            if(scheduledFuture != null && !scheduledFuture.isDone()){
+                scheduledFuture.cancel(true);
+                this.reconnectService.purge();
+            }
+            if(this.channel != null){
+                this.channel.close();
+            }
+        } catch (Throwable ex){
+            LOGGER.error("disconnect error", ex);
+        }
+    }
+
+    private void doConnect() throws RemotingException {
         ChannelFuture future = null;
         try {
             future = bootstrap.connect(address);
@@ -146,9 +159,9 @@ public class PushTcpClient{
                     channel = newChannel;
                 }
             } else if (future.cause() != null) {
-                throw new Exception(future.cause());
+                throw new RemotingException(future.cause());
             } else {
-                throw new Exception("connect server " + this.address + " timeout");
+                throw new RemotingException("connect server " + this.address + " timeout");
             }
         } finally {
             if(isConnected()){
@@ -168,7 +181,10 @@ public class PushTcpClient{
     }
 
     public void close(){
-        reconnectService.shutdown();
+        disconnect();
+        if(reconnectService != null){
+            reconnectService.shutdown();
+        }
         if(workGroup != null){
             workGroup.shutdownGracefully();
         }
