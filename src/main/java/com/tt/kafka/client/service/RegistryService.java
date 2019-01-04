@@ -1,8 +1,10 @@
 package com.tt.kafka.client.service;
 
 import com.tt.kafka.client.PushConfigs;
+import com.tt.kafka.client.transport.Address;
 import com.tt.kafka.client.zookeeper.ZookeeperClient;
 import com.tt.kafka.util.CollectionUtils;
+import com.tt.kafka.util.Constants;
 import com.tt.kafka.util.StringUtils;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.cache.TreeCache;
@@ -47,6 +49,7 @@ public class RegistryService implements TreeCacheListener {
         try {
             this.treeCache.start();
         } catch (Exception ex) {
+            LOGGER.error("subscribe service {} error {}", path, ex);
             throw new RuntimeException(ex);
         }
     }
@@ -64,16 +67,26 @@ public class RegistryService implements TreeCacheListener {
                 zookeeperClient.createPersistent(metadata.getPath());
             }
             zookeeperClient.createEPhemeral(metadata.getPath() +
-                    String.format("/%s:%s", metadata.getAddress().getHost(), metadata.getAddress().getPort()), new ZookeeperClient.BackgroundCallback() {
+                    String.format(Constants.ZOOKEEPER_PROVIDER_CONSUMER_NODE, metadata.getAddress().getHost(), metadata.getAddress().getPort()), new ZookeeperClient.BackgroundCallback() {
                 @Override
                 public void complete() {
-                    //TODO
-                    //for monitor use
+                    //NOP
                 }
             });
         } catch (Exception ex) {
-            LOGGER.error("register service error", ex);
+            LOGGER.error("register service {} error {}", metadata, ex);
             throw new RuntimeException(ex);
+        }
+    }
+
+    public void destroy(RegisterMetadata metadata){
+        for(RegistryListener listener : listeners){
+            listener.onDestroy(metadata);
+        }
+        try {
+            zookeeperClient.delete(metadata.getPath() + String.format(Constants.ZOOKEEPER_PROVIDER_CONSUMER_NODE, metadata.getAddress().getHost(), metadata.getAddress().getPort()));
+        } catch (Exception ex) {
+            LOGGER.error("destroy service {} error {}", metadata, ex);
         }
     }
 
@@ -91,17 +104,17 @@ public class RegistryService implements TreeCacheListener {
         this.zookeeperClient.close();
     }
 
-    public void parseProviders(String topic){
+    public void parseProviders(String path){
         try {
-            List<String> children = this.zookeeperClient.getChildren(topic);
-            LOGGER.debug("get children : {} ", children);
+            List<String> children = this.zookeeperClient.getChildren(path);
+            LOGGER.debug("get path :{} , children : {} ", path, children);
             if(!CollectionUtils.isEmpty(children)){
                 for(String child : children){
                     parseAndAdd(child, providers);
                 }
             }
         } catch (Exception ex) {
-            LOGGER.error("getProviders error", ex);
+            LOGGER.error("parseProviders , path : {} error : {}", path, ex);
         }
     }
 

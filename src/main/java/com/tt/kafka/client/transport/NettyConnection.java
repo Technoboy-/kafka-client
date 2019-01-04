@@ -1,6 +1,6 @@
-package com.tt.kafka.client.netty.transport;
+package com.tt.kafka.client.transport;
 
-import com.tt.kafka.client.netty.protocol.Packet;
+import com.tt.kafka.client.transport.protocol.Packet;
 import com.tt.kafka.util.NetUtils;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;

@@ -1,9 +1,9 @@
-package com.tt.kafka.client.netty.handler;
+package com.tt.kafka.client.transport.handler;
 
 import com.tt.kafka.consumer.service.MessageListenerService;
-import com.tt.kafka.client.netty.protocol.Header;
-import com.tt.kafka.client.netty.protocol.Packet;
-import com.tt.kafka.client.netty.transport.Connection;
+import com.tt.kafka.client.transport.protocol.Header;
+import com.tt.kafka.client.transport.protocol.Packet;
+import com.tt.kafka.client.transport.Connection;
 import com.tt.kafka.serializer.SerializerImpl;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.slf4j.Logger;

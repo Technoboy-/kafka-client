@@ -1,8 +1,8 @@
-package com.tt.kafka.client.netty.handler;
+package com.tt.kafka.client.transport.handler;
 
-import com.tt.kafka.client.netty.protocol.Packet;
-import com.tt.kafka.client.netty.service.HeartbeatService;
-import com.tt.kafka.client.netty.transport.Connection;
+import com.tt.kafka.client.transport.protocol.Packet;
+import com.tt.kafka.client.service.HeartbeatService;
+import com.tt.kafka.client.transport.Connection;
 import io.netty.channel.ChannelId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

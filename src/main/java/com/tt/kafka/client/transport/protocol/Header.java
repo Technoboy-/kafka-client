@@ -1,4 +1,4 @@
-package com.tt.kafka.client.netty.protocol;
+package com.tt.kafka.client.transport.protocol;
 
 import java.io.Serializable;
 

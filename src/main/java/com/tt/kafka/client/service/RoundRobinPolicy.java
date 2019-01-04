@@ -1,5 +1,7 @@
 package com.tt.kafka.client.service;
 
+import com.tt.kafka.client.transport.Address;
+
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 

@@ -62,6 +62,11 @@ public class ZookeeperClient {
         }).forPath(path);
     }
 
+    public void delete(String path) throws Exception{
+        checkState();
+        this.client.delete().forPath(path);
+    }
+
     public CuratorFramework getClient() {
         return client;
     }

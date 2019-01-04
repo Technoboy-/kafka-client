@@ -16,6 +16,8 @@ public interface Constants {
 
     String PUSH_CLIENT_PARALLELISM = "push.client.parallelism";
 
+    String PUSH_CLIENT_WORKER_NUM = "push.client.worker.num";
+
     // common configs for zk
     String ZOOKEEPER_SERVER_LIST = "zookeeper.server.list";
 
@@ -24,6 +26,8 @@ public interface Constants {
     String ZOOKEEPER_PROVIDERS = "/%s/providers";
 
     String ZOOKEEPER_CONSUMERS = "/%s/consumers";
+
+    String ZOOKEEPER_PROVIDER_CONSUMER_NODE = "/%s:%s";
 
     String ZOOKEEPER_SESSION_TIMEOUT_MS = "zookeeper.session.timeout.ms";
 

@@ -1,4 +1,4 @@
-package com.tt.kafka.client.service;
+package com.tt.kafka.client.transport;
 
 import java.io.Serializable;
 

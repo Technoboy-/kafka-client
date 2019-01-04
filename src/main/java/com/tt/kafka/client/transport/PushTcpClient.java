@@ -1,14 +1,14 @@
-package com.tt.kafka.client.netty.transport;
+package com.tt.kafka.client.transport;
 
-import com.tt.kafka.client.service.Address;
 import com.tt.kafka.client.service.RegisterMetadata;
 import com.tt.kafka.client.service.RegistryService;
+import com.tt.kafka.client.transport.codec.PacketDecoder;
+import com.tt.kafka.client.transport.codec.PacketEncoder;
+import com.tt.kafka.client.transport.handler.*;
+import com.tt.kafka.client.transport.protocol.Command;
 import com.tt.kafka.consumer.service.MessageListenerService;
-import com.tt.kafka.client.netty.codec.PacketDecoder;
-import com.tt.kafka.client.netty.codec.PacketEncoder;
-import com.tt.kafka.client.netty.handler.*;
-import com.tt.kafka.client.netty.protocol.Command;
 import com.tt.kafka.util.Constants;
+import com.tt.kafka.util.NamedThreadFactory;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -17,12 +17,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 /**
  * @Author: Tboy
  */
-public class PushTcpClient {
+public class PushTcpClient{
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PushTcpClient.class);
 
@@ -30,37 +31,33 @@ public class PushTcpClient {
 
     private NioEventLoopGroup workGroup;
 
-    private String ip;
+    private InetSocketAddress address;
 
-    private int port;
+    private volatile Channel channel = null;
 
-    protected Channel channel = null;
-
-    private PushClientHandler handler;
-
-    private MessageListenerService messageListenerService;
+    private final MessageListenerService messageListenerService;
 
     private final RegistryService registryService;
+
+    private final ScheduledThreadPoolExecutor reconnectService;
 
     public PushTcpClient(RegistryService registryService, MessageListenerService messageListenerService){
         this.registryService = registryService;
         this.messageListenerService = messageListenerService;
-        initHandler();
-        initClient();
+        this.reconnectService = new ScheduledThreadPoolExecutor(1, new NamedThreadFactory("reconnect-thread"));
+        init();
     }
 
-    private void initHandler(){
+    private void init() {
+        //
         MessageDispatcher dispatcher = new MessageDispatcher();
         dispatcher.register(Command.LOGIN, new LoginHandler());
         dispatcher.register(Command.HEARTBEAT_ACK, new HeartbeatHandler());
         dispatcher.register(Command.PUSH, new PushHandler(messageListenerService));
-        handler = new PushClientHandler(dispatcher);
-    }
+        PushClientHandler handler = new PushClientHandler(dispatcher);
 
-    private void initClient() {
         bootstrap = new Bootstrap();
-        int workNum = Runtime.getRuntime().availableProcessors() + 1;
-        workGroup = new NioEventLoopGroup(workNum);
+        workGroup = new NioEventLoopGroup(registryService.getClientConfigs().getClientWorkerNum());
         bootstrap.
                 option(ChannelOption.SO_KEEPALIVE, true).
                 option(ChannelOption.TCP_NODELAY, true).
@@ -80,23 +77,33 @@ public class PushTcpClient {
                 });
     }
 
-    public void connect(String ip, int port) {
-        this.ip = ip;
-        this.port = port;
+    public void connect(final InetSocketAddress address) {
+        this.address = address;
         try {
             if (isConnected()) {
                 return;
             }
             doConnect();
             if (!isConnected()) {
-                throw new Exception("connect to server(ip:" + getIp() + ", port:" + getPort() + ") fail");
+                throw new Exception("connect to server " + this.address + " fail");
             }
         } catch (Throwable e) {
-            LOGGER.error("connect to server(ip:" + getIp() + ", port:" + getIp() + ") fail", e);
+            LOGGER.error("connect to server " + this.address + " fail", e);
             throw new RuntimeException(e);
         }
-        LOGGER.info("connect to server(ip:" + getIp() + ", port:" + getPort() + ") success");
-        afterConnect();
+        LOGGER.info("connect to server : {} success", this.address);
+        reconnectService.scheduleAtFixedRate(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    if (!isConnected()) {
+                        doConnect();
+                    }
+                } catch (Throwable ex) {
+                    LOGGER.error("connect to server " + address +" fail", ex);
+                }
+            }
+        }, 2, 2, TimeUnit.SECONDS);
     }
 
     private void afterConnect(){
@@ -111,39 +118,46 @@ public class PushTcpClient {
         }
     }
 
+    private void destroy(Channel oldChannel){
+        if(oldChannel != null && oldChannel.localAddress() instanceof InetSocketAddress){
+            InetSocketAddress address = (InetSocketAddress)oldChannel.localAddress();
+            RegisterMetadata<PushTcpClient> metadata = new RegisterMetadata();
+            metadata.setPath(String.format(Constants.ZOOKEEPER_CONSUMERS, registryService.getClientConfigs().getClientTopic()));
+            Address client = new Address(address.getHostName(), address.getPort());
+            metadata.setAddress(client);
+            registryService.destroy(metadata);
+        }
+        if(oldChannel != null){
+            oldChannel.close();
+        }
+    }
+
     private void doConnect() throws Throwable {
         ChannelFuture future = null;
         try {
-            future = bootstrap.connect(getIp(), getPort());
-            boolean connected = future.awaitUninterruptibly(5000, TimeUnit.MILLISECONDS);
+            future = bootstrap.connect(address);
+            boolean connected = future.awaitUninterruptibly(3000, TimeUnit.MILLISECONDS);
             if (connected && future.isSuccess()) {
                 Channel newChannel = future.channel();
                 try {
                     Channel oldChannel = channel;
-                    if (oldChannel != null) {
-                        oldChannel.close();
-                    }
+                    destroy(oldChannel);
                 } finally {
                     channel = newChannel;
                 }
             } else if (future.cause() != null) {
                 throw new Exception(future.cause());
             } else {
-                throw new Exception("connect " + "server(ip:" + ip + ", port:" + port + ") timeout");
+                throw new Exception("connect server " + this.address + " timeout");
             }
         } finally {
+            if(isConnected()){
+                afterConnect();
+            }
             if (!isConnected() && future != null) {
                 future.cancel(true);
             }
         }
-    }
-
-    public String getIp() {
-        return ip;
-    }
-
-    public int getPort() {
-        return port;
     }
 
     private boolean isConnected() {
@@ -154,6 +168,7 @@ public class PushTcpClient {
     }
 
     public void close(){
+        reconnectService.shutdown();
         if(workGroup != null){
             workGroup.shutdownGracefully();
         }

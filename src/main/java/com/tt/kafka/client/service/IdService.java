@@ -1,4 +1,4 @@
-package com.tt.kafka.client.netty.service;
+package com.tt.kafka.client.service;
 
 import com.tt.kafka.util.Preconditions;
 

@@ -65,6 +65,11 @@ public class PushConfigs {
         return Integer.valueOf(parallelism);
     }
 
+    public int getClientWorkerNum(){
+        String workerNum = System.getProperty(Constants.PUSH_CLIENT_WORKER_NUM, properties.getProperty(Constants.PUSH_CLIENT_WORKER_NUM, String.valueOf(Constants.CPU_SIZE + 1)));
+        return Integer.valueOf(workerNum);
+    }
+
     public String getZookeeperServerList(){
         return System.getProperty(Constants.ZOOKEEPER_SERVER_LIST, properties.getProperty(Constants.ZOOKEEPER_SERVER_LIST));
     }
