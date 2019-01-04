@@ -12,13 +12,13 @@ import org.slf4j.LoggerFactory;
 /**
  * @Author: Tboy
  */
-public class PushHandler extends CommonMessageHandler {
+public class PushMessageHandler extends CommonMessageHandler {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(PushHandler.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(PushMessageHandler.class);
 
     private final MessageListenerService messageListenerService;
 
-    public PushHandler(MessageListenerService messageListenerService){
+    public PushMessageHandler(MessageListenerService messageListenerService){
         this.messageListenerService = messageListenerService;
     }
 

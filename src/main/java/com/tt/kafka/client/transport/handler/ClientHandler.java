@@ -13,31 +13,31 @@ import org.slf4j.LoggerFactory;
  * @Author: Tboy
  */
 @Sharable
-public class PushClientHandler extends ChannelInboundHandlerAdapter {
+public class ClientHandler extends ChannelInboundHandlerAdapter {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(PushClientHandler.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ClientHandler.class);
 
     private final MessageDispatcher dispatcher;
 
-    public PushClientHandler(MessageDispatcher dispatcher){
+    public ClientHandler(MessageDispatcher dispatcher){
         this.dispatcher = dispatcher;
     }
 
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
-        NettyConnection.attachChannel(ctx.channel());
+        NettyConnection.attachChannel(ctx.channel(), true);
     }
 
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        Connection connnection = NettyConnection.attachChannel(ctx.channel());
+        Connection connnection = NettyConnection.attachChannel(ctx.channel(), true);
         connnection.close();
     }
 
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        dispatcher.dispatch(NettyConnection.attachChannel(ctx.channel()), (Packet)msg);
+        dispatcher.dispatch(NettyConnection.attachChannel(ctx.channel(), true), (Packet)msg);
     }
 
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-        Connection connnection = NettyConnection.attachChannel(ctx.channel());
+        Connection connnection = NettyConnection.attachChannel(ctx.channel(), true);
         connnection.close();
     }
 }

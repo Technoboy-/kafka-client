@@ -43,8 +43,6 @@ public class NettyClient {
 
     private final LoadBalance<Address> loadBalance = new RoundRobinLoadBalance();
 
-    private final RetryPolicy retryPolicy = new DefaultRetryPolicy();
-
     public NettyClient(RegistryService registryService, MessageListenerService messageListenerService){
         this.registryService = registryService;
         this.messageListenerService = messageListenerService;
@@ -55,9 +53,8 @@ public class NettyClient {
     private void init() {
         //
         MessageDispatcher dispatcher = new MessageDispatcher();
-        dispatcher.register(Command.HEARTBEAT, new HeartbeatHandler());
-        dispatcher.register(Command.PUSH, new PushHandler(messageListenerService));
-        PushClientHandler handler = new PushClientHandler(dispatcher);
+        dispatcher.register(Command.PUSH, new PushMessageHandler(messageListenerService));
+        ClientHandler handler = new ClientHandler(dispatcher);
 
         bootstrap = new Bootstrap();
         workGroup = new NioEventLoopGroup(registryService.getClientConfigs().getClientWorkerNum());

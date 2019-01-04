@@ -32,13 +32,13 @@ public class NettyConnection implements Connection {
 
     private final long connectTime;
 
-    private final ScheduledExecutorService heartbeatService;
+    private ScheduledExecutorService heartbeatService;
 
-    public static NettyConnection attachChannel(Channel channel){
+    public static NettyConnection attachChannel(Channel channel, boolean clientSide){
         Attribute<NettyConnection> attr = channel.attr(channelKey);
         NettyConnection oldChannel = attr.get();
         if(oldChannel == null){
-            NettyConnection nettyChannel = new NettyConnection(channel);
+            NettyConnection nettyChannel = new NettyConnection(channel, clientSide);
             oldChannel = attr.setIfAbsent(nettyChannel);
             if(oldChannel == null){
                 oldChannel = nettyChannel;
@@ -47,22 +47,25 @@ public class NettyConnection implements Connection {
         return oldChannel;
     }
 
-    private NettyConnection(Channel channel){
+    private NettyConnection(Channel channel, boolean clientSide){
         this.channel = channel;
         this.connectTime = new Date().getTime();
-        this.heartbeatService = Executors.newSingleThreadScheduledExecutor();
-        this.heartbeatService.scheduleAtFixedRate(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    send(heartbeatPacket());
-                } catch (Exception ex){
-                    LOGGER.error("HeartbeatTask error {}, close channel ", ex);
-                    close();
-                }
+        if(clientSide){
+            this.heartbeatService = Executors.newSingleThreadScheduledExecutor();
+            this.heartbeatService.scheduleAtFixedRate(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        send(heartbeatPacket());
+                    } catch (Exception ex){
+                        LOGGER.error("HeartbeatTask error {}, close channel ", ex);
+                        close();
+                    }
 
-            }
-        }, 10, 10, TimeUnit.SECONDS);
+                }
+            }, 10, 10, TimeUnit.SECONDS);
+            this.send(registerPacket());
+        }
     }
 
     @Override
@@ -77,7 +80,9 @@ public class NettyConnection implements Connection {
 
     @Override
     public void close() {
-        this.heartbeatService.shutdown();
+        if(this.heartbeatService != null){
+            this.heartbeatService.shutdown();
+        }
         this.channel.close();
     }
 
@@ -115,6 +120,17 @@ public class NettyConnection implements Connection {
     @Override
     public long getConnectTime() {
         return this.connectTime;
+    }
+
+
+    private Packet registerPacket(){
+        Packet packet = new Packet();
+        packet.setMsgId(IdService.I.getId());
+        packet.setCmd(Command.REGISTER.getCmd());
+        packet.setHeader(new byte[0]);
+        packet.setKey(new byte[0]);
+        packet.setValue(new byte[0]);
+        return packet;
     }
 
     private Packet heartbeatPacket(){
