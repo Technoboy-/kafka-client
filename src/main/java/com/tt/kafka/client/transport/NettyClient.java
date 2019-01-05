@@ -5,9 +5,11 @@ import com.tt.kafka.client.transport.codec.PacketDecoder;
 import com.tt.kafka.client.transport.codec.PacketEncoder;
 import com.tt.kafka.client.transport.handler.*;
 import com.tt.kafka.client.transport.protocol.Command;
+import com.tt.kafka.consumer.listener.MessageListener;
 import com.tt.kafka.consumer.service.MessageListenerService;
 import com.tt.kafka.util.Constants;
 import com.tt.kafka.util.NamedThreadFactory;
+import com.tt.kafka.util.Pair;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -33,7 +35,7 @@ public class NettyClient {
 
     private volatile Channel channel = null;
 
-    private final MessageListenerService messageListenerService;
+    private final Pair<MessageListener, MessageListenerService> pair;
 
     private final RegistryService registryService;
 
@@ -45,9 +47,9 @@ public class NettyClient {
 
     private InetSocketAddress lastAddress;
 
-    public NettyClient(RegistryService registryService, MessageListenerService messageListenerService){
+    public NettyClient(RegistryService registryService, Pair<MessageListener, MessageListenerService> pair){
         this.registryService = registryService;
-        this.messageListenerService = messageListenerService;
+        this.pair = pair;
         this.reconnectService = new ScheduledThreadPoolExecutor(1, new NamedThreadFactory("reconnect-thread"));
         init();
     }
@@ -55,7 +57,7 @@ public class NettyClient {
     private void init() {
         //
         MessageDispatcher dispatcher = new MessageDispatcher();
-        dispatcher.register(Command.PUSH, new PushMessageHandler(messageListenerService));
+        dispatcher.register(Command.PUSH, new PushMessageHandler(pair.getL(), pair.getR()));
         ClientHandler handler = new ClientHandler(dispatcher);
 
         bootstrap = new Bootstrap();

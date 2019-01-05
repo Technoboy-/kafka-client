@@ -16,8 +16,8 @@ public class PacketEncoder extends MessageToByteEncoder<Packet> {
         if(msg == null){
             throw new Exception("encode msg is null");
         }
-        out.writeShort(Packet.MAGIC);
-        out.writeShort(Packet.VERSION);
+        out.writeByte(Packet.MAGIC);
+        out.writeByte(Packet.VERSION);
         out.writeByte(msg.getCmd());
         out.writeLong(msg.getMsgId());
         out.writeInt(msg.getHeader().length);

@@ -6,26 +6,26 @@ import java.io.Serializable;
  *
  *  * **************************************************************************************************
  *                                          Protocol
- *  ┌ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┐
- *       2   │    2    │    1    │     8     │      4       |
- *  ├ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┤
- *           │         │         │           │                                                      |
- *  │  Magic   Version     Cmd       MsgId       Body Size  |             Body Content              │
- *           │         │         │           │              |                                       |
- *  └ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┘
+ *  ┌ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ - - - - - - - - - - - - - - - - - - -┐
+ *       1   │    1    │    1    │     8     │       4       |                |     4      |             |      4       |
+ *  ├ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ - - - - - - - - - ─ ─ ─ - ┤- - - - - - -- -|
+ *           │         │         │           │               |                |            |             |              |                |
+ *  │  Magic   Version     Cmd       MsgId      header size  |  header value  |  key size  |  key value  |  value size  |  value content |
+ *           │         │         │           │               |                |            |             |              |                |
+ *  └ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ — — - - - - - - - - - - - - - - - - -
  * @Author: Tboy
  */
 public class Packet implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    public static final short MAGIC = (short) 0xbabe;
+    public static final byte MAGIC = (byte) 0xbabe;
 
-    public static final short VERSION = (short)0x00;
+    public static final byte VERSION = (byte)0x00;
 
-    public static final int LENGTH = 2 + 2 + 1 + 8 + 4 + 4 + 4;
+    public static final int LENGTH = 1 + 1 + 1 + 8 + 4 + 4 + 4;
 
-    private short version;
+    private byte version;
 
     private byte cmd;
 
@@ -41,7 +41,7 @@ public class Packet implements Serializable {
         return version;
     }
 
-    public void setVersion(short version) {
+    public void setVersion(byte version) {
         this.version = version;
     }
 

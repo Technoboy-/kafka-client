@@ -43,9 +43,12 @@ public class MessageListenerServiceRegistry<K, V> {
         ConsumerConfig configs = this.consumer.getConfigs();
         boolean partitionOrderly = configs.isPartitionOrderly();
         boolean isAssignTopicPartition = !CollectionUtils.isEmpty(configs.getTopicPartitions());
+        boolean useProxy = configs.isUseProxy();
         int parallel = configs.getParallelism();
         if (messageListener instanceof AcknowledgeMessageListener) {
-            if (partitionOrderly && isAssignTopicPartition) {
+            if(useProxy){
+                this.messageListenerService = new ProxyAcknowledgeMessageListenerService(this.consumer, messageListener);
+            } else if (partitionOrderly && isAssignTopicPartition) {
                 this.messageListenerService = new AssignPartitionOrderlyAcknowledgeMessageListenerService(this.consumer, messageListener);
             } else if(partitionOrderly){
                 this.messageListenerService = new PartitionOrderlyAcknowledgeMessageListenerService(this.consumer, messageListener);
@@ -55,13 +58,17 @@ public class MessageListenerServiceRegistry<K, V> {
                 this.messageListenerService = new AcknowledgeMessageListenerService(this.consumer, messageListener);
             }
         } else if(messageListener instanceof BatchAcknowledgeMessageListener){
-            if(isAssignTopicPartition){
+            if(useProxy){
+                this.messageListenerService = new ProxyBatchAcknowledgeMessageListenerService(this.consumer, messageListener);
+            } else if(isAssignTopicPartition){
                 this.messageListenerService = new AssignBatchAcknowledgeMessageListenerService(this.consumer, messageListener);
             } else{
                 this.messageListenerService = new BatchAcknowledgeMessageListenerService(this.consumer, messageListener);
             }
         } else if (messageListener instanceof AutoCommitMessageListener) {
-            if(partitionOrderly){
+            if(useProxy){
+                this.messageListenerService = new ProxyAutoCommitMessageListenerService(this.consumer, messageListener);
+            } else if(partitionOrderly){
                 this.messageListenerService = new PartitionOrderlyAutoCommitMessageListenerService(this.consumer, messageListener);
             } else if(parallel <= 0){
                 this.messageListenerService = new AutoCommitMessageListenerService(this.consumer, messageListener);

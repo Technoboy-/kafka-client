@@ -20,12 +20,12 @@ public class PacketDecoder extends ByteToMessageDecoder {
             return;
         }
         in.markReaderIndex();
-        short magic = in.readShort();
+        byte magic = in.readByte();
         if (magic != MAGIC) {
             ctx.close();
             return;
         }
-        short version = in.readShort();
+        byte version = in.readByte();
         if (version != VERSION) {
             ctx.close();
             return;

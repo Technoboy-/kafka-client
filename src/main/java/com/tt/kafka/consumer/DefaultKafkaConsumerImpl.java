@@ -12,6 +12,7 @@ import com.tt.kafka.consumer.service.MessageListenerServiceRegistry;
 import com.tt.kafka.metric.MonitorImpl;
 import com.tt.kafka.serializer.Serializer;
 import com.tt.kafka.util.CollectionUtils;
+import com.tt.kafka.util.Pair;
 import com.tt.kafka.util.Preconditions;
 import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.common.TopicPartition;
@@ -80,7 +81,7 @@ public class DefaultKafkaConsumerImpl<K, V> implements Runnable, KafkaConsumer<K
         boolean useProxy = configs.isUseProxy();
 
         if(useProxy){
-            pushServerConnector = new PushServerConnector(messageListenerService);
+            pushServerConnector = new PushServerConnector(new Pair<MessageListener, MessageListenerService>(messageListener, messageListenerService));
             pushServerConnector.start();
         } else{
             boolean isAssignTopicPartition = !CollectionUtils.isEmpty(configs.getTopicPartitions());
@@ -143,7 +144,7 @@ public class DefaultKafkaConsumerImpl<K, V> implements Runnable, KafkaConsumer<K
 
         //
         this.serviceRegistry = new MessageListenerServiceRegistry(this, messageListener);
-        this.messageListenerService = this.serviceRegistry.getMessageListenerService(true);
+        this.messageListenerService = this.serviceRegistry.getMessageListenerService(false);
         this.messageListener = messageListener;
     }
 
@@ -227,7 +228,7 @@ public class DefaultKafkaConsumerImpl<K, V> implements Runnable, KafkaConsumer<K
         byte[] valueBytes = record.value();
 
 
-        return new Record(record.topic(), record.partition(), record.offset(),
+        return new Record(record.offset(), record.topic(), record.partition(), record.offset(),
                 keyBytes != null ? (K) keySerializer.deserialize(record.key(), Object.class) : null,
                 valueBytes != null ? (V) valueSerializer.deserialize(record.value(), Object.class) : null,
                 record.timestamp());

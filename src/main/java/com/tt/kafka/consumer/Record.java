@@ -8,6 +8,8 @@ import java.util.Objects;
  */
 public class Record<K, V> implements Serializable {
 
+    private long msgId;
+
     private final String topic;
 
     private final int partition;
@@ -20,13 +22,22 @@ public class Record<K, V> implements Serializable {
 
     private final long timestamp;
 
-    public Record(String topic, int partition, long offset, K key, V value, long timestamp) {
+    public Record(long msgId, String topic, int partition, long offset, K key, V value, long timestamp) {
+        this.msgId = msgId;
         this.topic = topic;
         this.partition = partition;
         this.offset = offset;
         this.key = key;
         this.value = value;
         this.timestamp = timestamp;
+    }
+
+    public long getMsgId() {
+        return msgId;
+    }
+
+    public void setMsgId(long msgId) {
+        this.msgId = msgId;
     }
 
     public String getTopic() {
@@ -54,11 +65,25 @@ public class Record<K, V> implements Serializable {
     }
 
     @Override
+    public String toString() {
+        return "Record{" +
+                "msgId=" + msgId +
+                ", topic='" + topic + '\'' +
+                ", partition=" + partition +
+                ", offset=" + offset +
+                ", key=" + key +
+                ", value=" + value +
+                ", timestamp=" + timestamp +
+                '}';
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Record<?, ?> record = (Record<?, ?>) o;
-        return partition == record.partition &&
+        return msgId == record.msgId &&
+                partition == record.partition &&
                 offset == record.offset &&
                 timestamp == record.timestamp &&
                 Objects.equals(topic, record.topic) &&
@@ -68,18 +93,6 @@ public class Record<K, V> implements Serializable {
 
     @Override
     public int hashCode() {
-        return Objects.hash(topic, partition);
-    }
-
-    @Override
-    public String toString() {
-        return "Record{" +
-                "topic='" + topic + '\'' +
-                ", partition=" + partition +
-                ", offset=" + offset +
-                ", key=" + key +
-                ", value=" + value +
-                ", timestamp=" + timestamp +
-                '}';
+        return Objects.hash(msgId, topic, partition, offset, key, value, timestamp);
     }
 }
