@@ -1,6 +1,8 @@
 package com.tt.kafka.client.transport;
 
 import com.tt.kafka.client.service.IdService;
+import com.tt.kafka.client.service.LoadBalance;
+import com.tt.kafka.client.service.RoundRobinLoadBalance;
 import com.tt.kafka.client.transport.protocol.Command;
 import com.tt.kafka.client.transport.protocol.Packet;
 import com.tt.kafka.util.NetUtils;

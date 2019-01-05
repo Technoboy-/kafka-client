@@ -60,11 +60,6 @@ public class PushConfigs {
         return System.getProperty(Constants.PUSH_CLIENT_TOPIC, properties.getProperty(Constants.PUSH_CLIENT_TOPIC));
     }
 
-    public int getClientParallelism(){
-        String parallelism = System.getProperty(Constants.PUSH_CLIENT_PARALLELISM, properties.getProperty(Constants.PUSH_CLIENT_PARALLELISM, "1"));
-        return Integer.valueOf(parallelism);
-    }
-
     public int getClientWorkerNum(){
         String workerNum = System.getProperty(Constants.PUSH_CLIENT_WORKER_NUM, properties.getProperty(Constants.PUSH_CLIENT_WORKER_NUM, String.valueOf(Constants.CPU_SIZE + 1)));
         return Integer.valueOf(workerNum);

@@ -1,9 +1,14 @@
 package com.tt.kafka.client.transport;
 
-import com.tt.kafka.client.service.*;
+import com.tt.kafka.client.service.LoadBalance;
+import com.tt.kafka.client.service.RegisterMetadata;
+import com.tt.kafka.client.service.RegistryService;
+import com.tt.kafka.client.service.RoundRobinLoadBalance;
 import com.tt.kafka.client.transport.codec.PacketDecoder;
 import com.tt.kafka.client.transport.codec.PacketEncoder;
-import com.tt.kafka.client.transport.handler.*;
+import com.tt.kafka.client.transport.handler.ClientHandler;
+import com.tt.kafka.client.transport.handler.MessageDispatcher;
+import com.tt.kafka.client.transport.handler.PushMessageHandler;
 import com.tt.kafka.client.transport.protocol.Command;
 import com.tt.kafka.consumer.service.MessageListenerService;
 import com.tt.kafka.util.Constants;
@@ -23,9 +28,9 @@ import java.util.concurrent.TimeUnit;
 /**
  * @Author: Tboy
  */
-public class NettyClient {
+public class NettyClient_bak {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(NettyClient.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(NettyClient_bak.class);
 
     private Bootstrap bootstrap;
 
@@ -43,9 +48,7 @@ public class NettyClient {
 
     private final LoadBalance<Address> loadBalance = new RoundRobinLoadBalance();
 
-    private InetSocketAddress lastAddress;
-
-    public NettyClient(RegistryService registryService, MessageListenerService messageListenerService){
+    public NettyClient_bak(RegistryService registryService, MessageListenerService messageListenerService){
         this.registryService = registryService;
         this.messageListenerService = messageListenerService;
         this.reconnectService = new ScheduledThreadPoolExecutor(1, new NamedThreadFactory("reconnect-thread"));
@@ -79,27 +82,16 @@ public class NettyClient {
                 });
     }
 
-    public void connect(InetSocketAddress address) {
-        lastAddress = address;
+    public void connect() {
         if (isConnected()) {
             return;
         }
-        doConnect(address);
+        doConnect();
         scheduledFuture = reconnectService.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
                 if (!isConnected()) {
-                    boolean connect = doConnect(lastAddress);
-                    if(!connect){
-                        Address provider = loadBalance.select(registryService.getCopyProviders());
-                        if(provider != null){
-                            InetSocketAddress newAddress = new InetSocketAddress(provider.getHost(), provider.getPort());
-                            if(!newAddress.equals(lastAddress)){
-                                lastAddress = newAddress;
-                                doConnect(lastAddress);
-                            }
-                        }
-                    }
+                    doConnect();
                 }
             }
         }, 5, 5, TimeUnit.SECONDS);
@@ -108,7 +100,7 @@ public class NettyClient {
     private void afterConnect(){
         if(channel != null && channel.localAddress() instanceof InetSocketAddress){
             InetSocketAddress address = (InetSocketAddress)channel.localAddress();
-            RegisterMetadata<NettyClient> metadata = new RegisterMetadata();
+            RegisterMetadata<NettyClient_bak> metadata = new RegisterMetadata();
             metadata.setPath(String.format(Constants.ZOOKEEPER_CONSUMERS, registryService.getClientConfigs().getClientTopic()));
             Address client = new Address(address.getHostName(), address.getPort());
             metadata.setAddress(client);
@@ -120,7 +112,7 @@ public class NettyClient {
     private void destroy(Channel oldChannel){
         if(oldChannel != null && oldChannel.localAddress() instanceof InetSocketAddress){
             InetSocketAddress address = (InetSocketAddress)oldChannel.localAddress();
-            RegisterMetadata<NettyClient> metadata = new RegisterMetadata();
+            RegisterMetadata<NettyClient_bak> metadata = new RegisterMetadata();
             metadata.setPath(String.format(Constants.ZOOKEEPER_CONSUMERS, registryService.getClientConfigs().getClientTopic()));
             Address client = new Address(address.getHostName(), address.getPort());
             metadata.setAddress(client);
@@ -145,9 +137,14 @@ public class NettyClient {
         }
     }
 
-    private boolean doConnect(InetSocketAddress address) {
+    private void doConnect() {
         ChannelFuture future = null;
         try {
+            Address provider = loadBalance.select(registryService.getCopyProviders());
+            if(provider == null){
+                return;
+            }
+            InetSocketAddress address = new InetSocketAddress(provider.getHost(), provider.getPort());
             future = bootstrap.connect(address);
             boolean connected = future.awaitUninterruptibly(3000, TimeUnit.MILLISECONDS);
             if (connected && future.isSuccess()) {
@@ -164,7 +161,6 @@ public class NettyClient {
             } else {
                 LOGGER.error("connect to server " + address + " fail", future.cause());
             }
-            return isConnected();
         } finally {
             if(isConnected()){
                 afterConnect();
