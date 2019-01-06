@@ -6,7 +6,6 @@ import com.tt.kafka.client.transport.protocol.Header;
 import com.tt.kafka.client.transport.protocol.Packet;
 import com.tt.kafka.consumer.Record;
 import com.tt.kafka.consumer.TopicPartition;
-import com.tt.kafka.consumer.listener.AcknowledgeMessageListener;
 import com.tt.kafka.consumer.listener.MessageListener;
 import com.tt.kafka.consumer.service.MessageListenerService;
 import com.tt.kafka.consumer.service.ProxyAcknowledgeMessageListenerService;
@@ -41,17 +40,16 @@ public class PushMessageHandler extends CommonMessageHandler {
         ConsumerRecord record = new ConsumerRecord(header.getTopic(), header.getPartition(), header.getOffset(), packet.getKey(), packet.getValue());
         if(messageListenerService instanceof ProxyAcknowledgeMessageListenerService){
             ProxyAcknowledgeMessageListenerService service = (ProxyAcknowledgeMessageListenerService)messageListenerService;
-            service.setProxyAcknowledgment(new ProxyAcknowledgeMessageListenerService.ProxyAcknowledgment() {
+            service.onMessage(packet.getMsgId(), record, new ProxyAcknowledgeMessageListenerService.AcknowledgmentCallback() {
                 @Override
                 public void onAcknowledge(Record record) {
                     connection.send(ackPacket(record.getMsgId()));
                 }
             });
-            service.onMessage(packet.getMsgId(), record);
 
         } else if(messageListenerService instanceof ProxyBatchAcknowledgeMessageListenerService) {
             ProxyBatchAcknowledgeMessageListenerService service = (ProxyBatchAcknowledgeMessageListenerService)messageListenerService;
-            service.setProxyAcknowledgment(new ProxyBatchAcknowledgeMessageListenerService.ProxyAcknowledgment() {
+            service.onMessage(packet.getMsgId(), record, new ProxyBatchAcknowledgeMessageListenerService.AcknowledgmentCallback() {
                 @Override
                 public void onAcknowledge(List list) {
                     List<Record> records = (List<Record>)list;
@@ -61,8 +59,6 @@ public class PushMessageHandler extends CommonMessageHandler {
                     }
                 }
             });
-            service.onMessage(packet.getMsgId(), record);
-
         } else {
             messageListenerService.onMessage(record);
         }

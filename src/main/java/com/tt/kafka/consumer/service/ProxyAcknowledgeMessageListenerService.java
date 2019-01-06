@@ -19,16 +19,10 @@ public class ProxyAcknowledgeMessageListenerService<K, V> extends ProxyCommonMes
 
     private final AcknowledgeMessageListener<K, V> messageListener;
 
-    private ProxyAcknowledgment proxyAcknowledgment;
-
     public ProxyAcknowledgeMessageListenerService(DefaultKafkaConsumerImpl<K, V> consumer, MessageListener<K, V> messageListener) {
         super(consumer);
         this.messageListener = (AcknowledgeMessageListener)messageListener;
         MonitorImpl.getDefault().recordConsumeHandlerCount(1);
-    }
-
-    public void setProxyAcknowledgment(ProxyAcknowledgment proxyAcknowledgment){
-        this.proxyAcknowledgment = proxyAcknowledgment;
     }
 
     @Override
@@ -36,7 +30,7 @@ public class ProxyAcknowledgeMessageListenerService<K, V> extends ProxyCommonMes
         //
     }
 
-    public void onMessage(long msgId, ConsumerRecord<byte[], byte[]> record) {
+    public void onMessage(long msgId, ConsumerRecord<byte[], byte[]> record, AcknowledgmentCallback acknowledgmentCallback) {
         long now = System.currentTimeMillis();
         try {
             final Record<K, V> r = consumer.toRecord(record);
@@ -44,7 +38,7 @@ public class ProxyAcknowledgeMessageListenerService<K, V> extends ProxyCommonMes
             messageListener.onMessage(r, new AcknowledgeMessageListener.Acknowledgment() {
                 @Override
                 public void acknowledge() {
-                    proxyAcknowledgment.onAcknowledge(r);
+                    acknowledgmentCallback.onAcknowledge(r);
                 }
             });
         } catch (Throwable ex) {
@@ -56,7 +50,7 @@ public class ProxyAcknowledgeMessageListenerService<K, V> extends ProxyCommonMes
         }
     }
 
-    public interface ProxyAcknowledgment<K, V>{
+    public interface AcknowledgmentCallback<K, V>{
 
         void onAcknowledge(Record<K, V> record);
     }

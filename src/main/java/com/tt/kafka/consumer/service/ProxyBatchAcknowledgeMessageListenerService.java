@@ -34,7 +34,6 @@ public class ProxyBatchAcknowledgeMessageListenerService<K, V> extends ProxyComm
 
     private final Semaphore semaphore = new Semaphore(1);
 
-    private ProxyAcknowledgment proxyAcknowledgment;
 
     public ProxyBatchAcknowledgeMessageListenerService(DefaultKafkaConsumerImpl<K, V> consumer, MessageListener<K, V> messageListener) {
         super(consumer);
@@ -45,16 +44,12 @@ public class ProxyBatchAcknowledgeMessageListenerService<K, V> extends ProxyComm
         MonitorImpl.getDefault().recordConsumeHandlerCount(1);
     }
 
-    public void setProxyAcknowledgment(ProxyAcknowledgment proxyAcknowledgment){
-        this.proxyAcknowledgment = proxyAcknowledgment;
-    }
-
     @Override
     public void onMessage(final ConsumerRecord<byte[], byte[]> record) {
         //NOP
     }
 
-    public void onMessage(final long msgId, final ConsumerRecord<byte[], byte[]> record) {
+    public void onMessage(final long msgId, final ConsumerRecord<byte[], byte[]> record, AcknowledgmentCallback acknowledgmentCallback) {
         long now = System.currentTimeMillis();
         try {
             if(record != EmptyConsumerRecord.EMPTY){
@@ -71,7 +66,7 @@ public class ProxyBatchAcknowledgeMessageListenerService<K, V> extends ProxyComm
             messageListener.onMessage(records, new BatchAcknowledgeMessageListener.Acknowledgment() {
                 @Override
                 public void acknowledge() {
-                    proxyAcknowledgment.onAcknowledge(records);
+                    acknowledgmentCallback.onAcknowledge(records);
                     semaphore.release();
                 }
             });
@@ -86,7 +81,7 @@ public class ProxyBatchAcknowledgeMessageListenerService<K, V> extends ProxyComm
         }
     }
 
-    public interface ProxyAcknowledgment<K, V>{
+    public interface AcknowledgmentCallback<K, V>{
 
         void onAcknowledge(List<Record<K, V>> records);
     }
