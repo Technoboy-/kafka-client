@@ -77,7 +77,7 @@ public class NettyConnection implements Connection {
 
                 public void operationComplete(ChannelFuture future) throws Exception {
                     if(future.isSuccess()){
-                        LOGGER.info("send msg {} , to clientId : {}, successfully",packet, NetUtils.getRemoteAddress(channel));
+                        LOGGER.debug("send msg {} , to clientId : {}, successfully", packet, NetUtils.getRemoteAddress(channel));
                     } else{
                         LOGGER.error("send msg {} failed, error {}", packet, future.cause());
                     }

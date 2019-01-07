@@ -5,10 +5,8 @@ import com.tt.kafka.client.service.RegistryListener;
 import com.tt.kafka.client.service.RegistryService;
 import com.tt.kafka.client.transport.Address;
 import com.tt.kafka.client.transport.NettyClient;
-import com.tt.kafka.consumer.listener.MessageListener;
 import com.tt.kafka.consumer.service.MessageListenerService;
 import com.tt.kafka.util.Constants;
-import com.tt.kafka.util.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,7 +20,7 @@ public class PushServerConnector{
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PushServerConnector.class);
 
-    private final Pair<MessageListener, MessageListenerService> pair;
+    private final MessageListenerService messageListenerService;
 
     private final RegistryService registryService;
 
@@ -30,8 +28,8 @@ public class PushServerConnector{
 
     private final ConcurrentHashMap<Address, NettyClient> clients = new ConcurrentHashMap<>();
 
-    public PushServerConnector(Pair<MessageListener, MessageListenerService> pair){
-        this.pair = pair;
+    public PushServerConnector(MessageListenerService messageListenerService){
+        this.messageListenerService = messageListenerService;
         this.pushConfigs = new PushConfigs(false);
         this.registryService = new RegistryService(pushConfigs);
         this.registryService.addListener(new RegistryListener() {
@@ -74,14 +72,14 @@ public class PushServerConnector{
 
     private void addNettyClient(Address address){
         if(!clients.containsKey(address)){
-            NettyClient nettyClient = new NettyClient(registryService, pair);
+            NettyClient nettyClient = new NettyClient(registryService, messageListenerService);
             nettyClient.connect(new InetSocketAddress(address.getHost(), address.getPort()));
             clients.put(address, nettyClient);
         }
     }
 
     public void close(){
-        registryService.close();
+        this.registryService.close();
         for(NettyClient client : clients.values()){
             client.close();
         }

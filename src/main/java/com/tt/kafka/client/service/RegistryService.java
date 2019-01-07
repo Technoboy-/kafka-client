@@ -80,7 +80,7 @@ public class RegistryService implements PathChildrenCacheListener {
         }
     }
 
-    public void destroy(RegisterMetadata metadata){
+    public void unregister(RegisterMetadata metadata){
         for(RegistryListener listener : listeners){
             listener.onDestroy(metadata);
         }
@@ -102,7 +102,9 @@ public class RegistryService implements PathChildrenCacheListener {
 
     public void close(){
         try {
-            this.pathChildrenCache.close();
+            if(this.pathChildrenCache != null){
+                this.pathChildrenCache.close();
+            }
         } catch (IOException e) {
             //
         }

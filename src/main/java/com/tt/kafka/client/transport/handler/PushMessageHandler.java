@@ -30,7 +30,7 @@ public class PushMessageHandler extends CommonMessageHandler {
 
     private final MessageListenerService messageListenerService;
 
-    public PushMessageHandler(MessageListener messageListener, MessageListenerService messageListenerService){
+    public PushMessageHandler(MessageListenerService messageListenerService){
         this.messageListenerService = messageListenerService;
     }
 

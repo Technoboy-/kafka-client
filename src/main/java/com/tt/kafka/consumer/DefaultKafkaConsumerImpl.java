@@ -82,7 +82,7 @@ public class DefaultKafkaConsumerImpl<K, V> implements Runnable, KafkaConsumer<K
 
         if (start.compareAndSet(false, true)) {
             if(useProxy){
-                pushServerConnector = new PushServerConnector(new Pair<MessageListener, MessageListenerService>(messageListener, messageListenerService));
+                pushServerConnector = new PushServerConnector(messageListenerService);
                 pushServerConnector.start();
             } else{
                 boolean isAssignTopicPartition = !CollectionUtils.isEmpty(configs.getTopicPartitions());
