@@ -80,13 +80,12 @@ public class DefaultKafkaConsumerImpl<K, V> implements Runnable, KafkaConsumer<K
 
         boolean useProxy = configs.isUseProxy();
 
-        if(useProxy){
-            pushServerConnector = new PushServerConnector(new Pair<MessageListener, MessageListenerService>(messageListener, messageListenerService));
-            pushServerConnector.start();
-        } else{
-            boolean isAssignTopicPartition = !CollectionUtils.isEmpty(configs.getTopicPartitions());
-
-            if (start.compareAndSet(false, true)) {
+        if (start.compareAndSet(false, true)) {
+            if(useProxy){
+                pushServerConnector = new PushServerConnector(new Pair<MessageListener, MessageListenerService>(messageListener, messageListenerService));
+                pushServerConnector.start();
+            } else{
+                boolean isAssignTopicPartition = !CollectionUtils.isEmpty(configs.getTopicPartitions());
                 if(isAssignTopicPartition){
                     Collection<com.tt.kafka.consumer.TopicPartition> assignTopicPartitions = configs.getTopicPartitions();
                     ArrayList<TopicPartition> topicPartitions = new ArrayList<>(assignTopicPartitions.size());
@@ -110,11 +109,12 @@ public class DefaultKafkaConsumerImpl<K, V> implements Runnable, KafkaConsumer<K
                 });
                 worker.start();
                 //
-                Runtime.getRuntime().addShutdownHook(new Thread(() -> close()));
-
-                LOG.info("kafka consumer startup with info : {}", startupInfo());
             }
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> close()));
+
+            LOG.info("kafka consumer startup with info : {}", startupInfo());
         }
+
 
     }
 
@@ -245,6 +245,9 @@ public class DefaultKafkaConsumerImpl<K, V> implements Runnable, KafkaConsumer<K
                 consumer.unsubscribe();
                 consumer.close();
             }
+            if(pushServerConnector != null){
+                pushServerConnector.close();
+            }
             LOG.info("KafkaConsumer closed.");
         }
     }
@@ -259,6 +262,7 @@ public class DefaultKafkaConsumerImpl<K, V> implements Runnable, KafkaConsumer<K
         builder.append("bootstrap.servers : ").append(configs.getBootstrapServers()).append(" , ");
         builder.append("group.id : ").append(configs.getGroupId()).append(" , ");
         builder.append("in ").append(isAssignTopicPartition ? "[assign] : " + configs.getTopicPartitions(): "[subscribe] : " + configs.getTopic()).append(" , ");
+        builder.append("with : " + (configs.isUseProxy() ?  "proxy model " : " direct connect ")).append(" , ");
         builder.append("with listener : " + messageListener.getClass().getName()).append(" , ");
         builder.append("with listener service : " + messageListenerService.getClass().getSimpleName()).append(" ");
         return builder.toString();

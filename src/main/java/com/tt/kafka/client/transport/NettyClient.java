@@ -3,8 +3,11 @@ package com.tt.kafka.client.transport;
 import com.tt.kafka.client.service.*;
 import com.tt.kafka.client.transport.codec.PacketDecoder;
 import com.tt.kafka.client.transport.codec.PacketEncoder;
-import com.tt.kafka.client.transport.handler.*;
+import com.tt.kafka.client.transport.handler.ClientHandler;
+import com.tt.kafka.client.transport.handler.MessageDispatcher;
+import com.tt.kafka.client.transport.handler.PushMessageHandler;
 import com.tt.kafka.client.transport.protocol.Command;
+import com.tt.kafka.client.transport.protocol.Packet;
 import com.tt.kafka.consumer.listener.MessageListener;
 import com.tt.kafka.consumer.service.MessageListenerService;
 import com.tt.kafka.util.Constants;
@@ -41,7 +44,11 @@ public class NettyClient {
 
     private final ScheduledThreadPoolExecutor reconnectService;
 
-    private ScheduledFuture<?> scheduledFuture;
+    private final ScheduledThreadPoolExecutor heartbeatService;
+
+    private ScheduledFuture<?> reconnectScheduledFuture;
+
+    private ScheduledFuture<?> heartbeatScheduledFuture;
 
     private final LoadBalance<Address> loadBalance = new RoundRobinLoadBalance();
 
@@ -51,6 +58,7 @@ public class NettyClient {
         this.registryService = registryService;
         this.pair = pair;
         this.reconnectService = new ScheduledThreadPoolExecutor(1, new NamedThreadFactory("reconnect-thread"));
+        this.heartbeatService = new ScheduledThreadPoolExecutor(1, new NamedThreadFactory("heartbeat-thread"));
         init();
     }
 
@@ -87,7 +95,11 @@ public class NettyClient {
             return;
         }
         doConnect(address);
-        scheduledFuture = reconnectService.scheduleAtFixedRate(new Runnable() {
+        startSchedulerTask();
+    }
+
+    private void startSchedulerTask(){
+        reconnectScheduledFuture = reconnectService.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
                 if (!isConnected()) {
@@ -105,6 +117,21 @@ public class NettyClient {
                 }
             }
         }, 5, 5, TimeUnit.SECONDS);
+
+        heartbeatScheduledFuture = heartbeatService.scheduleAtFixedRate(new Runnable() {
+            @Override
+            public void run() {
+                if (isConnected()) {
+                    Packet packet = new Packet();
+                    packet.setMsgId(IdService.I.getId());
+                    packet.setCmd(Command.HEARTBEAT.getCmd());
+                    packet.setHeader(new byte[0]);
+                    packet.setKey(new byte[0]);
+                    packet.setValue(new byte[0]);
+                    channel.writeAndFlush(packet);
+                }
+            }
+        }, 1, 20, TimeUnit.SECONDS);
     }
 
     private void afterConnect(){
@@ -135,16 +162,31 @@ public class NettyClient {
 
     public void disconnect(){
         try {
-            if(scheduledFuture != null && !scheduledFuture.isDone()){
-                scheduledFuture.cancel(true);
+            if(reconnectScheduledFuture != null && !reconnectScheduledFuture.isDone()){
+                reconnectScheduledFuture.cancel(true);
                 this.reconnectService.purge();
             }
+            if(heartbeatScheduledFuture != null && !heartbeatScheduledFuture.isDone()){
+                heartbeatScheduledFuture.cancel(true);
+                this.heartbeatService.purge();
+            }
+            unregisterClient();
             if(this.channel != null){
                 this.channel.close();
             }
         } catch (Throwable ex){
             LOGGER.error("disconnect error", ex);
         }
+    }
+
+    private void unregisterClient(){
+        Packet packet = new Packet();
+        packet.setMsgId(IdService.I.getId());
+        packet.setCmd(Command.UNREGISTER.getCmd());
+        packet.setHeader(new byte[0]);
+        packet.setKey(new byte[0]);
+        packet.setValue(new byte[0]);
+        this.channel.writeAndFlush(packet);
     }
 
     private boolean doConnect(InetSocketAddress address) {
@@ -185,7 +227,7 @@ public class NettyClient {
     }
 
     public void close(){
-        disconnect();
+        this.disconnect();
         if(reconnectService != null){
             reconnectService.shutdown();
         }

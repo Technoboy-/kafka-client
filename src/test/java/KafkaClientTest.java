@@ -406,8 +406,21 @@ public class KafkaClientTest {
         consumer.setMessageListener(messageListener);
         consumer.start();
 
-        TimeUnit.MINUTES.sleep(100);
+        Thread t = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    TimeUnit.SECONDS.sleep(20);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                consumer.close();
+            }
+        });
+        t.setDaemon(true);
+        t.start();
 
+        TimeUnit.MINUTES.sleep(20);
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             consumer.close(); //程序关闭时调用。
         }));
