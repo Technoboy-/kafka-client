@@ -8,6 +8,8 @@ import java.util.Objects;
  */
 public class SendResult implements Serializable {
 
+    public static SendResult ERROR_RESULT = new SendResult(-1, -1L);
+
     private int partition;
 
     private long offset;
