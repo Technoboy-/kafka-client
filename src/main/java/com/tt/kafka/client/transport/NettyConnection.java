@@ -1,8 +1,6 @@
 package com.tt.kafka.client.transport;
 
 import com.tt.kafka.client.service.IdService;
-import com.tt.kafka.client.service.LoadBalance;
-import com.tt.kafka.client.service.RoundRobinLoadBalance;
 import com.tt.kafka.client.transport.protocol.Command;
 import com.tt.kafka.client.transport.protocol.Packet;
 import com.tt.kafka.util.NetUtils;
@@ -66,7 +64,6 @@ public class NettyConnection implements Connection {
 
                 }
             }, 10, 10, TimeUnit.SECONDS);
-            this.send(registerPacket());
         }
     }
 
@@ -124,17 +121,6 @@ public class NettyConnection implements Connection {
         return this.connectTime;
     }
 
-
-    private Packet registerPacket(){
-        Packet packet = new Packet();
-        packet.setMsgId(IdService.I.getId());
-        packet.setCmd(Command.REGISTER.getCmd());
-        packet.setHeader(new byte[0]);
-        packet.setKey(new byte[0]);
-        packet.setValue(new byte[0]);
-        return packet;
-    }
-
     private Packet heartbeatPacket(){
         Packet packet = new Packet();
         packet.setMsgId(IdService.I.getId());
@@ -150,11 +136,11 @@ public class NettyConnection implements Connection {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         NettyConnection that = (NettyConnection) o;
-        return Objects.equals(getChannel(), that.getChannel());
+        return Objects.equals(getChannel().id().asLongText(), that.getChannel().id().asLongText());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getChannel());
+        return Objects.hash(getChannel().id().asLongText());
     }
 }
