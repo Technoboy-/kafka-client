@@ -56,7 +56,9 @@ public class PushServerConnector{
                         break;
                     case DELETE:
                         NettyClient pre = clients.remove(address);
-                        pre.close();
+                        if(pre != null){
+                            pre.close();
+                        }
                         break;
                 }
             }
