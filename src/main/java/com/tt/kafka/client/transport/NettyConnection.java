@@ -1,9 +1,5 @@
 package com.tt.kafka.client.transport;
 
-import com.tt.kafka.client.service.IdService;
-import com.tt.kafka.client.service.LoadBalance;
-import com.tt.kafka.client.service.RoundRobinLoadBalance;
-import com.tt.kafka.client.transport.protocol.Command;
 import com.tt.kafka.client.transport.protocol.Packet;
 import com.tt.kafka.util.NetUtils;
 import io.netty.channel.Channel;
@@ -17,9 +13,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Date;
 import java.util.Objects;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @Author: Tboy
@@ -34,13 +27,11 @@ public class NettyConnection implements Connection {
 
     private final long connectTime;
 
-    private ScheduledExecutorService heartbeatService;
-
-    public static NettyConnection attachChannel(Channel channel, boolean clientSide){
+    public static NettyConnection attachChannel(Channel channel){
         Attribute<NettyConnection> attr = channel.attr(channelKey);
         NettyConnection oldChannel = attr.get();
         if(oldChannel == null){
-            NettyConnection nettyChannel = new NettyConnection(channel, clientSide);
+            NettyConnection nettyChannel = new NettyConnection(channel);
             oldChannel = attr.setIfAbsent(nettyChannel);
             if(oldChannel == null){
                 oldChannel = nettyChannel;
@@ -49,25 +40,9 @@ public class NettyConnection implements Connection {
         return oldChannel;
     }
 
-    private NettyConnection(Channel channel, boolean clientSide){
+    private NettyConnection(Channel channel){
         this.channel = channel;
         this.connectTime = new Date().getTime();
-        if(clientSide){
-            this.heartbeatService = Executors.newSingleThreadScheduledExecutor();
-            this.heartbeatService.scheduleAtFixedRate(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        send(heartbeatPacket());
-                    } catch (Exception ex){
-                        LOGGER.error("HeartbeatTask error {}, close channel ", ex);
-                        close();
-                    }
-
-                }
-            }, 10, 10, TimeUnit.SECONDS);
-            this.send(registerPacket());
-        }
     }
 
     @Override
@@ -82,9 +57,6 @@ public class NettyConnection implements Connection {
 
     @Override
     public void close() {
-        if(this.heartbeatService != null){
-            this.heartbeatService.shutdown();
-        }
         this.channel.close();
     }
 
@@ -105,7 +77,7 @@ public class NettyConnection implements Connection {
 
                 public void operationComplete(ChannelFuture future) throws Exception {
                     if(future.isSuccess()){
-                        LOGGER.info("send msg {} , to clientId : {}, successfully",packet, NetUtils.getRemoteAddress(channel));
+                        LOGGER.debug("send msg {} , to clientId : {}, successfully", packet, NetUtils.getRemoteAddress(channel));
                     } else{
                         LOGGER.error("send msg {} failed, error {}", packet, future.cause());
                     }
@@ -124,37 +96,16 @@ public class NettyConnection implements Connection {
         return this.connectTime;
     }
 
-
-    private Packet registerPacket(){
-        Packet packet = new Packet();
-        packet.setMsgId(IdService.I.getId());
-        packet.setCmd(Command.REGISTER.getCmd());
-        packet.setHeader(new byte[0]);
-        packet.setKey(new byte[0]);
-        packet.setValue(new byte[0]);
-        return packet;
-    }
-
-    private Packet heartbeatPacket(){
-        Packet packet = new Packet();
-        packet.setMsgId(IdService.I.getId());
-        packet.setCmd(Command.HEARTBEAT.getCmd());
-        packet.setHeader(new byte[0]);
-        packet.setKey(new byte[0]);
-        packet.setValue(new byte[0]);
-        return packet;
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         NettyConnection that = (NettyConnection) o;
-        return Objects.equals(getChannel(), that.getChannel());
+        return Objects.equals(getChannel().id().asLongText(), that.getChannel().id().asLongText());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getChannel());
+        return Objects.hash(getChannel().id().asLongText());
     }
 }

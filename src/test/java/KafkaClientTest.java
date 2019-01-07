@@ -20,6 +20,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 
 /**
@@ -31,6 +32,7 @@ public class KafkaClientTest {
 
     @Test
     public void testSyncProducer() throws Exception {
+        AtomicLong counter = new AtomicLong(1);
         ProducerConfig configs = new ProducerConfig("localhost:9092");
         configs.setKeySerializer(SerializerImpl.getFastJsonSerializer());
         configs.setValueSerializer(SerializerImpl.getFastJsonSerializer());
@@ -38,9 +40,10 @@ public class KafkaClientTest {
 
         final AtomicBoolean alive = new AtomicBoolean(true);
         while (alive.get()) {
-            SendResult sendResult = producer.sendSync("test-topic", System.currentTimeMillis() + "", "msg-" + new Date().toString());
-            LOG.info("sync send result: {}.", sendResult);
-            TimeUnit.MILLISECONDS.sleep(1000);
+            String value = String.valueOf(counter.getAndIncrement());
+            SendResult sendResult = producer.sendSync("test-topic", System.currentTimeMillis() + "", value);
+            LOG.info("sync send value: {}, result : {}", value, sendResult);
+            TimeUnit.MILLISECONDS.sleep(500);
         }
 
         producer.flush();
@@ -398,7 +401,7 @@ public class KafkaClientTest {
                 String key = record.getKey();
                 String value = record.getValue();
 
-                LOG.info(Thread.currentThread().getName() + " , partition : {}, value: {}, offset: {}.", new Object[]{partition, value, offset});
+                LOG.info("received push message : partition : {}, value: {}, offset: {}.", new Object[]{partition, value, offset});
                 acknowledgment.acknowledge();
             }
         };
@@ -406,8 +409,7 @@ public class KafkaClientTest {
         consumer.setMessageListener(messageListener);
         consumer.start();
 
-        TimeUnit.MINUTES.sleep(100);
-
+        TimeUnit.MINUTES.sleep(20);
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             consumer.close(); //程序关闭时调用。
         }));

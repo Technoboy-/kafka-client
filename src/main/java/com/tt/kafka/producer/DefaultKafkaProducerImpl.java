@@ -119,7 +119,11 @@ public class DefaultKafkaProducerImpl<K, V> implements KafkaProducer<K, V> {
             @Override
             public void onCompletion(RecordMetadata metadata, Exception exception) {
                 if (callback != null) {
-                    callback.onCompletion(new SendResult(metadata.partition(), metadata.offset()), exception);
+                    SendResult sendResult = SendResult.ERROR_RESULT;
+                    if(metadata != null){
+                        sendResult = new SendResult(metadata.partition(), metadata.offset());
+                    }
+                    callback.onCompletion(sendResult, exception);
                 }
             }
         });

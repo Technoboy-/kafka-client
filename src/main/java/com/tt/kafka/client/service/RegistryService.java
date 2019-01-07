@@ -80,7 +80,7 @@ public class RegistryService implements PathChildrenCacheListener {
         }
     }
 
-    public void destroy(RegisterMetadata metadata){
+    public void unregister(RegisterMetadata metadata){
         for(RegistryListener listener : listeners){
             listener.onDestroy(metadata);
         }
@@ -102,7 +102,9 @@ public class RegistryService implements PathChildrenCacheListener {
 
     public void close(){
         try {
-            this.pathChildrenCache.close();
+            if(this.pathChildrenCache != null){
+                this.pathChildrenCache.close();
+            }
         } catch (IOException e) {
             //
         }
@@ -142,8 +144,7 @@ public class RegistryService implements PathChildrenCacheListener {
                 LOGGER.debug("add node path : {}, value : {} ", addPath);
                 String childAddPath = addPath.substring(addPath.lastIndexOf("/") + 1);
                 Address addAddress = parse(childAddPath);
-                if(addAddress != null){
-                    providers.add(addAddress);
+                if(addAddress != null && providers.add(addAddress)){
                     for(RegistryListener listener : listeners){
                         listener.onChange(addAddress, RegistryListener.Event.ADD);
                     }
@@ -154,8 +155,7 @@ public class RegistryService implements PathChildrenCacheListener {
                 LOGGER.debug("remove node path : {}, value : {} ", removePath);
                 String childRemovePath = removePath.substring(removePath.lastIndexOf("/") + 1);
                 Address removeAddress = parse(childRemovePath);
-                if(removeAddress != null){
-                    providers.remove(removeAddress);
+                if(removeAddress != null && providers.remove(removeAddress)){
                     for(RegistryListener listener : listeners){
                         listener.onChange(removeAddress, RegistryListener.Event.DELETE);
                     }

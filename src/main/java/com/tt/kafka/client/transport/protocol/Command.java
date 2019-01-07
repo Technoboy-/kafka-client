@@ -5,9 +5,9 @@ package com.tt.kafka.client.transport.protocol;
  */
 public enum Command {
 
-    REGISTER(1),
+    HEARTBEAT(1),
 
-    HEARTBEAT(2),
+    UNREGISTER(2),
 
     PUSH(3),
 

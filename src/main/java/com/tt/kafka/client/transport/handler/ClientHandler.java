@@ -24,20 +24,19 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
     }
 
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
-        NettyConnection.attachChannel(ctx.channel(), true);
+        NettyConnection.attachChannel(ctx.channel());
     }
 
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        Connection connnection = NettyConnection.attachChannel(ctx.channel(), true);
+        Connection connnection = NettyConnection.attachChannel(ctx.channel());
         connnection.close();
     }
 
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        dispatcher.dispatch(NettyConnection.attachChannel(ctx.channel(), true), (Packet)msg);
+        dispatcher.dispatch(NettyConnection.attachChannel(ctx.channel()), (Packet)msg);
     }
 
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-        Connection connnection = NettyConnection.attachChannel(ctx.channel(), true);
-        connnection.close();
+        LOGGER.error("exceptionCaught", cause);
     }
 }
