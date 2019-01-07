@@ -42,6 +42,8 @@ public interface Constants {
 
     String PUSH_SERVER_QUEUE_SIZE = "push.server.queue.size";
 
+    String PUSH_SERVER_AUTO_COMMIT_OFFSET = "push.server.auto.commit.offset";
+
     String PUSH_SERVER_TOPIC = "push.server.topic";
 
     String PUSH_SERVER_GROUP_ID = "push.server.group.id";

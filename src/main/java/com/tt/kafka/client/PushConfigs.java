@@ -111,4 +111,9 @@ public class PushConfigs {
         return Integer.valueOf(queueSize);
     }
 
+    public boolean getServerAutoCommitOffset(){
+        String queueSize = System.getProperty(Constants.PUSH_SERVER_AUTO_COMMIT_OFFSET, properties.getProperty(Constants.PUSH_SERVER_AUTO_COMMIT_OFFSET, "false"));
+        return Boolean.valueOf(queueSize);
+    }
+
 }
