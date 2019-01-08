@@ -14,6 +14,8 @@ public interface Connection {
 
     boolean isActive();
 
+    boolean isWritable();
+
     void close();
 
     Channel getChannel();

@@ -10,17 +10,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * @Author: jiwei.guo
- * @Date: 2019/1/5 5:50 PM
+ * @Author: Tboy
  */
-public class ProxyAcknowledgeMessageListenerService<K, V> extends ProxyCommonMessageListenerService<K, V>{
+public class ProxyAcknowledgeMessageListenerService<K, V> implements MessageListenerService<K, V>{
 
     private static final Logger LOG = LoggerFactory.getLogger(ProxyAcknowledgeMessageListenerService.class);
 
     private final AcknowledgeMessageListener<K, V> messageListener;
 
+    protected final DefaultKafkaConsumerImpl<K, V> consumer;
+
     public ProxyAcknowledgeMessageListenerService(DefaultKafkaConsumerImpl<K, V> consumer, MessageListener<K, V> messageListener) {
-        super(consumer);
+        this.consumer = consumer;
         this.messageListener = (AcknowledgeMessageListener)messageListener;
         MonitorImpl.getDefault().recordConsumeHandlerCount(1);
     }

@@ -65,6 +65,10 @@ public class PushConfigs {
         return Integer.valueOf(workerNum);
     }
 
+    public String getZookeeperNamespace(){
+        return System.getProperty(Constants.ZOOKEEPER_NAMESPACE, properties.getProperty(Constants.ZOOKEEPER_NAMESPACE));
+    }
+
     public String getZookeeperServerList(){
         return System.getProperty(Constants.ZOOKEEPER_SERVER_LIST, properties.getProperty(Constants.ZOOKEEPER_SERVER_LIST));
     }
@@ -110,10 +114,4 @@ public class PushConfigs {
         String queueSize = System.getProperty(Constants.PUSH_SERVER_QUEUE_SIZE, properties.getProperty(Constants.PUSH_SERVER_QUEUE_SIZE, "100"));
         return Integer.valueOf(queueSize);
     }
-
-    public boolean getServerAutoCommitOffset(){
-        String queueSize = System.getProperty(Constants.PUSH_SERVER_AUTO_COMMIT_OFFSET, properties.getProperty(Constants.PUSH_SERVER_AUTO_COMMIT_OFFSET, "false"));
-        return Boolean.valueOf(queueSize);
-    }
-
 }

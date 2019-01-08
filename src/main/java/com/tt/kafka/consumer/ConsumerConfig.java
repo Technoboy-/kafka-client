@@ -11,33 +11,69 @@ import java.util.HashMap;
 public class ConsumerConfig extends HashMap<String, Object> {
 
     /**
-     * subscribe模式
-     * @param bootstrapServers
+     * subscribe模式 指定zookeeper服务器地址和命名空间
+     * @param zookeeperServers
      * @param topic
      * @param groupId
      */
-    public ConsumerConfig(String bootstrapServers, String topic, String groupId) {
-        this.bootstrapServers = bootstrapServers;
+    public ConsumerConfig(String zookeeperServers, String namespace, String topic, String groupId) {
+        this.zookeeperServers = zookeeperServers;
+        this.zookeeperNamespace = namespace;
+        this.topic = topic;
+        this.groupId = groupId;
+    }
+
+    /**
+     * assign模式，指定zookeeper服务器地址和命名空间
+     * @param zookeeperServers
+     * @param topicPartitions
+     * @param groupId
+     */
+    public ConsumerConfig(String zookeeperServers, String namespace, Collection<TopicPartition> topicPartitions, String groupId) {
+        this.zookeeperServers = zookeeperServers;
+        this.zookeeperNamespace = namespace;
+        this.topicPartitions = topicPartitions;
+        this.groupId = groupId;
+    }
+
+    /**
+     * subscribe模式
+     * @param kafkaServers
+     * @param topic
+     * @param groupId
+     */
+    public ConsumerConfig(String kafkaServers, String topic, String groupId) {
+        this.kafkaServers = kafkaServers;
         this.topic = topic;
         this.groupId = groupId;
     }
 
     /**
      * assign模式
-     * @param bootstrapServers
+     * @param kafkaServers
      * @param topicPartitions
      * @param groupId
      */
-    public ConsumerConfig(String bootstrapServers, Collection<TopicPartition> topicPartitions, String groupId) {
-        this.bootstrapServers = bootstrapServers;
+    public ConsumerConfig(String kafkaServers, Collection<TopicPartition> topicPartitions, String groupId) {
+        this.kafkaServers = kafkaServers;
         this.topicPartitions = topicPartitions;
         this.groupId = groupId;
     }
 
     /**
-     * 服务器列表
+     * kafka服务器列表
      */
-    private String bootstrapServers;
+    private String kafkaServers;
+
+    /**
+     * zookeeper服务器列表
+     */
+    private String zookeeperServers;
+
+    /**
+     * zookeeper的命名空间
+     */
+    private String zookeeperNamespace;
 
     /**
      * 消费主题
@@ -123,6 +159,14 @@ public class ConsumerConfig extends HashMap<String, Object> {
 
     private boolean useProxy = false;
 
+
+    public String getZookeeperServers() {
+        return zookeeperServers;
+    }
+
+    public String getZookeeperNamespace() {
+        return zookeeperNamespace;
+    }
 
     public boolean isUseProxy() {
         return useProxy;
@@ -225,8 +269,9 @@ public class ConsumerConfig extends HashMap<String, Object> {
         this.pollTimeout = pollTimeout;
     }
 
-    public String getBootstrapServers() {
-        return bootstrapServers;
+
+    public String getKafkaServers() {
+        return kafkaServers;
     }
 
     public String getTopic() {
@@ -254,4 +299,5 @@ public class ConsumerConfig extends HashMap<String, Object> {
         this.autoCommitInterval = autoCommitInterval;
         put("auto.commit.interval.ms", autoCommitInterval);
     }
+
 }

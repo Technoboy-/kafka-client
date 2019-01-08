@@ -17,7 +17,7 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * @Author: Tboy
  */
-abstract class CommonAcknowledgeMessageListenerService<K, V> implements MessageListenerService<K, V>{
+public abstract class CommonAcknowledgeMessageListenerService<K, V> implements MessageListenerService<K, V>{
 
     private static final Logger LOG = LoggerFactory.getLogger(CommonAcknowledgeMessageListenerService.class);
 

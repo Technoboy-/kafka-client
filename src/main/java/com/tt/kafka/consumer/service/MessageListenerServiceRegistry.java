@@ -58,17 +58,13 @@ public class MessageListenerServiceRegistry<K, V> {
                 this.messageListenerService = new AcknowledgeMessageListenerService(this.consumer, messageListener);
             }
         } else if(messageListener instanceof BatchAcknowledgeMessageListener){
-            if(useProxy){
-                this.messageListenerService = new ProxyBatchAcknowledgeMessageListenerService(this.consumer, messageListener);
-            } else if(isAssignTopicPartition){
+            if(isAssignTopicPartition){
                 this.messageListenerService = new AssignBatchAcknowledgeMessageListenerService(this.consumer, messageListener);
             } else{
                 this.messageListenerService = new BatchAcknowledgeMessageListenerService(this.consumer, messageListener);
             }
         } else if (messageListener instanceof AutoCommitMessageListener) {
-            if(useProxy){
-                this.messageListenerService = new ProxyAutoCommitMessageListenerService(this.consumer, messageListener);
-            } else if(partitionOrderly){
+            if(partitionOrderly){
                 this.messageListenerService = new PartitionOrderlyAutoCommitMessageListenerService(this.consumer, messageListener);
             } else if(parallel <= 0){
                 this.messageListenerService = new AutoCommitMessageListenerService(this.consumer, messageListener);

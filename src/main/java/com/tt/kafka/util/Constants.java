@@ -21,7 +21,9 @@ public interface Constants {
     // common configs for zk
     String ZOOKEEPER_SERVER_LIST = "zookeeper.server.list";
 
-    String ZOOKEEPER_NAMESPACE = "push_server";
+    String ZOOKEEPER_NAMESPACE = "zookeeper.namespace";
+
+    String ZOOKEEPER_PUSH_SERVER_NAMESPACE = "push_server";
 
     String ZOOKEEPER_PROVIDERS = "/%s/providers";
 
@@ -41,8 +43,6 @@ public interface Constants {
     String PUSH_SERVER_WORKER_NUM = "push.server.worker.num";
 
     String PUSH_SERVER_QUEUE_SIZE = "push.server.queue.size";
-
-    String PUSH_SERVER_AUTO_COMMIT_OFFSET = "push.server.auto.commit.offset";
 
     String PUSH_SERVER_TOPIC = "push.server.topic";
 

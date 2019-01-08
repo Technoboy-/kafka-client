@@ -1,7 +1,9 @@
 package com.tt.kafka.client.zookeeper;
 
 import com.tt.kafka.client.PushConfigs;
+import com.tt.kafka.serializer.SerializerImpl;
 import com.tt.kafka.util.Constants;
+import com.tt.kafka.util.StringUtils;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.framework.api.CuratorEvent;
@@ -22,11 +24,24 @@ public class ZookeeperClient {
 
     public ZookeeperClient(PushConfigs pushConfigs){
         this.client = CuratorFrameworkFactory.builder()
-                .namespace(Constants.ZOOKEEPER_NAMESPACE)
+                .namespace(Constants.ZOOKEEPER_PUSH_SERVER_NAMESPACE)
                 .connectString(pushConfigs.getZookeeperServerList())
                 .retryPolicy(new ExponentialBackoffRetry(1000, 3))
                 .sessionTimeoutMs(pushConfigs.getZookeeperSessionTimeoutMs())
                 .connectionTimeoutMs(pushConfigs.getZookeeperConnectionTimeoutMs())
+                .build();
+    }
+
+    public ZookeeperClient(String serverList, String namespace, int sessionTimeoutMs, int connectionTimeoutMs){
+        CuratorFrameworkFactory.Builder builder = CuratorFrameworkFactory.builder();
+        if(!StringUtils.isBlank(namespace)){
+            builder.namespace(namespace);
+        }
+        this.client = builder
+                .connectString(serverList)
+                .retryPolicy(new ExponentialBackoffRetry(1000, 3))
+                .sessionTimeoutMs(sessionTimeoutMs)
+                .connectionTimeoutMs(connectionTimeoutMs)
                 .build();
     }
 
@@ -37,6 +52,11 @@ public class ZookeeperClient {
     public List<String> getChildren(String path) throws Exception {
         checkState();
         return this.client.getChildren().forPath(path);
+    }
+
+    public byte[] getData(String path) throws Exception{
+        checkState();
+        return this.client.getData().forPath(path);
     }
 
     public boolean checkExists(String path) throws Exception {

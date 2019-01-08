@@ -56,6 +56,11 @@ public class NettyConnection implements Connection {
     }
 
     @Override
+    public boolean isWritable() {
+        return this.channel.isWritable();
+    }
+
+    @Override
     public void close() {
         this.channel.close();
     }

@@ -1,6 +1,8 @@
 package com.tt.kafka.consumer;
 
+import com.tt.kafka.client.PushConfigs;
 import com.tt.kafka.client.PushServerConnector;
+import com.tt.kafka.client.zookeeper.KafkaZookeeperConfig;
 import com.tt.kafka.consumer.exceptions.TopicNotExistException;
 import com.tt.kafka.consumer.listener.AcknowledgeMessageListener;
 import com.tt.kafka.consumer.listener.AutoCommitMessageListener;
@@ -14,6 +16,7 @@ import com.tt.kafka.serializer.Serializer;
 import com.tt.kafka.util.CollectionUtils;
 import com.tt.kafka.util.Pair;
 import com.tt.kafka.util.Preconditions;
+import com.tt.kafka.util.StringUtils;
 import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.serialization.ByteArrayDeserializer;
@@ -56,14 +59,21 @@ public class DefaultKafkaConsumerImpl<K, V> implements Runnable, KafkaConsumer<K
         keySerializer = configs.getKeySerializer();
         valueSerializer = configs.getValueSerializer();
 
-        // KAFKA 0.11 later version.
-        if(configs.get("partition.assignment.strategy") == null){
-            configs.put("partition.assignment.strategy", "com.tt.kafka.consumer.assignor.CheckTopicStickyAssignor");
-        }
-        configs.put("bootstrap.servers", configs.getBootstrapServers());
-        configs.put("group.id", configs.getGroupId());
+        if(!this.configs.isUseProxy()){
+            // KAFKA 0.11 later version.
+            if(configs.get("partition.assignment.strategy") == null){
+                configs.put("partition.assignment.strategy", "com.tt.kafka.consumer.assignor.CheckTopicStickyAssignor");
+            }
+            String bootstrapServers = configs.getKafkaServers();
+            if(StringUtils.isBlank(bootstrapServers)){
+                bootstrapServers = KafkaZookeeperConfig.getBrokerIds(configs.getZookeeperServers(), configs.getZookeeperNamespace());
+            }
 
-        this.consumer = new org.apache.kafka.clients.consumer.KafkaConsumer(configs, new ByteArrayDeserializer(), new ByteArrayDeserializer());
+            configs.put("bootstrap.servers", bootstrapServers);
+            configs.put("group.id", configs.getGroupId());
+
+            this.consumer = new org.apache.kafka.clients.consumer.KafkaConsumer(configs, new ByteArrayDeserializer(), new ByteArrayDeserializer());
+        }
 
     }
 
@@ -82,6 +92,7 @@ public class DefaultKafkaConsumerImpl<K, V> implements Runnable, KafkaConsumer<K
 
         if (start.compareAndSet(false, true)) {
             if(useProxy){
+                Preconditions.checkArgument(messageListener instanceof AcknowledgeMessageListener , "using proxy, MessageListener must be AcknowledgeMessageListener");
                 pushServerConnector = new PushServerConnector(messageListenerService);
                 pushServerConnector.start();
             } else{
@@ -114,8 +125,6 @@ public class DefaultKafkaConsumerImpl<K, V> implements Runnable, KafkaConsumer<K
 
             LOG.info("kafka consumer startup with info : {}", startupInfo());
         }
-
-
     }
 
     @Override
@@ -238,12 +247,14 @@ public class DefaultKafkaConsumerImpl<K, V> implements Runnable, KafkaConsumer<K
     public void close() {
         LOG.info("KafkaConsumer closing.");
         if(start.compareAndSet(true, false)){
-            synchronized (consumer) {
-                if (messageListenerService != null) {
-                    messageListenerService.close();
+            if(consumer != null){
+                synchronized (consumer) {
+                    if (messageListenerService != null) {
+                        messageListenerService.close();
+                    }
+                    consumer.unsubscribe();
+                    consumer.close();
                 }
-                consumer.unsubscribe();
-                consumer.close();
             }
             if(pushServerConnector != null){
                 pushServerConnector.close();
@@ -259,7 +270,7 @@ public class DefaultKafkaConsumerImpl<K, V> implements Runnable, KafkaConsumer<K
     private String startupInfo(){
         boolean isAssignTopicPartition = !CollectionUtils.isEmpty(configs.getTopicPartitions());
         StringBuilder builder = new StringBuilder(200);
-        builder.append("bootstrap.servers : ").append(configs.getBootstrapServers()).append(" , ");
+        builder.append("bootstrap.servers : ").append(StringUtils.isBlank(configs.getKafkaServers()) ? configs.getZookeeperServers() : configs.getKafkaServers()).append(" , ");
         builder.append("group.id : ").append(configs.getGroupId()).append(" , ");
         builder.append("in ").append(isAssignTopicPartition ? "[assign] : " + configs.getTopicPartitions(): "[subscribe] : " + configs.getTopic()).append(" , ");
         builder.append("with : " + (configs.isUseProxy() ?  "proxy model " : " direct connect ")).append(" , ");

@@ -6,10 +6,8 @@ import com.tt.kafka.client.transport.protocol.Header;
 import com.tt.kafka.client.transport.protocol.Packet;
 import com.tt.kafka.consumer.Record;
 import com.tt.kafka.consumer.TopicPartition;
-import com.tt.kafka.consumer.listener.MessageListener;
 import com.tt.kafka.consumer.service.MessageListenerService;
 import com.tt.kafka.consumer.service.ProxyAcknowledgeMessageListenerService;
-import com.tt.kafka.consumer.service.ProxyBatchAcknowledgeMessageListenerService;
 import com.tt.kafka.serializer.SerializerImpl;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.slf4j.Logger;
@@ -27,10 +25,10 @@ public class PushMessageHandler extends CommonMessageHandler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PushMessageHandler.class);
 
-    private final MessageListenerService messageListenerService;
+    private final ProxyAcknowledgeMessageListenerService messageListenerService;
 
     public PushMessageHandler(MessageListenerService messageListenerService){
-        this.messageListenerService = messageListenerService;
+        this.messageListenerService = (ProxyAcknowledgeMessageListenerService)messageListenerService;
     }
 
     @Override
@@ -38,30 +36,12 @@ public class PushMessageHandler extends CommonMessageHandler {
         LOGGER.debug("received msgId : {} ", packet.getMsgId());
         Header header = (Header)SerializerImpl.getFastJsonSerializer().deserialize(packet.getHeader(), Header.class);
         ConsumerRecord record = new ConsumerRecord(header.getTopic(), header.getPartition(), header.getOffset(), packet.getKey(), packet.getValue());
-        if(messageListenerService instanceof ProxyAcknowledgeMessageListenerService){
-            ProxyAcknowledgeMessageListenerService service = (ProxyAcknowledgeMessageListenerService)messageListenerService;
-            service.onMessage(packet.getMsgId(), record, new ProxyAcknowledgeMessageListenerService.AcknowledgmentCallback() {
-                @Override
-                public void onAcknowledge(Record record) {
-                    connection.send(ackPacket(record.getMsgId()));
-                }
-            });
-
-        } else if(messageListenerService instanceof ProxyBatchAcknowledgeMessageListenerService) {
-            ProxyBatchAcknowledgeMessageListenerService service = (ProxyBatchAcknowledgeMessageListenerService)messageListenerService;
-            service.onMessage(packet.getMsgId(), record, new ProxyBatchAcknowledgeMessageListenerService.AcknowledgmentCallback() {
-                @Override
-                public void onAcknowledge(List list) {
-                    List<Record> records = (List<Record>)list;
-                    List<Record> highestOffsetRecordList = getHighestOffsetList(records);
-                    for(Record r : highestOffsetRecordList){
-                        connection.send(ackPacket(r.getMsgId()));
-                    }
-                }
-            });
-        } else {
-            messageListenerService.onMessage(record);
-        }
+        messageListenerService.onMessage(packet.getMsgId(), record, new ProxyAcknowledgeMessageListenerService.AcknowledgmentCallback() {
+            @Override
+            public void onAcknowledge(Record record) {
+                connection.send(ackPacket(record.getMsgId()));
+            }
+        });
     }
 
     private List<Record> getHighestOffsetList(List<Record> records){
