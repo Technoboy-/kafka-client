@@ -40,7 +40,13 @@ public class PacketDecoder extends ByteToMessageDecoder {
         }
         byte[] header = new byte[headerLength];
         in.readBytes(header);
+
         //key
+        in.markReaderIndex();
+        if (in.readableBytes() < 4) {
+            in.resetReaderIndex();
+            return;
+        }
         int keyLength = in.readInt();
         if (in.readableBytes() < keyLength) {
             in.resetReaderIndex();
@@ -48,7 +54,13 @@ public class PacketDecoder extends ByteToMessageDecoder {
         }
         byte[] key = new byte[keyLength];
         in.readBytes(key);
+
         //value
+        in.markReaderIndex();
+        if (in.readableBytes() < 4) {
+            in.resetReaderIndex();
+            return;
+        }
         int valueLength = in.readInt();
         if (in.readableBytes() < valueLength) {
             in.resetReaderIndex();

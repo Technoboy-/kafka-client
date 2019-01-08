@@ -1,9 +1,14 @@
 package com.tt.kafka.client.service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * @Author: Tboy
  */
 public class DefaultRetryPolicy implements RetryPolicy {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(DefaultRetryPolicy.class);
 
     private final int retryCountReplica;
 
@@ -24,6 +29,7 @@ public class DefaultRetryPolicy implements RetryPolicy {
     @Override
     public boolean allowRetry() throws InterruptedException{
         if(retryCount > 0){
+            LOGGER.debug("Thread " + Thread.currentThread().getName() + " is retrying to get client ...");
             Thread.sleep(retryPeriod);
             retryCount--;
             return true;
