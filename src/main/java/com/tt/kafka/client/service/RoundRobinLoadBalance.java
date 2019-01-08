@@ -1,6 +1,7 @@
 package com.tt.kafka.client.service;
 
 import com.tt.kafka.client.transport.Address;
+import com.tt.kafka.client.transport.Connection;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -16,6 +17,11 @@ public class RoundRobinLoadBalance implements LoadBalance<Address> {
         if(invokers.size() <= 0){
             return null;
         }
-        return invokers.get(index.incrementAndGet() % invokers.size());
+        if(index.get() >= invokers.size()){
+            index.set(0);
+        }
+        Address address = invokers.get(index.get());
+        index.incrementAndGet();
+        return address;
     }
 }
