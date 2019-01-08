@@ -23,7 +23,11 @@ public class Packet implements Serializable {
 
     public static final byte VERSION = (byte)0x00;
 
-    public static final int LENGTH = 1 + 1 + 1 + 8 + 4;
+    public static final int TO_HEADER_LENGTH = 1 + 1 + 1 + 8 + 4;
+
+    public static final int KEY_SIZE = 4;
+
+    public static final int VALUE_SIZE = 4;
 
     private byte version;
 

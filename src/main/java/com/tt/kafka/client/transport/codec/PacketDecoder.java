@@ -16,7 +16,7 @@ public class PacketDecoder extends ByteToMessageDecoder {
 
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
-        if (in.readableBytes() < LENGTH) {
+        if (in.readableBytes() < TO_HEADER_LENGTH) {
             return;
         }
         in.markReaderIndex();
@@ -42,8 +42,7 @@ public class PacketDecoder extends ByteToMessageDecoder {
         in.readBytes(header);
 
         //key
-        in.markReaderIndex();
-        if (in.readableBytes() < 4) {
+        if (in.readableBytes() < KEY_SIZE) {
             in.resetReaderIndex();
             return;
         }
@@ -56,8 +55,7 @@ public class PacketDecoder extends ByteToMessageDecoder {
         in.readBytes(key);
 
         //value
-        in.markReaderIndex();
-        if (in.readableBytes() < 4) {
+        if (in.readableBytes() < VALUE_SIZE) {
             in.resetReaderIndex();
             return;
         }
