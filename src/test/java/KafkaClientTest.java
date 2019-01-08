@@ -57,8 +57,8 @@ public class KafkaClientTest {
     @Test
     public void testAsyncProducer() throws Exception {
         ProducerConfig configs = new ProducerConfig("localhost:9092");
-        configs.setKeySerializer(SerializerImpl.serializerImpl());
-        configs.setValueSerializer(SerializerImpl.serializerImpl());
+        configs.setKeySerializer(SerializerImpl.getFastJsonSerializer());
+        configs.setValueSerializer(SerializerImpl.getFastJsonSerializer());
         KafkaProducer<String, String> producer = TTKafkaClient.createProducer(configs);
 
         final AtomicBoolean alive = new AtomicBoolean(true);
@@ -351,37 +351,6 @@ public class KafkaClientTest {
             consumer.close(); //程序关闭时调用。
         }));
     }
-    @Test
-    public void testProxyAutoCommit() throws Exception{
-        ConsumerConfig configs = new ConsumerConfig("localhost:9092", "test-topic","test-group");
-        configs.setKeySerializer(SerializerImpl.getFastJsonSerializer());
-        configs.setValueSerializer(SerializerImpl.getFastJsonSerializer());
-        configs.setAutoCommit(true);
-        configs.put("auto.offset.reset", "latest");
-        configs.setUseProxy(true);
-        MessageListener<String, String> messageListener = new AutoCommitMessageListener<String, String>() {
-            @Override
-            public void onMessage(Record<String, String> record) {
-                String topic = record.getTopic();
-                int partition = record.getPartition();
-                long offset = record.getOffset();
-                long timestamp = record.getTimestamp();
-                String key = record.getKey();
-                String value = record.getValue();
-
-                LOG.info(Thread.currentThread().getName() + " , partition : {}, value: {}, offset: {}.", new Object[]{partition, value, offset});
-            }
-        };
-        KafkaConsumer<String, String> consumer = TTKafkaClient.createConsumer(configs);
-        consumer.setMessageListener(messageListener);
-        consumer.start();
-
-        TimeUnit.MINUTES.sleep(100);
-
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            consumer.close(); //程序关闭时调用。
-        }));
-    }
 
     @Test
     public void testProxyAcknowledgment() throws Exception{
@@ -415,16 +384,4 @@ public class KafkaClientTest {
         }));
     }
 
-    @Test
-    public void testSave(){
-        byte[] key = SerializerImpl.getFastJsonSerializer().serialize("key");
-        byte[] value = SerializerImpl.getFastJsonSerializer().serialize("value");
-        Record<byte[], byte[]> record = new Record<>(1,"test-topic", 1, 1, key, value, 1);
-        System.out.println(record);
-        byte[] serialize = SerializerImpl.getFastJsonSerializer().serialize(record);
-        System.out.println(new String(serialize));
-
-        System.out.println(SerializerImpl.getFastJsonSerializer().deserialize(serialize, String.class));
-
-    }
 }
