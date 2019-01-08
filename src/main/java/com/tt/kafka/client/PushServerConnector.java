@@ -70,6 +70,7 @@ public class PushServerConnector{
         for(Address address : registryService.getCopyProviders()){
             addNettyClient(address);
         }
+        LOGGER.debug("PushServerConnector started");
     }
 
     private void addNettyClient(Address address){
@@ -81,10 +82,11 @@ public class PushServerConnector{
     }
 
     public void close(){
-        this.registryService.close();
         for(NettyClient client : clients.values()){
             client.close();
         }
+        this.registryService.close();
+        LOGGER.debug("PushServerConnector closed");
     }
 
 

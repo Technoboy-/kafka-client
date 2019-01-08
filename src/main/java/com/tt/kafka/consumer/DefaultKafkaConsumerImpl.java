@@ -245,8 +245,8 @@ public class DefaultKafkaConsumerImpl<K, V> implements Runnable, KafkaConsumer<K
 
     @Override
     public void close() {
-        LOG.info("KafkaConsumer closing.");
         if(start.compareAndSet(true, false)){
+            LOG.info("KafkaConsumer closing.");
             if(consumer != null){
                 synchronized (consumer) {
                     if (messageListenerService != null) {

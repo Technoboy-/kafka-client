@@ -1,5 +1,6 @@
 package com.tt.kafka.client.transport;
 
+import com.tt.kafka.client.transport.exceptions.ChannelInactiveException;
 import com.tt.kafka.client.transport.protocol.Packet;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFutureListener;
@@ -20,9 +21,9 @@ public interface Connection {
 
     Channel getChannel();
 
-    void send(Packet packet);
+    void send(Packet packet) throws ChannelInactiveException;
 
-    void send(Packet packet, ChannelFutureListener listener);
+    void send(Packet packet, ChannelFutureListener listener) throws ChannelInactiveException;
 
     long getConnectTime();
 

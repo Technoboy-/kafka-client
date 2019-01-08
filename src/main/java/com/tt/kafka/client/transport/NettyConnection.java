@@ -1,5 +1,6 @@
 package com.tt.kafka.client.transport;
 
+import com.tt.kafka.client.transport.exceptions.ChannelInactiveException;
 import com.tt.kafka.client.transport.protocol.Packet;
 import com.tt.kafka.util.NetUtils;
 import io.netty.channel.Channel;
@@ -71,12 +72,12 @@ public class NettyConnection implements Connection {
     }
 
     @Override
-    public void send(Packet packet) {
+    public void send(Packet packet) throws ChannelInactiveException {
         this.send(packet, null);
     }
 
     @Override
-    public void send(Packet packet, ChannelFutureListener listener) {
+    public void send(Packet packet, ChannelFutureListener listener) throws ChannelInactiveException {
         if(this.channel.isActive()){
             ChannelFuture future = this.channel.writeAndFlush(packet).addListener(new ChannelFutureListener(){
 
@@ -92,7 +93,7 @@ public class NettyConnection implements Connection {
                 future.addListener(listener);
             }
         } else{
-            throw new RuntimeException("channel inactive exception, msg : { " + packet + " }");
+            throw new ChannelInactiveException("channel inactive exception, msg : { " + packet + " }");
         }
     }
 

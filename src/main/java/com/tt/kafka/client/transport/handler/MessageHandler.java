@@ -8,10 +8,10 @@ import com.tt.kafka.client.transport.Connection;
  */
 public interface MessageHandler {
 
-    public void handle(Connection connection, Packet packet) throws Exception;
+    void handle(Connection connection, Packet packet) throws Exception;
 
-    public void beforeHandle(Connection connection, Packet packet) throws Exception;
+    void beforeHandle(Connection connection, Packet packet) throws Exception;
 
-    public void afterHandle(Connection connection, Packet packet) throws Exception;
+    void afterHandle(Connection connection, Packet packet) throws Exception;
 
 }

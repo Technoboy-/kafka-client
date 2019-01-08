@@ -56,6 +56,7 @@ public class PacketDecoder extends ByteToMessageDecoder {
         }
         byte[] value = new byte[valueLength];
         in.readBytes(value);
+        //
         Packet p = new Packet();
         p.setCmd(cmd);
         p.setVersion(version);
