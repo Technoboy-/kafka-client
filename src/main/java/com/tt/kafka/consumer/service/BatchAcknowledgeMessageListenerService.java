@@ -50,7 +50,7 @@ public class BatchAcknowledgeMessageListenerService<K, V> extends RebalanceAckno
             if(record != EmptyConsumerRecord.EMPTY){
                 container.add(consumer.toRecord(record));
             }
-            if(container.isEmpty() || (container.size() < this.batchConsumeSize && System.currentTimeMillis() + batchConsumeTime < lastConsumeTime)){
+            if(container.isEmpty() || (container.size() < this.batchConsumeSize && System.currentTimeMillis() - batchConsumeTime < lastConsumeTime)){
                 return;
             }
             semaphore.acquire();
