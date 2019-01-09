@@ -1,6 +1,8 @@
 package com.tt.kafka.client;
 
 import com.tt.kafka.util.Constants;
+import com.tt.kafka.util.Preconditions;
+import com.tt.kafka.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,9 +26,13 @@ public class PushConfigs {
 
     private final Properties properties;
 
+    private final boolean serverSide;
+
     public PushConfigs(boolean serverSide){
         this.properties = new Properties();
+        this.serverSide = serverSide;
         load(serverSide ? SERVER_CONFIG_FILE : CLIENT_CONFIG_FILE);
+        checkNotEmtpy();
     }
 
     private void load(String file){
@@ -54,6 +60,15 @@ public class PushConfigs {
             LOGGER.error("error", ex);
             throw new RuntimeException(ex);
         }
+    }
+
+    private void checkNotEmtpy(){
+        Preconditions.checkArgument(!StringUtils.isBlank(getServerTopic()), "topic should not be empty");
+        //
+        if(serverSide){
+            Preconditions.checkArgument(!StringUtils.isBlank(getServerGroupId()), "groupId should not be empty");
+        }
+
     }
 
     public String getClientTopic() {

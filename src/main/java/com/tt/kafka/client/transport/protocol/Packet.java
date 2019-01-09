@@ -29,6 +29,14 @@ public class Packet implements Serializable {
 
     public static final int VALUE_SIZE = 4;
 
+    public Packet(){
+        //NOP
+    }
+
+    public Packet(long msgId){
+        this.msgId = msgId;
+    }
+
     private byte version;
 
     private byte cmd;
