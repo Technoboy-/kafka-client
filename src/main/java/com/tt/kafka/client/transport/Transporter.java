@@ -5,6 +5,7 @@ import com.tt.kafka.client.transport.codec.PacketDecoder;
 import com.tt.kafka.client.transport.codec.PacketEncoder;
 import com.tt.kafka.client.transport.handler.ClientHandler;
 import com.tt.kafka.consumer.service.MessageListenerService;
+import com.tt.kafka.util.NamedThreadFactory;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelInitializer;

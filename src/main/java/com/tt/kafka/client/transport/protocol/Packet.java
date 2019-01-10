@@ -49,7 +49,7 @@ public class Packet implements Serializable {
 
     private byte[] value;
 
-    public short getVersion() {
+    public byte getVersion() {
         return version;
     }
 

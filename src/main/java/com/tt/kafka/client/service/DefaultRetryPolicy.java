@@ -29,7 +29,9 @@ public class DefaultRetryPolicy implements RetryPolicy {
     @Override
     public boolean allowRetry() throws InterruptedException{
         if(retryCount > 0){
-            LOGGER.debug("Thread " + Thread.currentThread().getName() + " is retrying to get client ...");
+            if(LOGGER.isTraceEnabled()){
+                LOGGER.trace("Thread " + Thread.currentThread().getName() + " is retrying to get client ...");
+            }
             Thread.sleep(retryPeriod);
             retryCount--;
             return true;
