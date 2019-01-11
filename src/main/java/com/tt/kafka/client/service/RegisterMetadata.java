@@ -7,22 +7,19 @@ import java.io.Serializable;
 /**
  * @Author: Tboy
  */
-public class RegisterMetadata<T> implements Serializable {
+public class RegisterMetadata implements Serializable {
 
     private String path;
 
     private Address address;
 
-    private T ref;
-
     public RegisterMetadata(){
         //
     }
 
-    public RegisterMetadata(String path, Address address, T ref){
+    public RegisterMetadata(String path, Address address){
         this.path = path;
         this.address = address;
-        this.ref = ref;
     }
 
     public String getPath() {
@@ -41,20 +38,11 @@ public class RegisterMetadata<T> implements Serializable {
         this.address = address;
     }
 
-    public T getRef() {
-        return ref;
-    }
-
-    public void setRef(T ref) {
-        this.ref = ref;
-    }
-
     @Override
     public String toString() {
         return "RegisterMetadata{" +
                 "path='" + path + '\'' +
                 ", address=" + address +
-                ", ref=" + ref +
                 '}';
     }
 }

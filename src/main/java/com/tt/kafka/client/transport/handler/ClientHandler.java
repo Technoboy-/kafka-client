@@ -33,6 +33,8 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
     }
 
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+
+
         dispatcher.dispatch(NettyConnection.attachChannel(ctx.channel()), (Packet)msg);
     }
 

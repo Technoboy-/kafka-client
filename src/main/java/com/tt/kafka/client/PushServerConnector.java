@@ -1,6 +1,5 @@
 package com.tt.kafka.client;
 
-import com.tt.kafka.client.service.RegisterMetadata;
 import com.tt.kafka.client.service.RegistryListener;
 import com.tt.kafka.client.service.RegistryService;
 import com.tt.kafka.client.transport.Address;
@@ -11,7 +10,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @Author: Tboy
@@ -20,45 +18,26 @@ public class PushServerConnector{
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PushServerConnector.class);
 
-    private final MessageListenerService messageListenerService;
-
     private final RegistryService registryService;
 
     private final PushConfigs pushConfigs;
 
-    private final ConcurrentHashMap<Address, NettyClient> clients = new ConcurrentHashMap<>();
+    private final NettyClient nettyClient;
 
     public PushServerConnector(MessageListenerService messageListenerService){
-        this.messageListenerService = messageListenerService;
+        this.nettyClient = new NettyClient(messageListenerService);
         this.pushConfigs = new PushConfigs(false);
-        this.registryService = new RegistryService(pushConfigs);
+        this.registryService = new RegistryService();
         this.registryService.addListener(new RegistryListener() {
-            @Override
-            public void onSubscribe(String path) {
-
-            }
-
-            @Override
-            public void onRegister(RegisterMetadata metadata) {
-
-            }
-
-            @Override
-            public void onDestroy(RegisterMetadata metadata) {
-
-            }
 
             @Override
             public void onChange(Address address, Event event) {
                 switch (event){
                     case ADD:
-                        addNettyClient(address);
+                        nettyClient.connect(new InetSocketAddress(address.getHost(), address.getPort()));
                         break;
                     case DELETE:
-                        NettyClient pre = clients.remove(address);
-                        if(pre != null){
-                            pre.close();
-                        }
+                        nettyClient.disconnect(new InetSocketAddress(address.getHost(), address.getPort()));
                         break;
                 }
             }
@@ -67,24 +46,11 @@ public class PushServerConnector{
     }
 
     public void start(){
-        for(Address address : registryService.getCopyProviders()){
-            addNettyClient(address);
-        }
         LOGGER.debug("PushServerConnector started");
     }
 
-    private void addNettyClient(Address address){
-        if(!clients.containsKey(address)){
-            NettyClient nettyClient = new NettyClient(registryService, messageListenerService);
-            nettyClient.connect(new InetSocketAddress(address.getHost(), address.getPort()));
-            clients.put(address, nettyClient);
-        }
-    }
-
     public void close(){
-        for(NettyClient client : clients.values()){
-            client.close();
-        }
+        this.nettyClient.close();
         this.registryService.close();
         LOGGER.debug("PushServerConnector closed");
     }

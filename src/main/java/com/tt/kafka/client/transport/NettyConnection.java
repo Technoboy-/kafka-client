@@ -12,6 +12,7 @@ import io.netty.util.AttributeKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.SocketAddress;
 import java.util.Date;
 import java.util.Objects;
 
@@ -108,6 +109,11 @@ public class NettyConnection implements Connection {
         if (o == null || getClass() != o.getClass()) return false;
         NettyConnection that = (NettyConnection) o;
         return Objects.equals(getChannel().id().asLongText(), that.getChannel().id().asLongText());
+    }
+
+    @Override
+    public SocketAddress remoteAddress(){
+        return this.channel.remoteAddress();
     }
 
     @Override

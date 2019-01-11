@@ -22,13 +22,13 @@ public class ZookeeperClient {
 
     private final CuratorFramework client;
 
-    public ZookeeperClient(PushConfigs pushConfigs){
+    public ZookeeperClient(String serverList, int sessionTimeoutMs, int connectionTimeoutMs){
         this.client = CuratorFrameworkFactory.builder()
                 .namespace(Constants.ZOOKEEPER_PUSH_SERVER_NAMESPACE)
-                .connectString(pushConfigs.getZookeeperServerList())
+                .connectString(serverList)
                 .retryPolicy(new ExponentialBackoffRetry(1000, 3))
-                .sessionTimeoutMs(pushConfigs.getZookeeperSessionTimeoutMs())
-                .connectionTimeoutMs(pushConfigs.getZookeeperConnectionTimeoutMs())
+                .sessionTimeoutMs(sessionTimeoutMs)
+                .connectionTimeoutMs(connectionTimeoutMs)
                 .build();
     }
 

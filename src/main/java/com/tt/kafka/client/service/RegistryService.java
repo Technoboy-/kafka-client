@@ -1,21 +1,21 @@
 package com.tt.kafka.client.service;
 
-import com.tt.kafka.client.PushConfigs;
+import com.tt.kafka.client.SystemPropertiesUtils;
 import com.tt.kafka.client.transport.Address;
 import com.tt.kafka.client.zookeeper.ZookeeperClient;
-import com.tt.kafka.util.CollectionUtils;
 import com.tt.kafka.util.Constants;
 import com.tt.kafka.util.StringUtils;
 import org.apache.curator.framework.CuratorFramework;
-import org.apache.curator.framework.recipes.cache.*;
+import org.apache.curator.framework.recipes.cache.PathChildrenCache;
+import org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent;
+import org.apache.curator.framework.recipes.cache.PathChildrenCacheListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 /**
  * @Author: Tboy
@@ -24,27 +24,26 @@ public class RegistryService implements PathChildrenCacheListener {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RegistryService.class);
 
-    private final Set<Address> providers = new HashSet<>();
+    private final CopyOnWriteArraySet<Address> providers = new CopyOnWriteArraySet<>();
 
     private final ZookeeperClient zookeeperClient;
-
-    private final PushConfigs clientConfigs;
 
     private final List<RegistryListener> listeners = new ArrayList<>();
 
     private PathChildrenCache pathChildrenCache;
 
-    public RegistryService(PushConfigs clientConfigs){
-        this.clientConfigs = clientConfigs;
-        this.zookeeperClient = new ZookeeperClient(clientConfigs);
+    private final String serverList = SystemPropertiesUtils.get(Constants.ZOOKEEPER_SERVER_LIST);
+
+    private final int sessionTimeoutMs = SystemPropertiesUtils.getInt(Constants.ZOOKEEPER_SESSION_TIMEOUT_MS, 60000);
+
+    private final int connectionTimeoutMs = SystemPropertiesUtils.getInt(Constants.ZOOKEEPER_CONNECTION_TIMEOUT_MS, 15000);
+
+    public RegistryService(){
+        this.zookeeperClient = new ZookeeperClient(serverList, sessionTimeoutMs, connectionTimeoutMs);
         this.zookeeperClient.start();
     }
 
     public void subscribe(String path){
-        for(RegistryListener listener : listeners){
-            listener.onSubscribe(path);
-        }
-        parseProviders(path);
         this.pathChildrenCache = new PathChildrenCache(this.zookeeperClient.getClient(), path, false);
         this.pathChildrenCache.getListenable().addListener(this);
         try {
@@ -60,9 +59,6 @@ public class RegistryService implements PathChildrenCacheListener {
     }
 
     public void register(RegisterMetadata metadata){
-        for(RegistryListener listener : listeners){
-            listener.onRegister(metadata);
-        }
         try {
             if(!zookeeperClient.checkExists(metadata.getPath())){
                 zookeeperClient.createPersistent(metadata.getPath());
@@ -81,23 +77,11 @@ public class RegistryService implements PathChildrenCacheListener {
     }
 
     public void unregister(RegisterMetadata metadata){
-        for(RegistryListener listener : listeners){
-            listener.onDestroy(metadata);
-        }
         try {
             zookeeperClient.delete(metadata.getPath() + String.format(Constants.ZOOKEEPER_PROVIDER_CONSUMER_NODE, metadata.getAddress().getHost(), metadata.getAddress().getPort()));
         } catch (Exception ex) {
             LOGGER.error("destroy service {} error {}", metadata, ex);
         }
-    }
-
-    public List<Address> getCopyProviders() {
-        return new ArrayList<>(providers);
-    }
-
-
-    public PushConfigs getClientConfigs() {
-        return clientConfigs;
     }
 
     public void close(){
@@ -109,21 +93,6 @@ public class RegistryService implements PathChildrenCacheListener {
             //
         }
         this.zookeeperClient.close();
-    }
-
-    public void parseProviders(String path){
-        try {
-            List<String> children = this.zookeeperClient.getChildren(path);
-            LOGGER.debug("get path :{} , children : {} ", path, children);
-            if(!CollectionUtils.isEmpty(children)){
-                for(String child : children){
-                    Address address = parse(child);
-                    providers.add(address);
-                }
-            }
-        } catch (Exception ex) {
-            LOGGER.error("parseProviders , path : {} error : {}", path, ex);
-        }
     }
 
     private Address parse(String child){
