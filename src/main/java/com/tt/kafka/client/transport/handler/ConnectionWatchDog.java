@@ -1,4 +1,4 @@
-package com.tt.kafka.client.transport;
+package com.tt.kafka.client.transport.handler;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.ChannelFuture;
@@ -26,6 +26,8 @@ public abstract class ConnectionWatchDog extends ChannelInboundHandlerAdapter im
     private final Bootstrap bootstrap;
     private final Timer timer;
     private final SocketAddress socketAddress;
+
+    private volatile boolean isReconnect = true;
 
     public ConnectionWatchDog(Bootstrap bootstrap, Timer timer, SocketAddress socketAddress){
         this.bootstrap = bootstrap;
@@ -69,9 +71,13 @@ public abstract class ConnectionWatchDog extends ChannelInboundHandlerAdapter im
         }
     }
 
-    private boolean isReconnect(){
-        return true;
+    public boolean isReconnect() {
+        return isReconnect;
     }
 
-    abstract ChannelHandler[] handlers();
+    public void setReconnect(boolean reconnect) {
+        isReconnect = reconnect;
+    }
+
+    public abstract ChannelHandler[] handlers();
 }
