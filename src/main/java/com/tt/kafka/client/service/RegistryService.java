@@ -1,6 +1,6 @@
 package com.tt.kafka.client.service;
 
-import com.tt.kafka.client.SystemPropertiesUtils;
+import com.tt.kafka.client.util.SystemPropertiesUtils;
 import com.tt.kafka.client.transport.Address;
 import com.tt.kafka.client.zookeeper.ZookeeperClient;
 import com.tt.kafka.util.Constants;

@@ -1,7 +1,6 @@
 package com.tt.kafka.consumer;
 
-import com.tt.kafka.client.PushConfigs;
-import com.tt.kafka.client.PushServerConnector;
+import com.tt.kafka.client.NettyClient;
 import com.tt.kafka.client.zookeeper.KafkaZookeeperConfig;
 import com.tt.kafka.consumer.exceptions.TopicNotExistException;
 import com.tt.kafka.consumer.listener.AcknowledgeMessageListener;
@@ -14,7 +13,6 @@ import com.tt.kafka.consumer.service.MessageListenerServiceRegistry;
 import com.tt.kafka.metric.MonitorImpl;
 import com.tt.kafka.serializer.Serializer;
 import com.tt.kafka.util.CollectionUtils;
-import com.tt.kafka.util.Pair;
 import com.tt.kafka.util.Preconditions;
 import com.tt.kafka.util.StringUtils;
 import org.apache.kafka.clients.consumer.*;
@@ -52,7 +50,7 @@ public class DefaultKafkaConsumerImpl<K, V> implements Runnable, KafkaConsumer<K
 
     private MessageListenerServiceRegistry serviceRegistry;
 
-    private PushServerConnector pushServerConnector;
+    private NettyClient nettyClient;
 
     public DefaultKafkaConsumerImpl(ConsumerConfig configs) {
         this.configs = configs;
@@ -93,8 +91,8 @@ public class DefaultKafkaConsumerImpl<K, V> implements Runnable, KafkaConsumer<K
         if (start.compareAndSet(false, true)) {
             if(useProxy){
                 Preconditions.checkArgument(messageListener instanceof AcknowledgeMessageListener , "using proxy, MessageListener must be AcknowledgeMessageListener");
-                pushServerConnector = new PushServerConnector(messageListenerService);
-                pushServerConnector.start();
+                nettyClient = new NettyClient(messageListenerService);
+                nettyClient.start();
             } else{
                 boolean isAssignTopicPartition = !CollectionUtils.isEmpty(configs.getTopicPartitions());
                 if(isAssignTopicPartition){
@@ -256,8 +254,8 @@ public class DefaultKafkaConsumerImpl<K, V> implements Runnable, KafkaConsumer<K
                     consumer.close();
                 }
             }
-            if(pushServerConnector != null){
-                pushServerConnector.close();
+            if(nettyClient != null){
+                nettyClient.close();
             }
             LOG.info("KafkaConsumer closed.");
         }

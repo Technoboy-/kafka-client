@@ -1,4 +1,4 @@
-package com.tt.kafka.client;
+package com.tt.kafka.client.util;
 
 import com.tt.kafka.util.StringUtils;
 
