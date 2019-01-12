@@ -1,0 +1,6 @@
+jackson=com.owl.kafka.serializer.JacksonSerializer
+hessian=com.owl.kafka.serializer.HessianSerializer
+bytearray=com.owl.kafka.serializer.ByteArraySerializer
+string=com.owl.kafka.serializer.StringSerializer
+fastjson=com.owl.kafka.serializer.FastJsonSerializer
+protostuff=com.owl.kafka.serializer.ProtoStuffSerializer
