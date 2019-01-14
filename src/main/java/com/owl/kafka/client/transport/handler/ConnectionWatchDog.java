@@ -15,7 +15,6 @@ import java.net.SocketAddress;
 import java.util.concurrent.TimeUnit;
 
 /**
- * 参考Jupiter
  * @Author: Tboy
  */
 @ChannelHandler.Sharable
@@ -36,8 +35,7 @@ public abstract class ConnectionWatchDog extends ChannelInboundHandlerAdapter im
     }
 
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
-
-
+        LOGGER.info("connect to server : {} success", socketAddress);
         ctx.fireChannelActive();
     }
 
@@ -60,13 +58,8 @@ public abstract class ConnectionWatchDog extends ChannelInboundHandlerAdapter im
         synchronized (bootstrap){
             future = bootstrap.connect(socketAddress);
         }
-        boolean connected = future.awaitUninterruptibly(3000, TimeUnit.MILLISECONDS);
-        if (connected && future.isSuccess()) {
-            LOGGER.info("connect to server : {} success", socketAddress);
-
-        } else if (future.cause() != null) {
-            LOGGER.error("connect to server " + socketAddress + " fail", future.cause());
-        } else {
+        future.awaitUninterruptibly(3000, TimeUnit.MILLISECONDS);
+        if (future.cause() != null) {
             LOGGER.error("connect to server " + socketAddress + " fail", future.cause());
         }
     }

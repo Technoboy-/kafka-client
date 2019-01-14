@@ -1,6 +1,6 @@
 package com.owl.kafka.client.transport.handler;
 
-import com.owl.kafka.client.util.Heartbeats;
+import com.owl.kafka.client.util.Packets;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -18,9 +18,10 @@ public class IdleStateTrigger extends ChannelInboundHandlerAdapter {
         if(evt instanceof IdleStateEvent){
             IdleStateEvent event = (IdleStateEvent)evt;
             if(event.state() == IdleState.WRITER_IDLE){
-                ctx.writeAndFlush(Heartbeats.heartbeat());
+                ctx.writeAndFlush(Packets.ping());
             }
         } else {
+            System.out.println("1111");
             super.userEventTriggered(ctx, evt);
         }
     }

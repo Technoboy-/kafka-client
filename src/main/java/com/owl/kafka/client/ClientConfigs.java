@@ -13,11 +13,11 @@ public class ClientConfigs extends ConfigLoader{
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ClientConfigs.class);
 
-    String CLIENT_TOPIC = "client.topic";
+    static final String CLIENT_TOPIC = "client.topic";
 
-    String CLIENT_WORKER_NUM = "client.worker.num";
+    static final String CLIENT_WORKER_NUM = "client.worker.num";
 
-    static String CLIENT_CONFIG_FILE = "push_client.properties";
+    static final  String CLIENT_CONFIG_FILE = "push_client.properties";
 
     public static ClientConfigs I = new ClientConfigs(CLIENT_CONFIG_FILE);
 

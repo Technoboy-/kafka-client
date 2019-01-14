@@ -1,6 +1,7 @@
 package com.owl.kafka.client.transport;
 
 import com.owl.kafka.client.transport.handler.ConnectionWatchDog;
+import com.owl.kafka.client.util.Packets;
 import io.netty.channel.ChannelFuture;
 
 /**
@@ -17,9 +18,15 @@ public class Reconnector {
         this.future = future;
     }
 
-    public void setReconnect(boolean reconnect){
-        connectionWatchDog.setReconnect(reconnect);
+
+    public void disconnect(){
+        this.connectionWatchDog.setReconnect(false);
+        this.future.channel().close();
     }
 
-
+    public void close(){
+        this.connectionWatchDog.setReconnect(false);
+        this.future.channel().writeAndFlush(Packets.unregister());
+        this.future.channel().close();
+    }
 }

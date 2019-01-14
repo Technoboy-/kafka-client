@@ -29,7 +29,7 @@ public class NettyClient {
             public void onChange(Address address, Event event) {
                 switch (event){
                     case ADD:
-                        nettyConnector.connect(new InetSocketAddress(address.getHost(), address.getPort()));
+                        nettyConnector.connect(new InetSocketAddress(address.getHost(), address.getPort()), true);
                         break;
                     case DELETE:
                         nettyConnector.disconnect(new InetSocketAddress(address.getHost(), address.getPort()));

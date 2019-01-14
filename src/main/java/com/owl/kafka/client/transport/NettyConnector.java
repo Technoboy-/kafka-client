@@ -54,18 +54,19 @@ public class NettyConnector {
     }
 
     private void initHandler(MessageListenerService messageListenerService){
+        this.dispatcher.register(Command.PONG, new PongMessageHandler());
         this.dispatcher.register(Command.PUSH, new PushMessageHandler(messageListenerService));
         this.handler = new ClientHandler(this.dispatcher);
     }
 
-    public void connect(InetSocketAddress address) {
+    public void connect(InetSocketAddress address, boolean isSync) {
         //
         final ConnectionWatchDog connectionWatchDog = new ConnectionWatchDog(bootstrap, timer, address){
 
             @Override
             public ChannelHandler[] handlers() {
                 return new ChannelHandler[]{this,
-                        new IdleStateHandler(60, 60, 9),
+                        new IdleStateHandler(0, 30, 0),
                         idleStateTrigger, new PacketDecoder(), handler, encoder};
             }
         };
@@ -79,6 +80,9 @@ public class NettyConnector {
                 });
                 future = bootstrap.connect(address);
             }
+            if(isSync){
+               future.sync();
+            }
             reconnectors.put(address, new Reconnector(connectionWatchDog, future));
         } catch (Throwable ex){
             throw new RuntimeException("Connects to [" + address + "] fails", ex);
@@ -89,7 +93,7 @@ public class NettyConnector {
         try {
             Reconnector reconnector = reconnectors.remove(address);
             if(reconnector != null){
-                reconnector.setReconnect(false);
+                reconnector.disconnect();
             }
         } catch (Throwable ex){
             LOGGER.error("disconnect error", ex);
@@ -97,8 +101,8 @@ public class NettyConnector {
     }
 
     public void close(){
-        for(InetSocketAddress address : reconnectors.keySet()){
-            disconnect(address);
+        for(Reconnector reconnector : reconnectors.values()){
+            reconnector.close();
         }
         if(workGroup != null){
             workGroup.shutdownGracefully();

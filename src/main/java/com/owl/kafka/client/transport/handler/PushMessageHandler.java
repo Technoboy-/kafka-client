@@ -5,6 +5,7 @@ import com.owl.kafka.client.transport.exceptions.ChannelInactiveException;
 import com.owl.kafka.client.transport.protocol.Command;
 import com.owl.kafka.client.transport.protocol.Header;
 import com.owl.kafka.client.transport.protocol.Packet;
+import com.owl.kafka.client.util.Packets;
 import com.owl.kafka.consumer.Record;
 import com.owl.kafka.consumer.service.MessageListenerService;
 import com.owl.kafka.consumer.service.ProxyAcknowledgeMessageListenerService;
@@ -35,7 +36,7 @@ public class PushMessageHandler extends CommonMessageHandler {
             @Override
             public void onAcknowledge(Record record) {
                 try {
-                    connection.send(ackPacket(record.getMsgId()));
+                    connection.send(Packets.ack(record.getMsgId()));
                 } catch (ChannelInactiveException ex) {
                     //in this case, we do not need to care about it, because push server has repush policy
                     LOGGER.error("ChannelInactiveException, closing the channel ", ex);
@@ -45,13 +46,4 @@ public class PushMessageHandler extends CommonMessageHandler {
         });
     }
 
-    private Packet ackPacket(long msgId){
-        Packet ack = new Packet();
-        ack.setCmd(Command.ACK.getCmd());
-        ack.setMsgId(msgId);
-        ack.setHeader(new byte[0]);
-        ack.setKey(new byte[0]);
-        ack.setValue(new byte[0]);
-        return ack;
-    }
 }

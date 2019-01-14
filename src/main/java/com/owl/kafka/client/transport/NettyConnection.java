@@ -112,7 +112,7 @@ public class NettyConnection implements Connection {
     }
 
     @Override
-    public SocketAddress remoteAddress(){
+    public SocketAddress getRemoteAddress(){
         return this.channel.remoteAddress();
     }
 

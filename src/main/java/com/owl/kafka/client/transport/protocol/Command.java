@@ -5,13 +5,15 @@ package com.owl.kafka.client.transport.protocol;
  */
 public enum Command {
 
-    HEARTBEAT(1),
+    PING(1),
 
-    UNREGISTER(2),
+    PONG(2),
 
     PUSH(3),
 
     ACK(4),
+
+    UNREGISTER(5),
 
     UNKNOWN(-1);
 

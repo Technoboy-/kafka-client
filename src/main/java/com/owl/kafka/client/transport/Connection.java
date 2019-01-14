@@ -27,7 +27,7 @@ public interface Connection {
 
     void send(Packet packet, ChannelFutureListener listener) throws ChannelInactiveException;
 
-    SocketAddress remoteAddress();
+    SocketAddress getRemoteAddress();
 
     long getConnectTime();
 
