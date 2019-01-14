@@ -1,8 +1,9 @@
 package com.owl.kafka.client.util;
 
-import com.owl.kafka.client.service.IdService;
 import com.owl.kafka.client.transport.protocol.Command;
 import com.owl.kafka.client.transport.protocol.Packet;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 
 /**
  * @Author: Tboy
@@ -15,9 +16,34 @@ public class Packets {
 
     private static byte[] EMPTY_VALUE = new byte[0];
 
+    private static final ByteBuf HEARTBEATS_BUF;
+
+    static {
+        ByteBuf buf = Unpooled.buffer();
+        buf.writeByte(Packet.MAGIC);
+        buf.writeByte(Packet.VERSION);
+        buf.writeByte(Command.PING.getCmd());
+        buf.writeLong(0);
+        buf.writeInt(0);
+        buf.writeBytes(EMPTY_HEADER);
+        buf.writeInt(0);
+        buf.writeBytes(EMPTY_KEY);
+        buf.writeInt(0);
+        buf.writeBytes(EMPTY_VALUE);
+        HEARTBEATS_BUF = Unpooled.unreleasableBuffer(buf).asReadOnly();
+    }
+
+    public static ByteBuf heartbeatContent(){
+        return HEARTBEATS_BUF.duplicate();
+    }
+
+    public static ByteBuf registerContent(){
+        return HEARTBEATS_BUF.duplicate();
+    }
+
     public static Packet ping(){
         Packet ping = new Packet();
-        ping.setMsgId(IdService.I.getId());
+        ping.setMsgId(0);
         ping.setCmd(Command.PING.getCmd());
         ping.setHeader(EMPTY_HEADER);
         ping.setKey(EMPTY_KEY);
@@ -27,7 +53,7 @@ public class Packets {
 
     public static Packet pong(){
         Packet pong = new Packet();
-        pong.setMsgId(IdService.I.getId());
+        pong.setMsgId(0);
         pong.setCmd(Command.PONG.getCmd());
         pong.setHeader(EMPTY_HEADER);
         pong.setKey(EMPTY_KEY);
@@ -37,7 +63,7 @@ public class Packets {
 
     public static Packet unregister(){
         Packet unregister = new Packet();
-        unregister.setMsgId(IdService.I.getId());
+        unregister.setMsgId(0);
         unregister.setCmd(Command.UNREGISTER.getCmd());
         unregister.setHeader(new byte[0]);
         unregister.setKey(EMPTY_KEY);

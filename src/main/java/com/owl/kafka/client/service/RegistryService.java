@@ -8,6 +8,7 @@ import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.cache.PathChildrenCache;
 import org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent;
 import org.apache.curator.framework.recipes.cache.PathChildrenCacheListener;
+import org.apache.zookeeper.KeeperException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -78,8 +79,10 @@ public class RegistryService implements PathChildrenCacheListener {
     public void unregister(RegisterMetadata metadata){
         try {
             zookeeperClient.delete(metadata.getPath() + String.format(ClientConfigs.I.ZOOKEEPER_PROVIDER_CONSUMER_NODE, metadata.getAddress().getHost(), metadata.getAddress().getPort()));
+        } catch (KeeperException.NoNodeException ex) {
+            //ignore;
         } catch (Exception ex) {
-            LOGGER.error("destroy service {} error {}", metadata, ex);
+            LOGGER.error("unregister service {} error {}", metadata, ex);
         }
     }
 
