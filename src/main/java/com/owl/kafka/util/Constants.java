@@ -11,6 +11,8 @@ public interface Constants {
 
     int CPU_SIZE = Runtime.getRuntime().availableProcessors();
 
+    int K_BYTES = 1024;
 
+    int M_BYTES = K_BYTES * 1024;
 
 }
