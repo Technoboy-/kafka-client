@@ -1,7 +1,11 @@
 package com.owl.kafka.client.util;
 
+import com.owl.kafka.client.service.IdService;
 import com.owl.kafka.client.transport.protocol.Command;
+import com.owl.kafka.client.transport.protocol.Header;
 import com.owl.kafka.client.transport.protocol.Packet;
+import com.owl.kafka.consumer.Record;
+import com.owl.kafka.serializer.SerializerImpl;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 
@@ -79,5 +83,28 @@ public class Packets {
         ack.setKey(EMPTY_KEY);
         ack.setValue(EMPTY_VALUE);
         return ack;
+    }
+
+    public static Packet view(long msgId){
+        Packet ack = new Packet();
+        ack.setCmd(Command.VIEW.getCmd());
+        ack.setMsgId(msgId);
+        ack.setHeader(EMPTY_HEADER);
+        ack.setKey(EMPTY_KEY);
+        ack.setValue(EMPTY_VALUE);
+        return ack;
+    }
+
+    public static Packet toViewPacket(long msgId, Record<byte[], byte[]> record){
+        Packet packet = new Packet();
+        //
+        packet.setCmd(Command.VIEW.getCmd());
+        packet.setMsgId(msgId);
+        Header header = new Header(record.getTopic(), record.getPartition(), record.getOffset());
+        packet.setHeader(SerializerImpl.getFastJsonSerializer().serialize(header));
+        packet.setKey(record.getKey());
+        packet.setValue(record.getValue());
+
+        return packet;
     }
 }

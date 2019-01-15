@@ -19,7 +19,7 @@ public class ZookeeperClient {
 
     private final CuratorFramework client;
 
-    private final String PUSH_SERVER_NAMESPACE = "push_server";
+    public static final String PUSH_SERVER_NAMESPACE = "push_server";
 
     public ZookeeperClient(String serverList, int sessionTimeoutMs, int connectionTimeoutMs){
         this.client = CuratorFrameworkFactory.builder()
@@ -69,6 +69,11 @@ public class ZookeeperClient {
         this.client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT).forPath(path);
     }
 
+    public void createPersistent(String path, byte[] data) throws Exception {
+        checkState();
+        this.client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT).forPath(path, data);
+    }
+
     public void createEPhemeral(String path, BackgroundCallback callback) throws Exception {
         checkState();
         this.client.create().creatingParentsIfNeeded().withMode(CreateMode.EPHEMERAL).inBackground(new org.apache.curator.framework.api.BackgroundCallback() {
@@ -84,6 +89,11 @@ public class ZookeeperClient {
     public void delete(String path) throws Exception{
         checkState();
         this.client.delete().forPath(path);
+    }
+
+    public void set(String path, byte[] data) throws Exception{
+        checkState();
+        this.client.setData().forPath(path, data);
     }
 
     public CuratorFramework getClient() {

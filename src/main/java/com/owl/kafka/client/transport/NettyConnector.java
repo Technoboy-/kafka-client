@@ -56,6 +56,7 @@ public class NettyConnector {
     private void initHandler(MessageListenerService messageListenerService){
         this.dispatcher.register(Command.PONG, new PongMessageHandler());
         this.dispatcher.register(Command.PUSH, new PushMessageHandler(messageListenerService));
+        this.dispatcher.register(Command.VIEW, new ViewMessageHandler());
         this.handler = new ClientHandler(this.dispatcher);
     }
 
@@ -87,6 +88,10 @@ public class NettyConnector {
         } catch (Throwable ex){
             throw new RuntimeException("Connects to [" + address + "] fails", ex);
         }
+    }
+
+    public ConcurrentHashMap<InetSocketAddress, Reconnector> getReconnectors() {
+        return reconnectors;
     }
 
     public void disconnect(InetSocketAddress address){

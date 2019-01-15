@@ -126,6 +126,15 @@ public class DefaultKafkaConsumerImpl<K, V> implements Runnable, com.owl.kafka.c
     }
 
     @Override
+    public Record<byte[], byte[]> view(long msgId) {
+        if(configs.isUseProxy()){
+            return nettyClient.view(msgId);
+        } else{
+            throw new UnsupportedOperationException("only proxy model can view the DLQ message");
+        }
+    }
+
+    @Override
     public void setMessageListener(final MessageListener<K, V> messageListener) {
         if(this.messageListener != null){
             throw new IllegalArgumentException("messageListener has already set");

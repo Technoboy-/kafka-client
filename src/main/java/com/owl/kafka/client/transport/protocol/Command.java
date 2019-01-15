@@ -15,6 +15,8 @@ public enum Command {
 
     UNREGISTER(5),
 
+    VIEW(6),
+
     UNKNOWN(-1);
 
     Command(int cmd) {

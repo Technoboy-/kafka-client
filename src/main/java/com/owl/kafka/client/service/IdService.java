@@ -2,8 +2,10 @@ package com.owl.kafka.client.service;
 
 import com.owl.kafka.util.Preconditions;
 
+import java.io.Serializable;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.nio.ByteBuffer;
 import java.util.Calendar;
 
 /**
@@ -107,6 +109,85 @@ public class IdService {
         lastTime = currentMillis;
         // 生成编号
         return ((currentMillis - EPOCH) << TIMESTAMP_LEFT_SHIFT_BITS) | (workerId << WORKER_ID_LEFT_SHIFT_BITS) | sequence;
+    }
+
+
+    public String createMessageId(int partition) {
+        ByteBuffer buffer = ByteBuffer.allocate(12);
+
+        buffer.putInt(partition);
+        buffer.putLong(getId());
+
+        return bytes2string(buffer.array());
+    }
+
+    public PartitionMessageId decodeMessageId(String msgId) {
+        byte[] bytes = string2bytes(msgId);
+        ByteBuffer buffer = ByteBuffer.wrap(bytes);
+        return new PartitionMessageId(buffer.getInt(), buffer.getLong());
+    }
+
+    public static class PartitionMessageId implements Serializable{
+
+        private int partition;
+
+        private long id;
+
+        public PartitionMessageId(int partition, long id){
+            this.partition = partition;
+            this.id = id;
+        }
+
+        public int getPartition() {
+            return partition;
+        }
+
+        public void setPartition(int partition) {
+            this.partition = partition;
+        }
+
+        public long getId() {
+            return id;
+        }
+
+        public void setId(long id) {
+            this.id = id;
+        }
+    }
+
+    public String bytes2string(byte[] src) {
+        StringBuilder sb = new StringBuilder();
+        if (src == null || src.length <= 0) {
+            return null;
+        }
+        for (int i = 0; i < src.length; i++) {
+            int v = src[i] & 0xFF;
+            String hv = Integer.toHexString(v);
+            if (hv.length() < 2) {
+                sb.append(0);
+            }
+            sb.append(hv.toUpperCase());
+        }
+        return sb.toString();
+    }
+
+    public byte[] string2bytes(String hexString) {
+        if (hexString == null || hexString.equals("")) {
+            return null;
+        }
+        hexString = hexString.toUpperCase();
+        int length = hexString.length() / 2;
+        char[] hexChars = hexString.toCharArray();
+        byte[] d = new byte[length];
+        for (int i = 0; i < length; i++) {
+            int pos = i * 2;
+            d[i] = (byte) (charToByte(hexChars[pos]) << 4 | charToByte(hexChars[pos + 1]));
+        }
+        return d;
+    }
+
+    private byte charToByte(char c) {
+        return (byte) "0123456789ABCDEF".indexOf(c);
     }
 
     /**
