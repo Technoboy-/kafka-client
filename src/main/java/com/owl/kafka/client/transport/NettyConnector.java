@@ -32,7 +32,7 @@ public class NettyConnector {
 
     private final HashedWheelTimer timer = new HashedWheelTimer(new NamedThreadFactory("connector.timer"));
 
-    private final ConcurrentHashMap<InetSocketAddress, Reconnector> reconnectors = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<Address, Reconnector> reconnectors = new ConcurrentHashMap<>();
 
     private Bootstrap bootstrap = new Bootstrap();
 
@@ -60,9 +60,10 @@ public class NettyConnector {
         this.handler = new ClientHandler(this.dispatcher);
     }
 
-    public void connect(InetSocketAddress address, boolean isSync) {
+    public void connect(Address address, boolean isSync) {
         //
-        final ConnectionWatchDog connectionWatchDog = new ConnectionWatchDog(bootstrap, timer, address){
+        InetSocketAddress socketAddress = new InetSocketAddress(address.getHost(), address.getPort());
+        final ConnectionWatchDog connectionWatchDog = new ConnectionWatchDog(bootstrap, timer, socketAddress){
 
             @Override
             public ChannelHandler[] handlers() {
@@ -79,7 +80,7 @@ public class NettyConnector {
                         ch.pipeline().addLast((connectionWatchDog.handlers()));
                     }
                 });
-                future = bootstrap.connect(address);
+                future = bootstrap.connect(socketAddress);
             }
             if(isSync){
                future.sync();
@@ -90,11 +91,11 @@ public class NettyConnector {
         }
     }
 
-    public ConcurrentHashMap<InetSocketAddress, Reconnector> getReconnectors() {
+    public ConcurrentHashMap<Address, Reconnector> getReconnectors() {
         return reconnectors;
     }
 
-    public void disconnect(InetSocketAddress address){
+    public void disconnect(Address address){
         try {
             Reconnector reconnector = reconnectors.remove(address);
             if(reconnector != null){

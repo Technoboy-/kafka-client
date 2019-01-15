@@ -1,7 +1,7 @@
 package com.owl.kafka.client.service;
 
-import com.owl.kafka.client.transport.Address;
 import com.owl.kafka.client.ClientConfigs;
+import com.owl.kafka.client.transport.Address;
 import com.owl.kafka.client.zookeeper.ZookeeperClient;
 import com.owl.kafka.util.StringUtils;
 import org.apache.curator.framework.CuratorFramework;
@@ -40,6 +40,11 @@ public class RegistryService implements PathChildrenCacheListener {
 
     public RegistryService(){
         this.zookeeperClient = new ZookeeperClient(serverList, sessionTimeoutMs, connectionTimeoutMs);
+        this.zookeeperClient.start();
+    }
+
+    public RegistryService(ZookeeperClient zookeeperClient){
+        this.zookeeperClient = zookeeperClient;
         this.zookeeperClient.start();
     }
 

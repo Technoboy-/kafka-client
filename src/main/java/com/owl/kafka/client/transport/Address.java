@@ -1,5 +1,7 @@
 package com.owl.kafka.client.transport;
 
+import com.owl.kafka.util.StringUtils;
+
 import java.io.Serializable;
 
 /**
@@ -66,5 +68,15 @@ public class Address implements Serializable {
     @Override
     public String toString() {
         return "Address [host=" + host + ", port=" + port + "]";
+    }
+
+    public static Address parse(String child){
+        Address address = null;
+        if(!StringUtils.isBlank(child) && child.contains(":") && child.split(":").length == 2){
+            String host = child.split(":")[0];
+            int port = Integer.valueOf(child.split(":")[1]);
+            address = new Address(host, port);
+        }
+        return address;
     }
 }
