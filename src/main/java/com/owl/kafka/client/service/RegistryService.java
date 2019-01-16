@@ -32,17 +32,6 @@ public class RegistryService implements PathChildrenCacheListener {
 
     private PathChildrenCache pathChildrenCache;
 
-    private final String serverList = ClientConfigs.I.getZookeeperServerList();
-
-    private final int sessionTimeoutMs = ClientConfigs.I.getZookeeperSessionTimeoutMs();
-
-    private final int connectionTimeoutMs = ClientConfigs.I.getZookeeperConnectionTimeoutMs();
-
-    public RegistryService(){
-        this.zookeeperClient = new ZookeeperClient(serverList, sessionTimeoutMs, connectionTimeoutMs);
-        this.zookeeperClient.start();
-    }
-
     public RegistryService(ZookeeperClient zookeeperClient){
         this.zookeeperClient = zookeeperClient;
         this.zookeeperClient.start();
@@ -99,7 +88,6 @@ public class RegistryService implements PathChildrenCacheListener {
         } catch (IOException e) {
             //
         }
-        this.zookeeperClient.close();
     }
 
     private Address parse(String child){

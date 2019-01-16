@@ -98,6 +98,7 @@ public class NettyClient {
     public void close(){
         this.nettyConnector.close();
         this.registryService.close();
+        this.zookeeperClient.close();
         LOGGER.debug("NettyClient closed");
     }
 
