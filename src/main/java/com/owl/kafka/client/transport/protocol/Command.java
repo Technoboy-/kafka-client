@@ -17,6 +17,8 @@ public enum Command {
 
     VIEW(6),
 
+    PULL(7),
+
     UNKNOWN(-1);
 
     Command(int cmd) {

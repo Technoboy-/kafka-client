@@ -1,12 +1,12 @@
 package com.owl.kafka.client;
 
 import com.owl.kafka.client.service.InvokerPromise;
+import com.owl.kafka.client.service.PullMessageService;
 import com.owl.kafka.client.service.RegistryListener;
 import com.owl.kafka.client.service.RegistryService;
 import com.owl.kafka.client.transport.Address;
-import com.owl.kafka.client.transport.NettyConnector;
+import com.owl.kafka.client.transport.NettyClient;
 import com.owl.kafka.client.transport.Reconnector;
-import com.owl.kafka.client.transport.exceptions.ChannelInactiveException;
 import com.owl.kafka.client.transport.protocol.Header;
 import com.owl.kafka.client.transport.protocol.Packet;
 import com.owl.kafka.client.util.Packets;
@@ -14,25 +14,27 @@ import com.owl.kafka.client.zookeeper.ZookeeperClient;
 import com.owl.kafka.consumer.Record;
 import com.owl.kafka.consumer.service.MessageListenerService;
 import com.owl.kafka.serializer.SerializerImpl;
-import com.sun.xml.internal.bind.v2.runtime.reflect.Lister;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.InetSocketAddress;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @Author: Tboy
  */
-public class NettyClient {
+public class DefaultPullMessageImpl {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(NettyClient.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(DefaultPullMessageImpl.class);
 
     private final RegistryService registryService;
 
-    private final NettyConnector nettyConnector;
+    private final NettyClient nettyClient;
 
     private final ZookeeperClient zookeeperClient;
+
+    private final PullMessageService pullMessageService;
 
     private final String serverList = ClientConfigs.I.getZookeeperServerList();
 
@@ -40,8 +42,9 @@ public class NettyClient {
 
     private final int connectionTimeoutMs = ClientConfigs.I.getZookeeperConnectionTimeoutMs();
 
-    public NettyClient(MessageListenerService messageListenerService){
-        this.nettyConnector = new NettyConnector(messageListenerService);
+    public DefaultPullMessageImpl(MessageListenerService messageListenerService){
+        this.nettyClient = new NettyClient(messageListenerService);
+        this.pullMessageService = new PullMessageService(nettyClient);
         this.zookeeperClient = new ZookeeperClient(serverList, sessionTimeoutMs, connectionTimeoutMs);
         this.registryService = new RegistryService(zookeeperClient);
         this.registryService.addListener(new RegistryListener() {
@@ -49,10 +52,11 @@ public class NettyClient {
             public void onChange(Address address, Event event) {
                 switch (event){
                     case ADD:
-                        nettyConnector.connect(address, true);
+                        nettyClient.connect(address, true);
+                        pullMessageService.pull(address);
                         break;
                     case DELETE:
-                        nettyConnector.disconnect(address);
+                        nettyClient.disconnect(address);
                         break;
                 }
             }
@@ -61,7 +65,8 @@ public class NettyClient {
     }
 
     public void start(){
-        LOGGER.debug("NettyClient started");
+        LOGGER.debug("DefaultPullMessageImpl started");
+
     }
 
     public Record<byte[], byte[]> view(long msgId){
@@ -71,7 +76,7 @@ public class NettyClient {
             for(String child : children){
                 Address address = Address.parse(child);
                 if(address != null){
-                    Set<Map.Entry<Address, Reconnector>> entries = nettyConnector.getReconnectors().entrySet();
+                    Set<Map.Entry<Address, Reconnector>> entries = nettyClient.getReconnectors().entrySet();
                     for(Map.Entry<Address, Reconnector> entry : entries){
                         if(entry.getKey().equals(address)){
                             reconnector = entry.getValue();
@@ -96,11 +101,13 @@ public class NettyClient {
     }
 
     public void close(){
-        this.nettyConnector.close();
+        this.nettyClient.close();
         this.registryService.close();
         this.zookeeperClient.close();
-        LOGGER.debug("NettyClient closed");
+        LOGGER.debug("DefaultPullMessageImpl closed");
     }
+
+
 
 
 }

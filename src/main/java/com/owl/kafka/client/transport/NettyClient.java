@@ -22,9 +22,9 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * @Author: Tboy
  */
-public class NettyConnector {
+public class NettyClient {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(NettyConnector.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(NettyClient.class);
 
     private final IdleStateTrigger idleStateTrigger = new IdleStateTrigger();
 
@@ -44,7 +44,7 @@ public class NettyConnector {
 
     private ClientHandler handler;
 
-    public NettyConnector(MessageListenerService messageListenerService){
+    public NettyClient(MessageListenerService messageListenerService){
         bootstrap.
                 option(ChannelOption.SO_KEEPALIVE, true).
                 option(ChannelOption.TCP_NODELAY, true).

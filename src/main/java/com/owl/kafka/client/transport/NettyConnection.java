@@ -1,6 +1,7 @@
 package com.owl.kafka.client.transport;
 
 import com.owl.kafka.client.transport.exceptions.ChannelInactiveException;
+import com.owl.kafka.client.transport.protocol.Command;
 import com.owl.kafka.client.transport.protocol.Packet;
 import com.owl.kafka.util.NetUtils;
 import io.netty.channel.Channel;
@@ -9,6 +10,7 @@ import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelId;
 import io.netty.util.Attribute;
 import io.netty.util.AttributeKey;
+import org.apache.kafka.common.protocol.Protocol;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -83,7 +85,7 @@ public class NettyConnection implements Connection {
             ChannelFuture future = this.channel.writeAndFlush(packet).addListener(new ChannelFutureListener(){
 
                 public void operationComplete(ChannelFuture future) throws Exception {
-                    if(future.isSuccess()){
+                    if(future.isSuccess() && !filter(packet)){
                         LOGGER.debug("send msg {} , to clientId : {}, successfully", packet, NetUtils.getRemoteAddress(channel));
                     } else{
                         LOGGER.error("send msg {} failed, error {}", packet, future.cause());
@@ -96,6 +98,11 @@ public class NettyConnection implements Connection {
         } else{
             throw new ChannelInactiveException("channel inactive exception, msg : { " + packet + " }");
         }
+    }
+
+    private boolean filter(Packet packet){
+        Command command = Command.toCMD(packet.getCmd());
+        return Command.PING == command || Command.PONG == command;
     }
 
     @Override

@@ -8,6 +8,8 @@ import com.owl.kafka.consumer.Record;
 import com.owl.kafka.serializer.SerializerImpl;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.zookeeper.data.Id;
 
 /**
  * @Author: Tboy
@@ -95,6 +97,18 @@ public class Packets {
         return ack;
     }
 
+    public static Packet pull(){
+        Packet pull = new Packet();
+        //
+        pull.setCmd(Command.PULL.getCmd());
+        pull.setMsgId(IdService.I.getId());
+        pull.setHeader(EMPTY_HEADER);
+        pull.setKey(EMPTY_KEY);
+        pull.setValue(EMPTY_VALUE);
+
+        return pull;
+    }
+
     public static Packet toViewPacket(long msgId, Record<byte[], byte[]> record){
         Packet packet = new Packet();
         //
@@ -104,6 +118,19 @@ public class Packets {
         packet.setHeader(SerializerImpl.getFastJsonSerializer().serialize(header));
         packet.setKey(record.getKey());
         packet.setValue(record.getValue());
+
+        return packet;
+    }
+
+    public static Packet toPullPacket(ConsumerRecord<byte[], byte[]> record){
+        Packet packet = new Packet();
+        //
+        packet.setCmd(Command.PULL.getCmd());
+        packet.setMsgId(IdService.I.getId());
+        Header header = new Header(record.topic(), record.partition(), record.offset());
+        packet.setHeader(SerializerImpl.getFastJsonSerializer().serialize(header));
+        packet.setKey(record.key());
+        packet.setValue(record.value());
 
         return packet;
     }

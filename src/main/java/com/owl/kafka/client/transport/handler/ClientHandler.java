@@ -3,6 +3,7 @@ package com.owl.kafka.client.transport.handler;
 import com.owl.kafka.client.transport.Connection;
 import com.owl.kafka.client.transport.NettyConnection;
 import com.owl.kafka.client.transport.protocol.Packet;
+import com.owl.kafka.client.util.Packets;
 import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -23,18 +24,12 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
         this.dispatcher = dispatcher;
     }
 
-    public void channelActive(ChannelHandlerContext ctx) throws Exception {
-        NettyConnection.attachChannel(ctx.channel());
-    }
-
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         Connection connnection = NettyConnection.attachChannel(ctx.channel());
         connnection.close();
     }
 
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-
-
         dispatcher.dispatch(NettyConnection.attachChannel(ctx.channel()), (Packet)msg);
     }
 

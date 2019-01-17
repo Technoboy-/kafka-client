@@ -1,6 +1,6 @@
 package com.owl.kafka.consumer;
 
-import com.owl.kafka.client.NettyClient;
+import com.owl.kafka.client.DefaultPushMessageImpl;
 import com.owl.kafka.client.zookeeper.KafkaZookeeperConfig;
 import com.owl.kafka.consumer.exceptions.TopicNotExistException;
 import com.owl.kafka.consumer.listener.AcknowledgeMessageListener;
@@ -50,7 +50,7 @@ public class DefaultKafkaConsumerImpl<K, V> implements Runnable, com.owl.kafka.c
 
     private MessageListenerServiceRegistry serviceRegistry;
 
-    private NettyClient nettyClient;
+    private DefaultPushMessageImpl defaultPushMessageImpl;
 
     public DefaultKafkaConsumerImpl(com.owl.kafka.consumer.ConsumerConfig configs) {
         this.configs = configs;
@@ -91,8 +91,8 @@ public class DefaultKafkaConsumerImpl<K, V> implements Runnable, com.owl.kafka.c
         if (start.compareAndSet(false, true)) {
             if(useProxy){
                 Preconditions.checkArgument(messageListener instanceof AcknowledgeMessageListener, "using proxy, MessageListener must be AcknowledgeMessageListener");
-                nettyClient = new NettyClient(messageListenerService);
-                nettyClient.start();
+                defaultPushMessageImpl = new DefaultPushMessageImpl(messageListenerService);
+                defaultPushMessageImpl.start();
             } else{
                 boolean isAssignTopicPartition = !CollectionUtils.isEmpty(configs.getTopicPartitions());
                 if(isAssignTopicPartition){
@@ -128,7 +128,7 @@ public class DefaultKafkaConsumerImpl<K, V> implements Runnable, com.owl.kafka.c
     @Override
     public Record<byte[], byte[]> view(long msgId) {
         if(configs.isUseProxy()){
-            return nettyClient.view(msgId);
+            return defaultPushMessageImpl.view(msgId);
         } else{
             throw new UnsupportedOperationException("only proxy model can view the DLQ message");
         }
@@ -263,8 +263,8 @@ public class DefaultKafkaConsumerImpl<K, V> implements Runnable, com.owl.kafka.c
                     consumer.close();
                 }
             }
-            if(nettyClient != null){
-                nettyClient.close();
+            if(defaultPushMessageImpl != null){
+                defaultPushMessageImpl.close();
             }
             LOG.info("KafkaConsumer closed.");
         }
