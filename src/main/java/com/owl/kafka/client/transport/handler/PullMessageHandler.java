@@ -22,7 +22,6 @@ public class PullMessageHandler extends CommonMessageHandler {
 
     public PullMessageHandler(MessageListenerService messageListenerService){
         this.messageListenerService = (PullAcknowledgeMessageListenerService)messageListenerService;
-        this.pullMessageService = pullMessageService;
     }
 
     @Override

@@ -17,6 +17,8 @@ public class ClientConfigs extends ConfigLoader{
 
     static final String CLIENT_WORKER_NUM = "client.worker.num";
 
+    static final String CLIENT_PARALLELISM_NUM = "client.parallelism.num";
+
     static final  String CLIENT_CONFIG_FILE = "push_client.properties";
 
     public static ClientConfigs I = new ClientConfigs(CLIENT_CONFIG_FILE);
@@ -35,6 +37,10 @@ public class ClientConfigs extends ConfigLoader{
 
     public int getWorkerNum(){
         return getInt(CLIENT_WORKER_NUM, Constants.CPU_SIZE);
+    }
+
+    public int getParallelismNum(){
+        return getInt(CLIENT_PARALLELISM_NUM, 1);
     }
 
 }

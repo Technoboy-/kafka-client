@@ -1,5 +1,6 @@
 package com.owl.kafka.consumer.service;
 
+import com.owl.kafka.client.ClientConfigs;
 import com.owl.kafka.client.service.ProcessQueue;
 import com.owl.kafka.client.transport.Connection;
 import com.owl.kafka.client.transport.exceptions.ChannelInactiveException;
@@ -17,9 +18,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 /**
  * @Author: Tboy
@@ -30,9 +29,13 @@ public class PullAcknowledgeMessageListenerService<K, V> implements MessageListe
 
     private final ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory("PullAcknowledgeMessageListenerService-thread"));
 
+    private final int parallelism = ClientConfigs.I.getParallelismNum();
+
+    private final ThreadPoolExecutor consumeExcutor = new ThreadPoolExecutor(parallelism, parallelism, 60, TimeUnit.SECONDS, new LinkedBlockingQueue<>());
+
     private final AcknowledgeMessageListener<K, V> messageListener;
 
-    protected final DefaultKafkaConsumerImpl<K, V> consumer;
+    private final DefaultKafkaConsumerImpl<K, V> consumer;
 
     private Connection connection;
 
@@ -53,27 +56,7 @@ public class PullAcknowledgeMessageListenerService<K, V> implements MessageListe
     }
 
     private void onMessage(Packet packet) {
-        long now = System.currentTimeMillis();
-        try {
-            ProcessQueue.I.put(packet);
-            Header header = (Header) SerializerImpl.getFastJsonSerializer().deserialize(packet.getHeader(), Header.class);
-            ConsumerRecord record = new ConsumerRecord(header.getTopic(), header.getPartition(), header.getOffset(), packet.getKey(), packet.getValue());
-            final Record<K, V> r = consumer.toRecord(record);
-            r.setMsgId(packet.getMsgId());
-            messageListener.onMessage(r, new AcknowledgeMessageListener.Acknowledgment() {
-                @Override
-                public void acknowledge() {
-                    ProcessQueue.I.remove(packet.getMsgId());
-                }
-            });
-        } catch (Throwable ex) {
-            MonitorImpl.getDefault().recordConsumeProcessErrorCount(1);
-            LOG.error("onMessage error", ex);
-            sendBack(packet);
-        } finally {
-            MonitorImpl.getDefault().recordConsumeProcessCount(1);
-            MonitorImpl.getDefault().recordConsumeProcessTime(System.currentTimeMillis() - now);
-        }
+        consumeExcutor.submit(new ConsumeRequest(packet));
     }
 
     private void sendBack(Packet packet){
@@ -87,7 +70,41 @@ public class PullAcknowledgeMessageListenerService<K, V> implements MessageListe
                 }
             }, 3, TimeUnit.SECONDS);
         }
-        ProcessQueue.I.remove(packet.getMsgId());
+    }
+
+    class ConsumeRequest implements Runnable{
+
+        private Packet packet;
+
+        public ConsumeRequest(Packet packet){
+            this.packet = packet;
+        }
+
+        @Override
+        public void run() {
+            long now = System.currentTimeMillis();
+            try {
+                ProcessQueue.I.put(packet);
+                Header header = (Header) SerializerImpl.getFastJsonSerializer().deserialize(packet.getHeader(), Header.class);
+                ConsumerRecord record = new ConsumerRecord(header.getTopic(), header.getPartition(), header.getOffset(), packet.getKey(), packet.getValue());
+                final Record<K, V> r = consumer.toRecord(record);
+                r.setMsgId(packet.getMsgId());
+                messageListener.onMessage(r, new AcknowledgeMessageListener.Acknowledgment() {
+                    @Override
+                    public void acknowledge() {
+                        ProcessQueue.I.remove(packet.getMsgId());
+                    }
+                });
+            } catch (Throwable ex) {
+                MonitorImpl.getDefault().recordConsumeProcessErrorCount(1);
+                LOG.error("onMessage error", ex);
+                ProcessQueue.I.remove(packet.getMsgId());
+                sendBack(packet);
+            } finally {
+                MonitorImpl.getDefault().recordConsumeProcessCount(1);
+                MonitorImpl.getDefault().recordConsumeProcessTime(System.currentTimeMillis() - now);
+            }
+        }
     }
 
     @Override

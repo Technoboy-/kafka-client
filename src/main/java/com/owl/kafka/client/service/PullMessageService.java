@@ -21,9 +21,9 @@ public class PullMessageService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DefaultPullMessageImpl.class);
 
-    private NettyClient nettyClient;
-
     private final ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory("scheduled-pull-message-service"));
+
+    private NettyClient nettyClient;
 
     public void setNettyClient(NettyClient nettyClient) {
          this.nettyClient = nettyClient;

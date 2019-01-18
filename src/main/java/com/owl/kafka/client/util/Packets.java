@@ -143,4 +143,14 @@ public class Packets {
 
         return packet;
     }
+
+    public static Packet noMsg(){
+        Packet ping = new Packet();
+        ping.setMsgId(0);
+        ping.setCmd(Command.PULL.getCmd());
+        ping.setHeader(EMPTY_HEADER);
+        ping.setKey(EMPTY_KEY);
+        ping.setValue(EMPTY_VALUE);
+        return ping;
+    }
 }
