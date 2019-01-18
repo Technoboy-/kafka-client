@@ -5,14 +5,18 @@ import com.owl.kafka.client.transport.Address;
 import com.owl.kafka.client.transport.NettyClient;
 import com.owl.kafka.client.transport.Reconnector;
 import com.owl.kafka.client.transport.exceptions.ChannelInactiveException;
+import com.owl.kafka.client.transport.protocol.Packet;
 import com.owl.kafka.client.util.Packets;
 import com.owl.kafka.util.NamedThreadFactory;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelFutureListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * @Author: Tboy
@@ -42,9 +46,39 @@ public class PullMessageService {
     }
 
     public void pullImmediately(Address address){
+        long msgId = IdService.I.getId();
         Reconnector reconnector =  nettyClient.getReconnectors().get(address);
+        PullCallback callback = new PullCallback(){
+
+            @Override
+            public void onComplete(Packet packet) {
+                pullImmediately(address);
+            }
+
+            @Override
+            public void onException(Throwable ex) {
+                pullLater(address);
+            }
+        };
         try {
-            reconnector.getConnection().send(Packets.pull());
+            reconnector.getConnection().send(Packets.pull(), new ChannelFutureListener() {
+                @Override
+                public void operationComplete(ChannelFuture future) throws Exception {
+                    if(future.isSuccess()){
+                        new InvokerPromise(msgId, 5000, new InvokeCallback() {
+                            @Override
+                            public void onComplete(InvokerPromise invokerPromise) {
+                                Packet response = invokerPromise.getResult();
+                                if(response != null){
+                                    callback.onComplete(response);
+                                } else if(invokerPromise.isTimeout()){
+                                    callback.onException(new TimeoutException("timeout exception"));
+                                }
+                            }
+                        });
+                    }
+                }
+            });
         } catch (ChannelInactiveException ex) {
             LOGGER.error("ChannelInactiveException", ex);
             pullLater(address);

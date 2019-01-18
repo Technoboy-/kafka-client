@@ -1,6 +1,6 @@
 package com.owl.kafka.client.transport.handler;
 
-import com.owl.kafka.client.service.PullMessageService;
+import com.owl.kafka.client.service.InvokerPromise;
 import com.owl.kafka.client.transport.Connection;
 import com.owl.kafka.client.transport.protocol.Packet;
 import com.owl.kafka.consumer.service.MessageListenerService;
@@ -18,8 +18,6 @@ public class PullMessageHandler extends CommonMessageHandler {
 
     private final PullAcknowledgeMessageListenerService messageListenerService;
 
-    private PullMessageService pullMessageService;
-
     public PullMessageHandler(MessageListenerService messageListenerService){
         this.messageListenerService = (PullAcknowledgeMessageListenerService)messageListenerService;
     }
@@ -29,10 +27,17 @@ public class PullMessageHandler extends CommonMessageHandler {
         if(LOGGER.isDebugEnabled()){
             LOGGER.debug("received pull message: {}, from : {}", packet, NetUtils.getRemoteAddress(connection.getChannel()));
         }
+        InvokerPromise invokerPromise = InvokerPromise.get(packet.getMsgId());
+        if(invokerPromise != null){
+            if(invokerPromise.getInvokeCallback() != null){
+                invokerPromise.executeInvokeCallback();
+            } else{
+                invokerPromise.doReceive(packet);
+            }
+        }
         if(packet.getValue().length >= 1){
             messageListenerService.onMessage(connection, packet);
         }
-        pullMessageService.pull();
     }
 
 }

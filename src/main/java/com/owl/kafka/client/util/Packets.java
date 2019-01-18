@@ -98,10 +98,14 @@ public class Packets {
     }
 
     public static Packet pull(){
+        return pull(IdService.I.getId());
+    }
+
+    public static Packet pull(long msgId){
         Packet pull = new Packet();
         //
         pull.setCmd(Command.PULL.getCmd());
-        pull.setMsgId(IdService.I.getId());
+        pull.setMsgId(msgId);
         pull.setHeader(EMPTY_HEADER);
         pull.setKey(EMPTY_KEY);
         pull.setValue(EMPTY_VALUE);
