@@ -44,7 +44,8 @@ public class DefaultPullMessageImpl {
 
     public DefaultPullMessageImpl(MessageListenerService messageListenerService){
         this.nettyClient = new NettyClient(messageListenerService);
-        this.pullMessageService = new PullMessageService(nettyClient);
+        this.pullMessageService = new PullMessageService();
+        this.pullMessageService.setNettyClient(nettyClient);
         this.zookeeperClient = new ZookeeperClient(serverList, sessionTimeoutMs, connectionTimeoutMs);
         this.registryService = new RegistryService(zookeeperClient);
         this.registryService.addListener(new RegistryListener() {
@@ -53,7 +54,7 @@ public class DefaultPullMessageImpl {
                 switch (event){
                     case ADD:
                         nettyClient.connect(address, true);
-                        pullMessageService.pull(address);
+                        pullMessageService.pullImmediately(address);
                         break;
                     case DELETE:
                         nettyClient.disconnect(address);
@@ -106,8 +107,5 @@ public class DefaultPullMessageImpl {
         this.zookeeperClient.close();
         LOGGER.debug("DefaultPullMessageImpl closed");
     }
-
-
-
 
 }

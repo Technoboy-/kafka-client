@@ -134,4 +134,13 @@ public class Packets {
 
         return packet;
     }
+
+    public static Packet toSendBackPacket(Packet packet){
+        Packet back = new Packet();
+        //
+        back.setCmd(Command.SEND_BACK.getCmd());
+        back.setMsgId(packet.getMsgId());
+
+        return packet;
+    }
 }

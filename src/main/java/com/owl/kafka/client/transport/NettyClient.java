@@ -1,14 +1,17 @@
 package com.owl.kafka.client.transport;
 
+import com.owl.kafka.client.ClientConfigs;
 import com.owl.kafka.client.transport.codec.PacketDecoder;
 import com.owl.kafka.client.transport.codec.PacketEncoder;
 import com.owl.kafka.client.transport.handler.*;
-import com.owl.kafka.client.ClientConfigs;
 import com.owl.kafka.client.transport.protocol.Command;
 import com.owl.kafka.consumer.service.MessageListenerService;
 import com.owl.kafka.util.NamedThreadFactory;
 import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.*;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelHandler;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelOption;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.timeout.IdleStateHandler;
@@ -57,6 +60,7 @@ public class NettyClient {
         this.dispatcher.register(Command.PONG, new PongMessageHandler());
         this.dispatcher.register(Command.PUSH, new PushMessageHandler(messageListenerService));
         this.dispatcher.register(Command.VIEW, new ViewMessageHandler());
+        this.dispatcher.register(Command.PULL, new PullMessageHandler(messageListenerService));
         this.handler = new ClientHandler(this.dispatcher);
     }
 

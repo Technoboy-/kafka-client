@@ -99,5 +99,4 @@ public class DefaultPushMessageImpl {
         LOGGER.debug("DefaultPushMessageImpl closed");
     }
 
-
 }

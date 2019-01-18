@@ -12,15 +12,15 @@ import org.slf4j.LoggerFactory;
 /**
  * @Author: Tboy
  */
-public class ProxyAcknowledgeMessageListenerService<K, V> implements MessageListenerService<K, V>{
+public class PushAcknowledgeMessageListenerService<K, V> implements MessageListenerService<K, V>{
 
-    private static final Logger LOG = LoggerFactory.getLogger(ProxyAcknowledgeMessageListenerService.class);
+    private static final Logger LOG = LoggerFactory.getLogger(PushAcknowledgeMessageListenerService.class);
 
     private final AcknowledgeMessageListener<K, V> messageListener;
 
     protected final DefaultKafkaConsumerImpl<K, V> consumer;
 
-    public ProxyAcknowledgeMessageListenerService(DefaultKafkaConsumerImpl<K, V> consumer, MessageListener<K, V> messageListener) {
+    public PushAcknowledgeMessageListenerService(DefaultKafkaConsumerImpl<K, V> consumer, MessageListener<K, V> messageListener) {
         this.consumer = consumer;
         this.messageListener = (AcknowledgeMessageListener)messageListener;
         MonitorImpl.getDefault().recordConsumeHandlerCount(1);
