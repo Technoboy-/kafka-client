@@ -1,5 +1,6 @@
 package com.owl.kafka.consumer;
 
+import com.owl.kafka.client.DefaultPullMessageImpl;
 import com.owl.kafka.client.DefaultPushMessageImpl;
 import com.owl.kafka.client.zookeeper.KafkaZookeeperConfig;
 import com.owl.kafka.consumer.exceptions.TopicNotExistException;
@@ -50,7 +51,9 @@ public class DefaultKafkaConsumerImpl<K, V> implements Runnable, com.owl.kafka.c
 
     private MessageListenerServiceRegistry serviceRegistry;
 
-    private DefaultPushMessageImpl defaultPushMessageImpl;
+//    private DefaultPushMessageImpl defaultPushMessageImpl;
+
+    private DefaultPullMessageImpl defaultPullMessageImpl;
 
     public DefaultKafkaConsumerImpl(com.owl.kafka.consumer.ConsumerConfig configs) {
         this.configs = configs;
@@ -91,8 +94,8 @@ public class DefaultKafkaConsumerImpl<K, V> implements Runnable, com.owl.kafka.c
         if (start.compareAndSet(false, true)) {
             if(useProxy){
                 Preconditions.checkArgument(messageListener instanceof AcknowledgeMessageListener, "using proxy, MessageListener must be AcknowledgeMessageListener");
-                defaultPushMessageImpl = new DefaultPushMessageImpl(messageListenerService);
-                defaultPushMessageImpl.start();
+                defaultPullMessageImpl = new DefaultPullMessageImpl(messageListenerService);
+                defaultPullMessageImpl.start();
             } else{
                 boolean isAssignTopicPartition = !CollectionUtils.isEmpty(configs.getTopicPartitions());
                 if(isAssignTopicPartition){
@@ -128,7 +131,7 @@ public class DefaultKafkaConsumerImpl<K, V> implements Runnable, com.owl.kafka.c
     @Override
     public Record<byte[], byte[]> view(long msgId) {
         if(configs.isUseProxy()){
-            return defaultPushMessageImpl.view(msgId);
+            return defaultPullMessageImpl.view(msgId);
         } else{
             throw new UnsupportedOperationException("only proxy model can view the DLQ message");
         }
@@ -263,8 +266,8 @@ public class DefaultKafkaConsumerImpl<K, V> implements Runnable, com.owl.kafka.c
                     consumer.close();
                 }
             }
-            if(defaultPushMessageImpl != null){
-                defaultPushMessageImpl.close();
+            if(defaultPullMessageImpl != null){
+                defaultPullMessageImpl.close();
             }
             LOG.info("KafkaConsumer closed.");
         }

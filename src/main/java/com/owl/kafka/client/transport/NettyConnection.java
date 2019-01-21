@@ -85,8 +85,10 @@ public class NettyConnection implements Connection {
             ChannelFuture future = this.channel.writeAndFlush(packet).addListener(new ChannelFutureListener(){
 
                 public void operationComplete(ChannelFuture future) throws Exception {
-                    if(future.isSuccess() && !filter(packet)){
-                        LOGGER.debug("send msg {} , to clientId : {}, successfully", packet, NetUtils.getRemoteAddress(channel));
+                    if(future.isSuccess()){
+                        if(isNotHeartbeat(packet)){
+                            LOGGER.debug("send msg {} , to clientId : {}, successfully", packet, NetUtils.getRemoteAddress(channel));
+                        }
                     } else{
                         LOGGER.error("send msg {} failed, error {}", packet, future.cause());
                     }
@@ -100,7 +102,7 @@ public class NettyConnection implements Connection {
         }
     }
 
-    private boolean filter(Packet packet){
+    private boolean isNotHeartbeat(Packet packet){
         Command command = Command.toCMD(packet.getCmd());
         return Command.PING == command || Command.PONG == command;
     }
