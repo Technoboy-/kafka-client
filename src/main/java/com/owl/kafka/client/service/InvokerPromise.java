@@ -1,14 +1,13 @@
 package com.owl.kafka.client.service;
 
 import com.owl.kafka.client.transport.protocol.Packet;
+import com.owl.kafka.util.NamedThreadFactory;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 /**
  * @Author: Tboy
@@ -66,7 +65,7 @@ public class InvokerPromise {
         return promises.get(msgId);
     }
 
-    public void doReceive(Packet packet){
+    private void doReceive(Packet packet){
         this.response = packet;
         this.latch.countDown();
     }
@@ -74,7 +73,6 @@ public class InvokerPromise {
     public void executeInvokeCallback() {
         if (invokeCallback != null) {
             invokeCallback.onComplete(this);
-
         }
     }
 

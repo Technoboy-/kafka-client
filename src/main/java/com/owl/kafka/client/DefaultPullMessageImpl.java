@@ -41,8 +41,7 @@ public class DefaultPullMessageImpl {
 
     public DefaultPullMessageImpl(MessageListenerService messageListenerService){
         this.nettyClient = new NettyClient(messageListenerService);
-        this.pullMessageService = new PullMessageService();
-        this.pullMessageService.setNettyClient(nettyClient);
+        this.pullMessageService = new PullMessageService(nettyClient);
         this.zookeeperClient = new ZookeeperClient(serverList, sessionTimeoutMs, connectionTimeoutMs);
         this.registryService = new RegistryService(zookeeperClient);
         this.registryService.addListener(new RegistryListener() {
@@ -99,6 +98,7 @@ public class DefaultPullMessageImpl {
     }
 
     public void close(){
+        this.pullMessageService.close();
         this.nettyClient.close();
         this.registryService.close();
         this.zookeeperClient.close();

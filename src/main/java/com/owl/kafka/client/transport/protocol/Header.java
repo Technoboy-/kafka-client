@@ -7,13 +7,19 @@ import java.io.Serializable;
  */
 public class Header implements Serializable {
 
-    private final String topic;
+    private String topic;
 
-    private final int partition;
+    private int partition;
 
-    private final long offset;
+    private long offset;
 
-    private int repost;
+    private byte repost;
+
+    private byte pullStatus;
+
+    public Header(byte pullStatus) {
+        this.pullStatus = pullStatus;
+    }
 
     public Header(String topic, int partition, long offset) {
         this.topic = topic;
@@ -21,11 +27,19 @@ public class Header implements Serializable {
         this.offset = offset;
     }
 
-    public void setRepost(int repost) {
+    public byte getPullStatus() {
+        return pullStatus;
+    }
+
+    public void setPullStatus(byte pullStatus) {
+        this.pullStatus = pullStatus;
+    }
+
+    public void setRepost(byte repost) {
         this.repost = repost;
     }
 
-    public int getRepost() {
+    public byte getRepost() {
         return repost;
     }
 

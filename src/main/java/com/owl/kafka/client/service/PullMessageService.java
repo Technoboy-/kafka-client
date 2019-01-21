@@ -27,10 +27,20 @@ public class PullMessageService {
 
     private final ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory("scheduled-pull-message-service"));
 
-    private NettyClient nettyClient;
+    private final NettyClient nettyClient;
 
-    public void setNettyClient(NettyClient nettyClient) {
-         this.nettyClient = nettyClient;
+
+
+    private final int pullTimeoutMs = 30 * 1000;
+
+    public PullMessageService(NettyClient nettyClient){
+        this.nettyClient = nettyClient;
+        this.scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
+            @Override
+            public void run() {
+                InvokerPromise.scan();
+            }
+        }, 3, 3, TimeUnit.SECONDS);
     }
 
     public void pull(){
@@ -57,6 +67,7 @@ public class PullMessageService {
 
             @Override
             public void onException(Throwable ex) {
+                LOGGER.error("exception on pull ", ex);
                 pullLater(address);
             }
         };
@@ -64,19 +75,20 @@ public class PullMessageService {
             reconnector.getConnection().send(Packets.pull(), new ChannelFutureListener() {
                 @Override
                 public void operationComplete(ChannelFuture future) throws Exception {
-                    if(future.isSuccess()){
-                        new InvokerPromise(msgId, 5000, new InvokeCallback() {
-                            @Override
-                            public void onComplete(InvokerPromise invokerPromise) {
-                                Packet response = invokerPromise.getResult();
-                                if(response != null){
-                                    callback.onComplete(response);
-                                } else if(invokerPromise.isTimeout()){
-                                    callback.onException(new TimeoutException("timeout exception"));
-                                }
+                    Throwable ex = future.cause();
+                    new InvokerPromise(msgId, pullTimeoutMs, new InvokeCallback() {
+                        @Override
+                        public void onComplete(InvokerPromise invokerPromise) {
+                            Packet response = invokerPromise.getResult();
+                            if(response != null){
+                                callback.onComplete(response);
+                            } else if(invokerPromise.isTimeout()){
+                                callback.onException(new TimeoutException("timeout exception"));
+                            } else{
+                                callback.onException(ex == null ? new Exception("unknown exception") : ex);
                             }
-                        });
-                    }
+                        }
+                    });
                 }
             });
         } catch (ChannelInactiveException ex) {

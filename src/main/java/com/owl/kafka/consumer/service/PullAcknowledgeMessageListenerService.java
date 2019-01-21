@@ -2,6 +2,7 @@ package com.owl.kafka.consumer.service;
 
 import com.owl.kafka.client.ClientConfigs;
 import com.owl.kafka.client.service.ProcessQueue;
+import com.owl.kafka.client.service.PullStatus;
 import com.owl.kafka.client.transport.Connection;
 import com.owl.kafka.client.transport.exceptions.ChannelInactiveException;
 import com.owl.kafka.client.transport.protocol.Header;
@@ -86,15 +87,24 @@ public class PullAcknowledgeMessageListenerService<K, V> implements MessageListe
             try {
                 ProcessQueue.I.put(packet);
                 Header header = (Header) SerializerImpl.getFastJsonSerializer().deserialize(packet.getHeader(), Header.class);
-                ConsumerRecord record = new ConsumerRecord(header.getTopic(), header.getPartition(), header.getOffset(), packet.getKey(), packet.getValue());
-                final Record<K, V> r = consumer.toRecord(record);
-                r.setMsgId(packet.getMsgId());
-                messageListener.onMessage(r, new AcknowledgeMessageListener.Acknowledgment() {
-                    @Override
-                    public void acknowledge() {
-                        ProcessQueue.I.remove(packet.getMsgId());
-                    }
-                });
+                PullStatus pullStatus = PullStatus.of(header.getPullStatus());
+                switch (pullStatus){
+                    case FOUND:
+                        ConsumerRecord record = new ConsumerRecord(header.getTopic(), header.getPartition(), header.getOffset(), packet.getKey(), packet.getValue());
+                        final Record<K, V> r = consumer.toRecord(record);
+                        r.setMsgId(packet.getMsgId());
+                        messageListener.onMessage(r, new AcknowledgeMessageListener.Acknowledgment() {
+                            @Override
+                            public void acknowledge() {
+                                ProcessQueue.I.remove(packet.getMsgId());
+                            }
+                        });
+                        break;
+                    case NO_NEW_MSG:
+                        LOG.debug("no new msg message");
+                        break;
+                }
+
             } catch (Throwable ex) {
                 MonitorImpl.getDefault().recordConsumeProcessErrorCount(1);
                 LOG.error("onMessage error", ex);

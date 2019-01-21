@@ -1,13 +1,18 @@
 package com.owl.kafka.client.transport.handler;
 
 import com.owl.kafka.client.service.InvokerPromise;
+import com.owl.kafka.client.service.PullStatus;
 import com.owl.kafka.client.transport.Connection;
+import com.owl.kafka.client.transport.protocol.Header;
 import com.owl.kafka.client.transport.protocol.Packet;
 import com.owl.kafka.consumer.service.MessageListenerService;
 import com.owl.kafka.consumer.service.PullAcknowledgeMessageListenerService;
+import com.owl.kafka.serializer.SerializerImpl;
 import com.owl.kafka.util.NetUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.Serializable;
 
 /**
  * @Author: Tboy
@@ -29,15 +34,12 @@ public class PullMessageHandler extends CommonMessageHandler {
         }
         InvokerPromise invokerPromise = InvokerPromise.get(packet.getMsgId());
         if(invokerPromise != null){
+            InvokerPromise.receive(packet);
             if(invokerPromise.getInvokeCallback() != null){
                 invokerPromise.executeInvokeCallback();
-            } else{
-                invokerPromise.doReceive(packet);
             }
         }
-        if(packet.getValue().length >= 1){
-            messageListenerService.onMessage(connection, packet);
-        }
+        this.messageListenerService.onMessage(connection, packet);
     }
 
 }

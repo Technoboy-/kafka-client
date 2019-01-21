@@ -1,6 +1,7 @@
 package com.owl.kafka.client.util;
 
 import com.owl.kafka.client.service.IdService;
+import com.owl.kafka.client.service.PullStatus;
 import com.owl.kafka.client.transport.protocol.Command;
 import com.owl.kafka.client.transport.protocol.Header;
 import com.owl.kafka.client.transport.protocol.Packet;
@@ -148,11 +149,12 @@ public class Packets {
         return packet;
     }
 
-    public static Packet noMsg(){
+    public static Packet noNewMsg(long msgId){
         Packet ping = new Packet();
-        ping.setMsgId(0);
+        ping.setMsgId(msgId);
         ping.setCmd(Command.PULL.getCmd());
-        ping.setHeader(EMPTY_HEADER);
+        Header header = new Header(PullStatus.NO_NEW_MSG.getStatus());
+        ping.setHeader(SerializerImpl.getFastJsonSerializer().serialize(header));
         ping.setKey(EMPTY_KEY);
         ping.setValue(EMPTY_VALUE);
         return ping;
