@@ -30,8 +30,10 @@ public class PacketDecoder extends ByteToMessageDecoder {
             ctx.close();
             return;
         }
+        //cmd
         byte cmd = in.readByte();
-        long msgId = in.readLong();
+        //opaque
+        long opaque = in.readLong();
         //header
         int headerLength = in.readInt();
         if (in.readableBytes() < headerLength) {
@@ -70,7 +72,7 @@ public class PacketDecoder extends ByteToMessageDecoder {
         Packet p = new Packet();
         p.setCmd(cmd);
         p.setVersion(version);
-        p.setMsgId(msgId);
+        p.setOpaque(opaque);
         p.setHeader(header);
         p.setKey(key);
         p.setValue(value);

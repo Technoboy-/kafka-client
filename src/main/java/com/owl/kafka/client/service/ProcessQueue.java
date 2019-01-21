@@ -21,11 +21,11 @@ public class ProcessQueue {
 
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
-    public void put(Packet packet){
+    public void put(long msgId, Packet packet){
         this.lock.writeLock().lock();
         try {
             msgCount.incrementAndGet();
-            treeMap.put(packet.getMsgId(), packet);
+            treeMap.put(msgId, packet);
         } finally {
             this.lock.writeLock().unlock();
         }

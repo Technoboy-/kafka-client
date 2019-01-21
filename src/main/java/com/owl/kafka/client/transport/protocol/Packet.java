@@ -10,7 +10,7 @@ import java.io.Serializable;
  *       1   │    1    │    1    │     8     │       4       |                |     4      |             |      4       |
  *  ├ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ - - - - - - - - - ─ ─ ─ - ┤- - - - - - -- -|
  *           │         │         │           │               |                |            |             |              |                |
- *  │  Magic   Version     Cmd       MsgId      header size  |  header value  |  key size  |  key value  |  value size  |  value content |
+ *  │  Magic   Version     Cmd       Opaque      header size  |  header value  |  key size  |  key value  |  value size  |  value content |
  *           │         │         │           │               |                |            |             |              |                |
  *  └ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ — — - - - - - - - - - - - - - - - - -
  * @Author: Tboy
@@ -33,17 +33,19 @@ public class Packet implements Serializable {
         //NOP
     }
 
-    public Packet(long msgId){
-        this.msgId = msgId;
+    public Packet(long opaque){
+        this.opaque = opaque;
     }
 
     private byte version;
 
     private byte cmd;
 
-    private long msgId;
+    private long opaque;
 
     private byte[] header;
+
+    private Header headerRef;
 
     private byte[] key;
 
@@ -55,6 +57,14 @@ public class Packet implements Serializable {
 
     public void setVersion(byte version) {
         this.version = version;
+    }
+
+    public Header getHeaderRef() {
+        return headerRef;
+    }
+
+    public void setHeaderRef(Header headerRef) {
+        this.headerRef = headerRef;
     }
 
     public byte[] getHeader() {
@@ -89,25 +99,18 @@ public class Packet implements Serializable {
         this.cmd = cmd;
     }
 
-    /**
-     * @return the msgId
-     */
-    public long getMsgId() {
-        return msgId;
+    public long getOpaque() {
+        return opaque;
     }
 
-    /**
-     * @param msgId
-     *            the msgId to set
-     */
-    public void setMsgId(long msgId) {
-        this.msgId = msgId;
+    public void setOpaque(long opaque) {
+        this.opaque = opaque;
     }
 
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + (int) (msgId ^ (msgId >>> 32));
+        result = prime * result + (int) (opaque ^ (opaque >>> 32));
         return result;
     }
 
@@ -119,14 +122,14 @@ public class Packet implements Serializable {
         if (getClass() != obj.getClass())
             return false;
         Packet other = (Packet) obj;
-        if (msgId != other.msgId)
+        if (opaque != other.opaque)
             return false;
         return true;
     }
 
     @Override
     public String toString() {
-        return "Packet [cmd=" + cmd + ", msgId=" + msgId + ", bodyLen=" + (header.length + key.length + value.length) + ", version=" + version + "]";
+        return "Packet [cmd=" + cmd + ", opaque=" + opaque + ", bodyLen=" + (header.length + key.length + value.length) + ", version=" + version + "]";
     }
 
 }

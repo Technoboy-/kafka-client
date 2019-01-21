@@ -15,7 +15,7 @@ public class ViewMessageHandler extends CommonMessageHandler {
 
     @Override
     public void handle(Connection connection, Packet packet) throws Exception {
-        LOGGER.debug("received view msgId : {}", packet.getMsgId());
+        LOGGER.debug("received view msg : {}", packet);
         InvokerPromise.receive(packet);
     }
 

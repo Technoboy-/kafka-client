@@ -50,7 +50,7 @@ public class Packets {
 
     public static Packet ping(){
         Packet ping = new Packet();
-        ping.setMsgId(0);
+        ping.setOpaque(0);
         ping.setCmd(Command.PING.getCmd());
         ping.setHeader(EMPTY_HEADER);
         ping.setKey(EMPTY_KEY);
@@ -60,7 +60,7 @@ public class Packets {
 
     public static Packet pong(){
         Packet pong = new Packet();
-        pong.setMsgId(0);
+        pong.setOpaque(0);
         pong.setCmd(Command.PONG.getCmd());
         pong.setHeader(EMPTY_HEADER);
         pong.setKey(EMPTY_KEY);
@@ -70,7 +70,7 @@ public class Packets {
 
     public static Packet unregister(){
         Packet unregister = new Packet();
-        unregister.setMsgId(0);
+        unregister.setOpaque(0);
         unregister.setCmd(Command.UNREGISTER.getCmd());
         unregister.setHeader(new byte[0]);
         unregister.setKey(EMPTY_KEY);
@@ -81,7 +81,7 @@ public class Packets {
     public static Packet ack(long msgId){
         Packet ack = new Packet();
         ack.setCmd(Command.ACK.getCmd());
-        ack.setMsgId(msgId);
+        ack.setOpaque(msgId);
         ack.setHeader(EMPTY_HEADER);
         ack.setKey(EMPTY_KEY);
         ack.setValue(EMPTY_VALUE);
@@ -91,22 +91,18 @@ public class Packets {
     public static Packet view(long msgId){
         Packet ack = new Packet();
         ack.setCmd(Command.VIEW.getCmd());
-        ack.setMsgId(msgId);
+        ack.setOpaque(msgId);
         ack.setHeader(EMPTY_HEADER);
         ack.setKey(EMPTY_KEY);
         ack.setValue(EMPTY_VALUE);
         return ack;
     }
 
-    public static Packet pull(){
-        return pull(IdService.I.getId());
-    }
-
     public static Packet pull(long msgId){
         Packet pull = new Packet();
         //
         pull.setCmd(Command.PULL.getCmd());
-        pull.setMsgId(msgId);
+        pull.setOpaque(msgId);
         pull.setHeader(EMPTY_HEADER);
         pull.setKey(EMPTY_KEY);
         pull.setValue(EMPTY_VALUE);
@@ -118,7 +114,7 @@ public class Packets {
         Packet packet = new Packet();
         //
         packet.setCmd(Command.VIEW.getCmd());
-        packet.setMsgId(msgId);
+        packet.setOpaque(msgId);
         Header header = new Header(record.getTopic(), record.getPartition(), record.getOffset());
         packet.setHeader(SerializerImpl.getFastJsonSerializer().serialize(header));
         packet.setKey(record.getKey());
@@ -131,7 +127,7 @@ public class Packets {
         Packet packet = new Packet();
         //
         packet.setCmd(Command.PULL.getCmd());
-        packet.setMsgId(IdService.I.getId());
+        packet.setOpaque(IdService.I.getId());
         Header header = new Header(record.topic(), record.partition(), record.offset());
         packet.setHeader(SerializerImpl.getFastJsonSerializer().serialize(header));
         packet.setKey(record.key());
@@ -144,14 +140,14 @@ public class Packets {
         Packet back = new Packet();
         //
         back.setCmd(Command.SEND_BACK.getCmd());
-        back.setMsgId(packet.getMsgId());
+        back.setOpaque(packet.getOpaque());
 
         return packet;
     }
 
     public static Packet noNewMsg(long msgId){
         Packet ping = new Packet();
-        ping.setMsgId(msgId);
+        ping.setOpaque(msgId);
         ping.setCmd(Command.PULL.getCmd());
         Header header = new Header(PullStatus.NO_NEW_MSG.getStatus());
         ping.setHeader(SerializerImpl.getFastJsonSerializer().serialize(header));

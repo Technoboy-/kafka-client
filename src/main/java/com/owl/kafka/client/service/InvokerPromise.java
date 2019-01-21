@@ -16,7 +16,7 @@ public class InvokerPromise {
 
     private static final ConcurrentHashMap<Long, InvokerPromise> promises = new ConcurrentHashMap<>();
 
-    private final long msgId;
+    private final long opaque;
 
     private final long startMs;
 
@@ -28,21 +28,21 @@ public class InvokerPromise {
 
     private InvokeCallback invokeCallback;
 
-    public InvokerPromise(long msgId, long timeoutMs){
-        this.msgId = msgId;
+    public InvokerPromise(long opaque, long timeoutMs){
+        this.opaque = opaque;
         this.startMs = System.currentTimeMillis();
         this.timeoutMs = timeoutMs;
         this.latch = new CountDownLatch(1);
-        promises.put(this.msgId, this);
+        promises.put(this.opaque, this);
     }
 
-    public InvokerPromise(long msgId, long timeoutMs, InvokeCallback invokeCallback){
-        this.msgId = msgId;
+    public InvokerPromise(long opaque, long timeoutMs, InvokeCallback invokeCallback){
+        this.opaque = opaque;
         this.startMs = System.currentTimeMillis();
         this.timeoutMs = timeoutMs;
         this.invokeCallback = invokeCallback;
         this.latch = new CountDownLatch(1);
-        promises.put(this.msgId, this);
+        promises.put(this.opaque, this);
     }
 
     public Packet getResult(){
@@ -55,7 +55,7 @@ public class InvokerPromise {
     }
 
     public static void receive(Packet packet){
-        InvokerPromise promise = promises.remove(packet.getMsgId());
+        InvokerPromise promise = promises.remove(packet.getOpaque());
         if(promise != null){
             promise.doReceive(packet);
         }
@@ -98,7 +98,7 @@ public class InvokerPromise {
         while(iterator.hasNext()){
             Map.Entry<Long, InvokerPromise> next = iterator.next();
             InvokerPromise invokerPromise = next.getValue();
-            if(invokerPromise.getStartMs() + invokerPromise.getTimeoutMs() <= System.currentTimeMillis()){
+            if(System.currentTimeMillis() >= invokerPromise.getStartMs() + invokerPromise.getTimeoutMs()){
                 iterator.remove();
                 removeList.add(invokerPromise);
             }
@@ -106,5 +106,14 @@ public class InvokerPromise {
         for(InvokerPromise invokerPromise : removeList){
             invokerPromise.executeInvokeCallback();
         }
+    }
+
+    @Override
+    public String toString() {
+        return "InvokerPromise{" +
+                "opaque=" + opaque +
+                ", startMs=" + startMs +
+                ", timeoutMs=" + timeoutMs +
+                '}';
     }
 }

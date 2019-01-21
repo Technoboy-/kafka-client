@@ -83,7 +83,7 @@ public class DefaultPushMessageImpl {
                 Packet result = promise.getResult();
                 if(result != null){
                     Header header = (Header) SerializerImpl.getFastJsonSerializer().deserialize(result.getHeader(), Header.class);
-                    return new Record<>(result.getMsgId(), header.getTopic(), header.getPartition(), header.getOffset(), result.getKey(), result.getValue(), -1);
+                    return new Record<>(header.getMsgId(), header.getTopic(), header.getPartition(), header.getOffset(), result.getKey(), result.getValue(), -1);
                 }
             }
         } catch (Exception ex) {

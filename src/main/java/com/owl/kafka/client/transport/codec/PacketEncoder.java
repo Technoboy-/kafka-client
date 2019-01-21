@@ -19,7 +19,7 @@ public class PacketEncoder extends MessageToByteEncoder<Packet> {
         out.writeByte(Packet.MAGIC);
         out.writeByte(Packet.VERSION);
         out.writeByte(msg.getCmd());
-        out.writeLong(msg.getMsgId());
+        out.writeLong(msg.getOpaque());
         out.writeInt(msg.getHeader().length);
         out.writeBytes(msg.getHeader());
         out.writeInt(msg.getKey().length);

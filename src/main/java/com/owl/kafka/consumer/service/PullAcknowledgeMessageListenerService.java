@@ -84,31 +84,32 @@ public class PullAcknowledgeMessageListenerService<K, V> implements MessageListe
         @Override
         public void run() {
             long now = System.currentTimeMillis();
+            long msgId = -1;
             try {
-                ProcessQueue.I.put(packet);
                 Header header = (Header) SerializerImpl.getFastJsonSerializer().deserialize(packet.getHeader(), Header.class);
                 PullStatus pullStatus = PullStatus.of(header.getPullStatus());
+                msgId = header.getMsgId();
+                ProcessQueue.I.put(msgId, packet);
                 switch (pullStatus){
                     case FOUND:
                         ConsumerRecord record = new ConsumerRecord(header.getTopic(), header.getPartition(), header.getOffset(), packet.getKey(), packet.getValue());
                         final Record<K, V> r = consumer.toRecord(record);
-                        r.setMsgId(packet.getMsgId());
+                        r.setMsgId(header.getMsgId());
                         messageListener.onMessage(r, new AcknowledgeMessageListener.Acknowledgment() {
                             @Override
                             public void acknowledge() {
-                                ProcessQueue.I.remove(packet.getMsgId());
+                                ProcessQueue.I.remove(header.getMsgId());
                             }
                         });
                         break;
                     case NO_NEW_MSG:
-                        LOG.debug("no new msg message");
+                        LOG.debug("no new msg");
                         break;
                 }
-
             } catch (Throwable ex) {
                 MonitorImpl.getDefault().recordConsumeProcessErrorCount(1);
                 LOG.error("onMessage error", ex);
-                ProcessQueue.I.remove(packet.getMsgId());
+                ProcessQueue.I.remove(msgId);
                 sendBack(packet);
             } finally {
                 MonitorImpl.getDefault().recordConsumeProcessCount(1);

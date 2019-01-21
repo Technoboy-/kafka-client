@@ -28,10 +28,10 @@ public class PushMessageHandler extends CommonMessageHandler {
 
     @Override
     public void handle(Connection connection, Packet packet) throws Exception {
-        LOGGER.debug("received msgId : {} ", packet.getMsgId());
+        LOGGER.debug("received push message : {} ", packet);
         Header header = (Header)SerializerImpl.getFastJsonSerializer().deserialize(packet.getHeader(), Header.class);
         ConsumerRecord record = new ConsumerRecord(header.getTopic(), header.getPartition(), header.getOffset(), packet.getKey(), packet.getValue());
-        messageListenerService.onMessage(packet.getMsgId(), record, new PushAcknowledgeMessageListenerService.AcknowledgmentCallback() {
+        messageListenerService.onMessage(header.getMsgId(), record, new PushAcknowledgeMessageListenerService.AcknowledgmentCallback() {
             @Override
             public void onAcknowledge(Record record) {
                 try {

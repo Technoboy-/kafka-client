@@ -27,7 +27,7 @@ public class PullMessageHandler extends CommonMessageHandler {
         if(LOGGER.isDebugEnabled()){
             LOGGER.debug("received pull message: {}, from : {}", packet, NetUtils.getRemoteAddress(connection.getChannel()));
         }
-        InvokerPromise invokerPromise = InvokerPromise.get(packet.getMsgId());
+        InvokerPromise invokerPromise = InvokerPromise.get(packet.getOpaque());
         if(invokerPromise != null){
             InvokerPromise.receive(packet);
             if(invokerPromise.getInvokeCallback() != null){

@@ -1,5 +1,7 @@
 package com.owl.kafka.client.transport.protocol;
 
+import com.owl.kafka.client.service.PullStatus;
+
 import java.io.Serializable;
 
 /**
@@ -13,6 +15,8 @@ public class Header implements Serializable {
 
     private long offset;
 
+    private long msgId;
+
     private byte repost;
 
     private byte pullStatus;
@@ -21,10 +25,23 @@ public class Header implements Serializable {
         this.pullStatus = pullStatus;
     }
 
+    public Header(String topic, int partition, long offset, long msgId) {
+        this.topic = topic;
+        this.partition = partition;
+        this.offset = offset;
+        this.msgId = msgId;
+        this.repost = (byte)1;
+        this.pullStatus = PullStatus.FOUND.getStatus();
+    }
+
     public Header(String topic, int partition, long offset) {
         this.topic = topic;
         this.partition = partition;
         this.offset = offset;
+    }
+
+    public long getMsgId() {
+        return msgId;
     }
 
     public byte getPullStatus() {

@@ -72,7 +72,7 @@ public class PullMessageService {
             }
         };
         try {
-            reconnector.getConnection().send(Packets.pull(), new ChannelFutureListener() {
+            reconnector.getConnection().send(Packets.pull(msgId), new ChannelFutureListener() {
                 @Override
                 public void operationComplete(ChannelFuture future) throws Exception {
                     Throwable ex = future.cause();
