@@ -15,11 +15,15 @@ public enum Command {
 
     UNREGISTER(5),
 
-    VIEW(6),
+    VIEW_REQ(6),
 
-    PULL(7),
+    VIEW_RESP(7),
 
-    SEND_BACK(8),
+    PULL_REQ(8),
+
+    PULL_RESP(9),
+
+    SEND_BACK(10),
 
     UNKNOWN(-1);
 

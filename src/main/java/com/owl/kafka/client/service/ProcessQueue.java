@@ -1,5 +1,6 @@
 package com.owl.kafka.client.service;
 
+import com.owl.kafka.client.transport.message.Message;
 import com.owl.kafka.client.transport.protocol.Packet;
 
 import java.util.Map;
@@ -15,27 +16,27 @@ public class ProcessQueue {
 
     public static ProcessQueue I = new ProcessQueue();
 
-    private final TreeMap<Long, Packet> treeMap = new TreeMap<>();
+    private final TreeMap<Long, Message> treeMap = new TreeMap<>();
 
     private final AtomicLong msgCount = new AtomicLong(0);
 
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
-    public void put(long msgId, Packet packet){
+    public void put(long msgId, Message message){
         this.lock.writeLock().lock();
         try {
             msgCount.incrementAndGet();
-            treeMap.put(msgId, packet);
+            treeMap.put(msgId, message);
         } finally {
             this.lock.writeLock().unlock();
         }
     }
 
-    public Packet take(){
+    public Message take(){
         this.lock.writeLock().lock();
         try {
             if(!treeMap.isEmpty()){
-                Map.Entry<Long, Packet> entry = treeMap.pollFirstEntry();
+                Map.Entry<Long, Message> entry = treeMap.pollFirstEntry();
                 if(entry != null){
                     msgCount.decrementAndGet();
                     return entry.getValue();
@@ -50,7 +51,7 @@ public class ProcessQueue {
     public void remove(Long msgId){
         this.lock.writeLock().lock();
         try {
-            Packet remove = treeMap.remove(msgId);
+            Message remove = treeMap.remove(msgId);
             if(remove != null){
                 msgCount.decrementAndGet();
             }

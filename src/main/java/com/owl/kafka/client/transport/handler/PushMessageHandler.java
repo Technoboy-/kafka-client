@@ -29,20 +29,22 @@ public class PushMessageHandler extends CommonMessageHandler {
     @Override
     public void handle(Connection connection, Packet packet) throws Exception {
         LOGGER.debug("received push message : {} ", packet);
-        Header header = (Header)SerializerImpl.getFastJsonSerializer().deserialize(packet.getHeader(), Header.class);
-        ConsumerRecord record = new ConsumerRecord(header.getTopic(), header.getPartition(), header.getOffset(), packet.getKey(), packet.getValue());
-        messageListenerService.onMessage(header.getMsgId(), record, new PushAcknowledgeMessageListenerService.AcknowledgmentCallback() {
-            @Override
-            public void onAcknowledge(Record record) {
-                try {
-                    connection.send(Packets.ack(record.getMsgId()));
-                } catch (ChannelInactiveException ex) {
-                    //in this case, we do not need to care about it, because push server has repush policy
-                    LOGGER.error("ChannelInactiveException, closing the channel ", ex);
-                    connection.close();
-                }
-            }
-        });
+
+        //TODO
+//        Header header = (Header)SerializerImpl.getFastJsonSerializer().deserialize(packet.getHeader(), Header.class);
+//        ConsumerRecord record = new ConsumerRecord(header.getTopic(), header.getPartition(), header.getOffset(), packet.getKey(), packet.getValue());
+//        messageListenerService.onMessage(header.getMsgId(), record, new PushAcknowledgeMessageListenerService.AcknowledgmentCallback() {
+//            @Override
+//            public void onAcknowledge(Record record) {
+//                try {
+//                    connection.send(Packets.ack(record.getMsgId()));
+//                } catch (ChannelInactiveException ex) {
+//                    //in this case, we do not need to care about it, because push server has repush policy
+//                    LOGGER.error("ChannelInactiveException, closing the channel ", ex);
+//                    connection.close();
+//                }
+//            }
+//        });
     }
 
 }

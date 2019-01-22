@@ -4,13 +4,13 @@ import com.owl.kafka.client.service.*;
 import com.owl.kafka.client.transport.Address;
 import com.owl.kafka.client.transport.NettyClient;
 import com.owl.kafka.client.transport.Reconnector;
-import com.owl.kafka.client.transport.protocol.Header;
+import com.owl.kafka.client.transport.message.Message;
 import com.owl.kafka.client.transport.protocol.Packet;
+import com.owl.kafka.client.util.MessageDecoder;
 import com.owl.kafka.client.util.Packets;
 import com.owl.kafka.client.zookeeper.ZookeeperClient;
 import com.owl.kafka.consumer.Record;
 import com.owl.kafka.consumer.service.MessageListenerService;
-import com.owl.kafka.serializer.SerializerImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -87,8 +87,9 @@ public class DefaultPullMessageImpl {
                 InvokerPromise promise = new InvokerPromise(msgId, 5000);
                 Packet result = promise.getResult();
                 if(result != null){
-                    Header header = (Header) SerializerImpl.getFastJsonSerializer().deserialize(result.getHeader(), Header.class);
-                    return new Record<>(header.getMsgId(), header.getTopic(), header.getPartition(), header.getOffset(), result.getKey(), result.getValue(), -1);
+                    Message message = MessageDecoder.decode(result.getBody());
+                    return new Record<>(message.getHeader().getMsgId(), message.getHeader().getTopic(),
+                            message.getHeader().getPartition(), message.getHeader().getOffset(), message.getKey(), message.getValue(), -1);
                 }
             }
         } catch (Exception ex) {

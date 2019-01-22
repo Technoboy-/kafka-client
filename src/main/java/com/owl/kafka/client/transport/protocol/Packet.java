@@ -5,15 +5,15 @@ import java.util.List;
 
 /**
  *
- *  * **************************************************************************************************
- *                                          Protocol
- *  ┌ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ - - - - - - - - - - - - - - - - - - -┐
- *       1   │    1    │    1    │     8     │       4       |                |     4      |             |      4       |
- *  ├ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ - - - - - - - - - ─ ─ ─ - ┤- - - - - - -- -|
- *           │         │         │           │               |                |            |             |              |                |
- *  │  Magic   Version     Cmd       Opaque      header size  |  header value  |  key size  |  key value  |  value size  |  value content|
- *           │         │         │           │               |                |            |             |              |                |
- *  └ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ — — - - - - - - - - - - - - - - - - -
+ *  * *************************************************************************
+ *                                   Protocol
+ *  ┌ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─
+ *       1   │    1    │    1    │     8     │       4       |                |
+ *  ├ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─
+ *           │         │         │           │               |                |
+ *  │  magic   version     cmd       opaque      body size   |  body value    |
+ *           │         │         │           │               |                |
+ *  └ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─
  * @Author: Tboy
  */
 public class Packet implements Serializable {
@@ -24,11 +24,7 @@ public class Packet implements Serializable {
 
     public static final byte VERSION = (byte)0x00;
 
-    public static final int TO_HEADER_LENGTH = 1 + 1 + 1 + 8 + 4;
-
-    public static final int KEY_SIZE = 4;
-
-    public static final int VALUE_SIZE = 4;
+    public static final int LENGTH = 1 + 1 + 1 + 8 + 4;
 
     public Packet(){
         //NOP

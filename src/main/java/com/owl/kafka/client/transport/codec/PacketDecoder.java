@@ -16,15 +16,17 @@ public class PacketDecoder extends ByteToMessageDecoder {
 
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
-        if (in.readableBytes() < TO_HEADER_LENGTH) {
+        if (in.readableBytes() < LENGTH) {
             return;
         }
         in.markReaderIndex();
+        //
         byte magic = in.readByte();
         if (magic != MAGIC) {
             ctx.close();
             return;
         }
+        //
         byte version = in.readByte();
         if (version != VERSION) {
             ctx.close();
@@ -34,48 +36,22 @@ public class PacketDecoder extends ByteToMessageDecoder {
         byte cmd = in.readByte();
         //opaque
         long opaque = in.readLong();
-        //header
-        int headerLength = in.readInt();
-        if (in.readableBytes() < headerLength) {
+        //body length
+        int bodyLength = in.readInt();
+        if (in.readableBytes() < bodyLength) {
             in.resetReaderIndex();
             return;
         }
-        byte[] header = new byte[headerLength];
-        in.readBytes(header);
+        //
+        byte[] body = new byte[bodyLength];
+        in.readBytes(body);
 
-        //key
-        if (in.readableBytes() < KEY_SIZE) {
-            in.resetReaderIndex();
-            return;
-        }
-        int keyLength = in.readInt();
-        if (in.readableBytes() < keyLength) {
-            in.resetReaderIndex();
-            return;
-        }
-        byte[] key = new byte[keyLength];
-        in.readBytes(key);
-
-        //value
-        if (in.readableBytes() < VALUE_SIZE) {
-            in.resetReaderIndex();
-            return;
-        }
-        int valueLength = in.readInt();
-        if (in.readableBytes() < valueLength) {
-            in.resetReaderIndex();
-            return;
-        }
-        byte[] value = new byte[valueLength];
-        in.readBytes(value);
         //
         Packet p = new Packet();
-        p.setCmd(cmd);
         p.setVersion(version);
+        p.setCmd(cmd);
         p.setOpaque(opaque);
-        p.setHeader(header);
-        p.setKey(key);
-        p.setValue(value);
+        p.setBody(body);
         out.add(p);
     }
 }

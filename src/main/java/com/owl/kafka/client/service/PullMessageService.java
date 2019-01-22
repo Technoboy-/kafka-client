@@ -29,8 +29,6 @@ public class PullMessageService {
 
     private final NettyClient nettyClient;
 
-
-
     private final int pullTimeoutMs = 30 * 1000;
 
     public PullMessageService(NettyClient nettyClient){
