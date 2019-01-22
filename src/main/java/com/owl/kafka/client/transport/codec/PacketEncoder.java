@@ -1,5 +1,6 @@
 package com.owl.kafka.client.transport.codec;
 
+import com.owl.kafka.client.transport.protocol.Message;
 import com.owl.kafka.client.transport.protocol.Packet;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandler.Sharable;
@@ -20,12 +21,15 @@ public class PacketEncoder extends MessageToByteEncoder<Packet> {
         out.writeByte(Packet.VERSION);
         out.writeByte(msg.getCmd());
         out.writeLong(msg.getOpaque());
-        out.writeInt(msg.getHeader().length);
-        out.writeBytes(msg.getHeader());
-        out.writeInt(msg.getKey().length);
-        out.writeBytes(msg.getKey());
-        out.writeInt(msg.getValue().length);
-        out.writeBytes(msg.getValue());
+        for(Message message : msg.getMessageList()){
+            out.writeInt(message.getHeader().length);
+            out.writeBytes(message.getHeader());
+            out.writeInt(message.getKey().length);
+            out.writeBytes(message.getKey());
+            out.writeInt(message.getValue().length);
+            out.writeBytes(message.getValue());
+
+        }
     }
 
 }

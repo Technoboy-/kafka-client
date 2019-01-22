@@ -1,6 +1,7 @@
 package com.owl.kafka.client.transport.protocol;
 
 import java.io.Serializable;
+import java.util.List;
 
 /**
  *
@@ -10,7 +11,7 @@ import java.io.Serializable;
  *       1   │    1    │    1    │     8     │       4       |                |     4      |             |      4       |
  *  ├ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ - - - - - - - - - ─ ─ ─ - ┤- - - - - - -- -|
  *           │         │         │           │               |                |            |             |              |                |
- *  │  Magic   Version     Cmd       Opaque      header size  |  header value  |  key size  |  key value  |  value size  |  value content |
+ *  │  Magic   Version     Cmd       Opaque      header size  |  header value  |  key size  |  key value  |  value size  |  value content|
  *           │         │         │           │               |                |            |             |              |                |
  *  └ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ — — - - - - - - - - - - - - - - - - -
  * @Author: Tboy
@@ -43,13 +44,7 @@ public class Packet implements Serializable {
 
     private long opaque;
 
-    private byte[] header;
-
-    private Header headerRef;
-
-    private byte[] key;
-
-    private byte[] value;
+    private byte[] body;
 
     public byte getVersion() {
         return version;
@@ -57,38 +52,6 @@ public class Packet implements Serializable {
 
     public void setVersion(byte version) {
         this.version = version;
-    }
-
-    public Header getHeaderRef() {
-        return headerRef;
-    }
-
-    public void setHeaderRef(Header headerRef) {
-        this.headerRef = headerRef;
-    }
-
-    public byte[] getHeader() {
-        return header;
-    }
-
-    public void setHeader(byte[] header) {
-        this.header = header;
-    }
-
-    public byte[] getKey() {
-        return key;
-    }
-
-    public void setKey(byte[] key) {
-        this.key = key;
-    }
-
-    public byte[] getValue() {
-        return value;
-    }
-
-    public void setValue(byte[] value) {
-        this.value = value;
     }
 
     public byte getCmd() {
@@ -105,6 +68,14 @@ public class Packet implements Serializable {
 
     public void setOpaque(long opaque) {
         this.opaque = opaque;
+    }
+
+    public byte[] getBody() {
+        return body;
+    }
+
+    public void setBody(byte[] body) {
+        this.body = body;
     }
 
     public int hashCode() {
@@ -129,7 +100,7 @@ public class Packet implements Serializable {
 
     @Override
     public String toString() {
-        return "Packet [cmd=" + cmd + ", opaque=" + opaque + ", bodyLen=" + (header.length + key.length + value.length) + ", version=" + version + "]";
+        return "Packet [cmd=" + cmd + ", opaque=" + opaque + ", bodyLen=" + body.length + ", version=" + version + "]";
     }
 
 }
