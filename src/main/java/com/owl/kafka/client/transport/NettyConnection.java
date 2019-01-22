@@ -86,8 +86,8 @@ public class NettyConnection implements Connection {
 
                 public void operationComplete(ChannelFuture future) throws Exception {
                     if(future.isSuccess()){
-                        if(isNotHeartbeat(packet)){
-                            LOGGER.debug("send msg {} , to clientId : {}, successfully", packet, NetUtils.getRemoteAddress(channel));
+                        if(!isHeartbeat(packet)){
+                            LOGGER.debug("send msg {} , to : {}, successfully", packet, NetUtils.getRemoteAddress(channel));
                         }
                     } else{
                         LOGGER.error("send msg {} failed, error {}", packet, future.cause());
@@ -102,7 +102,7 @@ public class NettyConnection implements Connection {
         }
     }
 
-    private boolean isNotHeartbeat(Packet packet){
+    private boolean isHeartbeat(Packet packet){
         Command command = Command.toCMD(packet.getCmd());
         return Command.PING == command || Command.PONG == command;
     }

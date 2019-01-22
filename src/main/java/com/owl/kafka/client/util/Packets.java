@@ -91,18 +91,19 @@ public class Packets {
     public static Packet view(long msgId){
         Packet ack = new Packet();
         ack.setCmd(Command.VIEW.getCmd());
-        ack.setOpaque(msgId);
-        ack.setHeader(EMPTY_HEADER);
+        ack.setOpaque(IdService.I.getId());
+        Header header = new Header(msgId);
+        ack.setHeader(SerializerImpl.getFastJsonSerializer().serialize(header));
         ack.setKey(EMPTY_KEY);
         ack.setValue(EMPTY_VALUE);
         return ack;
     }
 
-    public static Packet pull(long msgId){
+    public static Packet pull(long opaque){
         Packet pull = new Packet();
         //
         pull.setCmd(Command.PULL.getCmd());
-        pull.setOpaque(msgId);
+        pull.setOpaque(opaque);
         pull.setHeader(EMPTY_HEADER);
         pull.setKey(EMPTY_KEY);
         pull.setValue(EMPTY_VALUE);
@@ -116,6 +117,7 @@ public class Packets {
         packet.setCmd(Command.VIEW.getCmd());
         packet.setOpaque(msgId);
         Header header = new Header(record.getTopic(), record.getPartition(), record.getOffset());
+
         packet.setHeader(SerializerImpl.getFastJsonSerializer().serialize(header));
         packet.setKey(record.getKey());
         packet.setValue(record.getValue());
@@ -139,15 +141,16 @@ public class Packets {
     public static Packet toSendBackPacket(Packet packet){
         Packet back = new Packet();
         //
-        back.setCmd(Command.SEND_BACK.getCmd());
         back.setOpaque(packet.getOpaque());
+        back.setHeader(packet.getHeader());
+        back.setCmd(Command.SEND_BACK.getCmd());
 
         return packet;
     }
 
-    public static Packet noNewMsg(long msgId){
+    public static Packet noNewMsg(long opaque){
         Packet ping = new Packet();
-        ping.setOpaque(msgId);
+        ping.setOpaque(opaque);
         ping.setCmd(Command.PULL.getCmd());
         Header header = new Header(PullStatus.NO_NEW_MSG.getStatus());
         ping.setHeader(SerializerImpl.getFastJsonSerializer().serialize(header));

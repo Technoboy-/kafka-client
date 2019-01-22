@@ -21,8 +21,15 @@ public class Header implements Serializable {
 
     private byte pullStatus;
 
+    public Header() {
+    }
+
     public Header(byte pullStatus) {
         this.pullStatus = pullStatus;
+    }
+
+    public Header(long msgId) {
+        this.msgId = msgId;
     }
 
     public Header(String topic, int partition, long offset, long msgId) {
@@ -68,7 +75,35 @@ public class Header implements Serializable {
         return partition;
     }
 
+    public void setTopic(String topic) {
+        this.topic = topic;
+    }
+
+    public void setPartition(int partition) {
+        this.partition = partition;
+    }
+
+    public void setOffset(long offset) {
+        this.offset = offset;
+    }
+
+    public void setMsgId(long msgId) {
+        this.msgId = msgId;
+    }
+
     public long getOffset() {
         return offset;
+    }
+
+    @Override
+    public String toString() {
+        return "Header{" +
+                "topic='" + topic + '\'' +
+                ", partition=" + partition +
+                ", offset=" + offset +
+                ", msgId=" + msgId +
+                ", repost=" + repost +
+                ", pullStatus=" + pullStatus +
+                '}';
     }
 }

@@ -56,7 +56,7 @@ public class PullMessageService {
     }
 
     public void pullImmediately(Address address){
-        long msgId = IdService.I.getId();
+        long opaque = IdService.I.getId();
         Reconnector reconnector =  nettyClient.getReconnectors().get(address);
         PullCallback callback = new PullCallback(){
 
@@ -72,11 +72,11 @@ public class PullMessageService {
             }
         };
         try {
-            reconnector.getConnection().send(Packets.pull(msgId), new ChannelFutureListener() {
+            reconnector.getConnection().send(Packets.pull(opaque), new ChannelFutureListener() {
                 @Override
                 public void operationComplete(ChannelFuture future) throws Exception {
                     Throwable ex = future.cause();
-                    new InvokerPromise(msgId, pullTimeoutMs, new InvokeCallback() {
+                    new InvokerPromise(opaque, pullTimeoutMs, new InvokeCallback() {
                         @Override
                         public void onComplete(InvokerPromise invokerPromise) {
                             Packet response = invokerPromise.getResult();
