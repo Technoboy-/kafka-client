@@ -90,6 +90,7 @@ public class NettyConnection implements Connection {
                             LOGGER.debug("send msg {} , to : {}, successfully", packet, NetUtils.getRemoteAddress(channel));
                         }
                     } else{
+                        future.cause().printStackTrace();
                         LOGGER.error("send msg {} failed, error {}", packet, future.cause());
                     }
                 }

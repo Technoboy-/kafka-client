@@ -11,6 +11,7 @@ import com.owl.kafka.serializer.SerializerImpl;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.zookeeper.data.Id;
 
 import java.nio.ByteBuffer;
 
@@ -72,11 +73,20 @@ public class Packets {
 
     public static Packet ack(long msgId){
         Packet ack = new Packet();
-//        ack.setCmd(Command.ACK.getCmd());
-//        ack.setOpaque(msgId);
-//        ack.setHeader(EMPTY_HEADER);
-//        ack.setKey(EMPTY_KEY);
-//        ack.setValue(EMPTY_VALUE);
+        ack.setCmd(Command.ACK.getCmd());
+        ack.setOpaque(IdService.I.getId());
+
+        Header header = new Header(msgId);
+        byte[] headerInBytes = SerializerImpl.getFastJsonSerializer().serialize(header);
+        ByteBuffer buffer = ByteBuffer.allocate(4 + headerInBytes.length + 4 + 4);
+        buffer.putInt(headerInBytes.length);
+        buffer.put(headerInBytes);
+        buffer.putInt(0);
+        buffer.put(EMPTY_KEY);
+        buffer.putInt(0);
+        buffer.put(EMPTY_VALUE);
+        ack.setBody(buffer.array());
+
         return ack;
     }
 

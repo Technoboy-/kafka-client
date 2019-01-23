@@ -74,6 +74,10 @@ public class Packet implements Serializable {
         this.body = body;
     }
 
+    public boolean isBodyEmtpy(){
+        return this.body.length == 0;
+    }
+
     public int hashCode() {
         final int prime = 31;
         int result = 1;
@@ -96,7 +100,7 @@ public class Packet implements Serializable {
 
     @Override
     public String toString() {
-        return "Packet [cmd=" + cmd + ", opaque=" + opaque + ", bodyLen=" + body.length + ", version=" + version + "]";
+        return "Packet [cmd=" + cmd + ", opaque=" + opaque + ", bodyLen=" + (body == null ? 0 : body.length) + ", version=" + version + "]";
     }
 
 }

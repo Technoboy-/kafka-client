@@ -51,7 +51,7 @@ public class DefaultKafkaConsumerImpl<K, V> implements Runnable, com.owl.kafka.c
 
     private MessageListenerServiceRegistry serviceRegistry;
 
-//    private DefaultPushMessageImpl defaultPushMessageImpl;
+    private DefaultPushMessageImpl defaultPushMessageImpl;
 
     private DefaultPullMessageImpl defaultPullMessageImpl;
 
@@ -94,8 +94,10 @@ public class DefaultKafkaConsumerImpl<K, V> implements Runnable, com.owl.kafka.c
         if (start.compareAndSet(false, true)) {
             if(useProxy){
                 Preconditions.checkArgument(messageListener instanceof AcknowledgeMessageListener, "using proxy, MessageListener must be AcknowledgeMessageListener");
-                defaultPullMessageImpl = new DefaultPullMessageImpl(messageListenerService);
-                defaultPullMessageImpl.start();
+//                defaultPullMessageImpl = new DefaultPullMessageImpl(messageListenerService);
+//                defaultPullMessageImpl.start();
+                defaultPushMessageImpl = new DefaultPushMessageImpl(messageListenerService);
+                defaultPushMessageImpl.start();
             } else{
                 boolean isAssignTopicPartition = !CollectionUtils.isEmpty(configs.getTopicPartitions());
                 if(isAssignTopicPartition){

@@ -59,7 +59,8 @@ public class NettyClient {
     private void initHandler(MessageListenerService messageListenerService){
         this.dispatcher.register(Command.PONG, new PongMessageHandler());
         this.dispatcher.register(Command.VIEW_RESP, new ViewMessageHandler());
-        this.dispatcher.register(Command.PULL_RESP, new PullMessageHandler(messageListenerService));
+//        this.dispatcher.register(Command.PULL_RESP, new PullRespMessageHandler(messageListenerService));
+        this.dispatcher.register(Command.PUSH, new PushMessageHandler(messageListenerService));
         this.handler = new ClientHandler(this.dispatcher);
     }
 

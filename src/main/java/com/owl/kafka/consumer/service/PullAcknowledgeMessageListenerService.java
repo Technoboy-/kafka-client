@@ -34,7 +34,7 @@ public class PullAcknowledgeMessageListenerService<K, V> implements MessageListe
 
     private final int parallelism = ClientConfigs.I.getParallelismNum();
 
-    private final int consumeBatchSize = 1;
+    private final int consumeBatchSize = 2;
 
     private final ThreadPoolExecutor consumeExecutor = new ThreadPoolExecutor(parallelism, parallelism, 60, TimeUnit.SECONDS, new LinkedBlockingQueue<>());
 

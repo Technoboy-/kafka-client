@@ -16,13 +16,13 @@ import java.util.List;
 /**
  * @Author: Tboy
  */
-public class PullMessageHandler extends CommonMessageHandler {
+public class PullRespMessageHandler extends CommonMessageHandler {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(PullMessageHandler.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(PullRespMessageHandler.class);
 
     private final PullAcknowledgeMessageListenerService messageListenerService;
 
-    public PullMessageHandler(MessageListenerService messageListenerService){
+    public PullRespMessageHandler(MessageListenerService messageListenerService){
         this.messageListenerService = (PullAcknowledgeMessageListenerService)messageListenerService;
     }
 

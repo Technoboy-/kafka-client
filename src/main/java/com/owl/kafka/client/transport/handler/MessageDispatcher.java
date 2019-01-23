@@ -31,6 +31,7 @@ public class MessageDispatcher {
                 connection.close();
             }
         } catch (Exception e) {
+            e.printStackTrace();
             LOGGER.error("dispatch msg {} , error {}, close channel {}", new Object[]{packet, e, NetUtils.getRemoteAddress(connection.getChannel())});
             connection.close();
         }
