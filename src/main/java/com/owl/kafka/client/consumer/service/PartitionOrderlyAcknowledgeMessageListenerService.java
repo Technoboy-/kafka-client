@@ -11,10 +11,7 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -83,7 +80,7 @@ public class PartitionOrderlyAcknowledgeMessageListenerService<K, V> extends Ack
 
         private Thread worker;
 
-        private final BlockingQueue<ConsumerRecord<byte[], byte[]>> queue = new LinkedBlockingQueue<>(consumer.getConfigs().getHandlerQueueSize());
+        private final ArrayBlockingQueue<ConsumerRecord<byte[], byte[]>> queue = new ArrayBlockingQueue<>(consumer.getConfigs().getHandlerQueueSize());
 
         private final AtomicBoolean start = new AtomicBoolean(false);
 

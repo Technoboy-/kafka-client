@@ -23,7 +23,7 @@ public class MessageListenerServiceRegistry<K, V> {
 
     private MessageListenerService messageListenerService;
 
-    private final String packageName = "com.tt.kafka.consumer.service.";
+    private final String packageName = "com.owl.kafka.client.consumer.service.";
 
     public MessageListenerServiceRegistry(DefaultKafkaConsumerImpl<K, V> consumer, MessageListener<K, V> messageListener){
         this.consumer = consumer;
