@@ -1,4 +1,4 @@
-import com.owl.kafka.TTKafkaClient;
+import com.owl.kafka.OwlKafkaClient;
 import com.owl.kafka.consumer.ConsumerConfig;
 import com.owl.kafka.consumer.KafkaConsumer;
 import com.owl.kafka.consumer.Record;
@@ -35,7 +35,7 @@ public class KafkaClientTest {
         ProducerConfig configs = new ProducerConfig("localhost:9092");
         configs.setKeySerializer(SerializerImpl.getFastJsonSerializer());
         configs.setValueSerializer(SerializerImpl.getFastJsonSerializer());
-        KafkaProducer<String, String> producer = TTKafkaClient.createProducer(configs);
+        KafkaProducer<String, String> producer = OwlKafkaClient.createProducer(configs);
 
         final AtomicBoolean alive = new AtomicBoolean(true);
         while (alive.get()) {
@@ -58,7 +58,7 @@ public class KafkaClientTest {
         ProducerConfig configs = new ProducerConfig("localhost:9092");
         configs.setKeySerializer(SerializerImpl.getFastJsonSerializer());
         configs.setValueSerializer(SerializerImpl.getFastJsonSerializer());
-        KafkaProducer<String, String> producer = TTKafkaClient.createProducer(configs);
+        KafkaProducer<String, String> producer = OwlKafkaClient.createProducer(configs);
 
         final AtomicBoolean alive = new AtomicBoolean(true);
         while (alive.get()) {
@@ -80,7 +80,7 @@ public class KafkaClientTest {
         ProducerConfig configs = new ProducerConfig("localhost:9092");
         configs.setKeySerializer(SerializerImpl.serializerImpl());
         configs.setValueSerializer(SerializerImpl.serializerImpl());
-        KafkaProducer<String, String> producer = TTKafkaClient.createProducer(configs);
+        KafkaProducer<String, String> producer = OwlKafkaClient.createProducer(configs);
 
         final AtomicBoolean alive = new AtomicBoolean(true);
         while (alive.get()) {
@@ -124,7 +124,7 @@ public class KafkaClientTest {
                 LOG.info("partition : {}, value = {}", new Object[]{partition, value});
             }
         };
-        KafkaConsumer<String, String> consumer = TTKafkaClient.createConsumer(configs);
+        KafkaConsumer<String, String> consumer = OwlKafkaClient.createConsumer(configs);
         consumer.setMessageListener(messageListener);
         consumer.start();
 
@@ -158,7 +158,7 @@ public class KafkaClientTest {
                 LOG.info(Thread.currentThread().getName() + " , partition : {}, value = {}", new Object[]{partition, value});
             }
         };
-        KafkaConsumer<String, String> consumer = TTKafkaClient.createConsumer(configs);
+        KafkaConsumer<String, String> consumer = OwlKafkaClient.createConsumer(configs);
         consumer.setMessageListener(messageListener);
         consumer.start();
 
@@ -192,7 +192,7 @@ public class KafkaClientTest {
                 LOG.info(Thread.currentThread().getName() + " , partition : {}, value = {}", new Object[]{partition, value});
             }
         };
-        KafkaConsumer<String, String> consumer = TTKafkaClient.createConsumer(configs);
+        KafkaConsumer<String, String> consumer = OwlKafkaClient.createConsumer(configs);
         consumer.setMessageListener(messageListener);
         consumer.start();
 
@@ -227,7 +227,7 @@ public class KafkaClientTest {
                 acknowledgment.acknowledge();
             }
         };
-        KafkaConsumer<String, String> consumer = TTKafkaClient.createConsumer(configs);
+        KafkaConsumer<String, String> consumer = OwlKafkaClient.createConsumer(configs);
         consumer.setMessageListener(messageListener);
         consumer.start();
 
@@ -264,7 +264,7 @@ public class KafkaClientTest {
                 acknowledgment.acknowledge();
             }
         };
-        KafkaConsumer<String, String> consumer = TTKafkaClient.createConsumer(configs);
+        KafkaConsumer<String, String> consumer = OwlKafkaClient.createConsumer(configs);
         consumer.setMessageListener(messageListener);
         consumer.start();
 
@@ -306,7 +306,7 @@ public class KafkaClientTest {
                 acknowledgment.acknowledge();
             }
         };
-        KafkaConsumer<String, String> consumer = TTKafkaClient.createConsumer(configs);
+        KafkaConsumer<String, String> consumer = OwlKafkaClient.createConsumer(configs);
         consumer.setMessageListener(messageListener);
         consumer.start();
 
@@ -340,7 +340,7 @@ public class KafkaClientTest {
                 acknowledgment.acknowledge();
             }
         };
-        KafkaConsumer<String, String> consumer = TTKafkaClient.createConsumer(configs);
+        KafkaConsumer<String, String> consumer = OwlKafkaClient.createConsumer(configs);
         consumer.setMessageListener(messageListener);
         consumer.start();
 
@@ -374,7 +374,7 @@ public class KafkaClientTest {
                 acknowledgment.acknowledge();
             }
         };
-        KafkaConsumer<String, String> consumer = TTKafkaClient.createConsumer(configs);
+        KafkaConsumer<String, String> consumer = OwlKafkaClient.createConsumer(configs);
         consumer.setMessageListener(messageListener);
         consumer.start();
 

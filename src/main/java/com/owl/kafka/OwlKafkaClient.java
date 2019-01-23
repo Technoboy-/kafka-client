@@ -10,7 +10,7 @@ import com.owl.kafka.producer.KafkaProducer;
 /**
  * @Author: Tboy
  */
-public class TTKafkaClient {
+public class OwlKafkaClient {
 
     public static <K, V> KafkaConsumer<K, V> createConsumer(ConsumerConfig configs)
     {
