@@ -359,6 +359,7 @@ public class KafkaClientTest {
         configs.setAutoCommit(false);
         configs.put("auto.offset.reset", "latest");
         configs.setUseProxy(true);
+//        configs.setProxyModel(ConsumerConfig.ProxyModel.PUSH);
         MessageListener<String, String> messageListener = new AcknowledgeMessageListener<String, String>() {
             @Override
             public void onMessage(Record<String, String> record, Acknowledgment acknowledgment) {
