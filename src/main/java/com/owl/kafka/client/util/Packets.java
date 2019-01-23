@@ -10,8 +10,6 @@ import com.owl.kafka.consumer.Record;
 import com.owl.kafka.serializer.SerializerImpl;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.zookeeper.data.Id;
 
 import java.nio.ByteBuffer;
 
@@ -26,33 +24,36 @@ public class Packets {
 
     private static byte[] EMPTY_VALUE = new byte[0];
 
-    private static final ByteBuf HEARTBEATS_BUF;
+    private static final ByteBuf PING_BUF;
+
+    private static final ByteBuf PONE_BUF;
 
     static {
-        ByteBuf buf = Unpooled.buffer();
-        buf.writeByte(Packet.MAGIC);
-        buf.writeByte(Packet.VERSION);
-        buf.writeByte(Command.PING.getCmd());
-        buf.writeLong(0);
-        buf.writeInt(0);
-        buf.writeBytes(EMPTY_BODY);
-        HEARTBEATS_BUF = Unpooled.unreleasableBuffer(buf).asReadOnly();
+        ByteBuf ping = Unpooled.buffer();
+        ping.writeByte(Packet.MAGIC);
+        ping.writeByte(Packet.VERSION);
+        ping.writeByte(Command.PING.getCmd());
+        ping.writeLong(0);
+        ping.writeInt(0);
+        ping.writeBytes(EMPTY_BODY);
+        PING_BUF = Unpooled.unreleasableBuffer(ping).asReadOnly();
+        //
+        ByteBuf pong = Unpooled.buffer();
+        pong.writeByte(Packet.MAGIC);
+        pong.writeByte(Packet.VERSION);
+        pong.writeByte(Command.PONG.getCmd());
+        pong.writeLong(0);
+        pong.writeInt(0);
+        pong.writeBytes(EMPTY_BODY);
+        PONE_BUF = Unpooled.unreleasableBuffer(pong).asReadOnly();
     }
 
-    public static ByteBuf heartbeatContent(){
-        return HEARTBEATS_BUF.duplicate();
+    public static ByteBuf pingContent(){
+        return PING_BUF.duplicate();
     }
 
     public static ByteBuf registerContent(){
-        return HEARTBEATS_BUF.duplicate();
-    }
-
-    public static Packet ping(){
-        Packet ping = new Packet();
-        ping.setOpaque(0);
-        ping.setCmd(Command.PING.getCmd());
-        ping.setBody(EMPTY_BODY);
-        return ping;
+        return PING_BUF.duplicate();
     }
 
     public static Packet pong(){
@@ -78,6 +79,7 @@ public class Packets {
 
         Header header = new Header(msgId);
         byte[] headerInBytes = SerializerImpl.getFastJsonSerializer().serialize(header);
+        //
         ByteBuffer buffer = ByteBuffer.allocate(4 + headerInBytes.length + 4 + 4);
         buffer.putInt(headerInBytes.length);
         buffer.put(headerInBytes);
@@ -90,21 +92,59 @@ public class Packets {
         return ack;
     }
 
-    public static Packet view(long msgId){
+    public static Packet viewReq(long msgId){
         Packet ack = new Packet();
-//        ack.setCmd(Command.VIEW.getCmd());
-//        ack.setOpaque(IdService.I.getId());
-//
-//        Header header = new Header(msgId);
-//        ack.setHeader(SerializerImpl.getFastJsonSerializer().serialize(header));
-//        ack.setKey(EMPTY_KEY);
-//        ack.setValue(EMPTY_VALUE);
+        ack.setCmd(Command.VIEW_REQ.getCmd());
+        ack.setOpaque(IdService.I.getId());
+        //
+        Header header = new Header(msgId);
+        byte[] headerInBytes = SerializerImpl.getFastJsonSerializer().serialize(header);
+        //
+        ByteBuffer buffer = ByteBuffer.allocate(4 + headerInBytes.length + 4 + 4);
+        buffer.putInt(headerInBytes.length);
+        buffer.put(headerInBytes);
+        buffer.putInt(0);
+        buffer.put(EMPTY_KEY);
+        buffer.putInt(0);
+        buffer.put(EMPTY_VALUE);
+        ack.setBody(buffer.array());
+
         return ack;
     }
 
-    public static Packet pull(long opaque){
+    public static Packet viewResp(long opaque, long msgId, Record<byte[], byte[]> record){
+        Packet viewResp = new Packet();
+        viewResp.setCmd(Command.VIEW_RESP.getCmd());
+        viewResp.setOpaque(opaque);
+        //
+        Header header = new Header(record.getTopic(), record.getPartition(), record.getOffset(), msgId);
+        byte[] headerInBytes = SerializerImpl.getFastJsonSerializer().serialize(header);
+
+        ByteBuffer buffer = ByteBuffer.allocate(4 + headerInBytes.length + 4 + record.getKey().length + 4 + record.getValue().length);
+        buffer.putInt(headerInBytes.length);
+        buffer.put(headerInBytes);
+        buffer.putInt(record.getKey().length);
+        buffer.put(record.getKey());
+        buffer.putInt(record.getValue().length);
+        buffer.put(record.getValue());
+
+        viewResp.setBody(buffer.array());
+
+        return viewResp;
+    }
+
+    public static Packet noViewMsgResp(long opaque){
+        Packet viewResp = new Packet();
+        viewResp.setCmd(Command.VIEW_RESP.getCmd());
+        viewResp.setOpaque(opaque);
+        viewResp.setBody(EMPTY_BODY);
+
+        return viewResp;
+    }
+
+    public static Packet pullReq(long opaque){
         Packet pull = new Packet();
-//        //
+
         pull.setCmd(Command.PULL_REQ.getCmd());
         pull.setOpaque(opaque);
         pull.setBody(EMPTY_BODY);
@@ -112,36 +152,8 @@ public class Packets {
         return pull;
     }
 
-    public static Packet toViewPacket(long msgId, Record<byte[], byte[]> record){
-        Packet packet = new Packet();
-//        //
-//        packet.setCmd(Command.VIEW.getCmd());
-//        packet.setOpaque(msgId);
-//        Header header = new Header(record.getTopic(), record.getPartition(), record.getOffset());
-//
-//        packet.setHeader(SerializerImpl.getFastJsonSerializer().serialize(header));
-//        packet.setKey(record.getKey());
-//        packet.setValue(record.getValue());
-
-        return packet;
-    }
-
-    public static Packet toPullPacket(ConsumerRecord<byte[], byte[]> record){
-        Packet packet = new Packet();
-//        //
-//        packet.setCmd(Command.PULL.getCmd());
-//        packet.setOpaque(IdService.I.getId());
-//        Header header = new Header(record.topic(), record.partition(), record.offset());
-//        packet.setHeader(SerializerImpl.getFastJsonSerializer().serialize(header));
-//        packet.setKey(record.key());
-//        packet.setValue(record.value());
-
-        return packet;
-    }
-
-    public static Packet toSendBackPacket(Message message){
+    public static Packet sendBackReq(Message message){
         Packet back = new Packet();
-        //
         back.setCmd(Command.SEND_BACK.getCmd());
         back.setOpaque(IdService.I.getId());
         //
@@ -157,9 +169,8 @@ public class Packets {
         return back;
     }
 
-    public static Packet noNewMsg(long opaque){
+    public static Packet noNewMsgResp(long opaque){
         Packet result = new Packet();
-        //
         result.setOpaque(opaque);
         result.setCmd(Command.PULL_RESP.getCmd());
         //
@@ -177,11 +188,4 @@ public class Packets {
         return result;
     }
 
-    public static Packet pullResp(long opaque){
-        Packet pull = new Packet();
-        pull.setOpaque(opaque);
-        pull.setCmd(Command.PULL_RESP.getCmd());
-        pull.setBody(EMPTY_BODY);
-        return pull;
-    }
 }

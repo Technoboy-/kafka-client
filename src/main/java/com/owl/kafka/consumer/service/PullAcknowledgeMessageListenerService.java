@@ -98,7 +98,7 @@ public class PullAcknowledgeMessageListenerService<K, V> implements MessageListe
 
     private void sendBack(Message message){
         try {
-            connection.send(Packets.toSendBackPacket(message));
+            connection.send(Packets.sendBackReq(message));
         } catch (ChannelInactiveException e) {
             consumeLater(new ConsumeRequest(Arrays.asList(message)));
         }

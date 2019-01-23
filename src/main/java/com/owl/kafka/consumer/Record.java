@@ -8,6 +8,8 @@ import java.util.Objects;
  */
 public class Record<K, V> implements Serializable {
 
+    public static final Record EMPTY = new Record<>(-1, "", -1, -1, null, null, -1);
+
     private long msgId;
 
     private final String topic;

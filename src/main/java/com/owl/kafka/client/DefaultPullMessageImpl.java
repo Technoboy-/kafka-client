@@ -83,13 +83,18 @@ public class DefaultPullMessageImpl {
                 }
             }
             if(reconnector != null){
-                reconnector.getConnection().send(Packets.view(msgId));
+                reconnector.getConnection().send(Packets.viewReq(msgId));
                 InvokerPromise promise = new InvokerPromise(msgId, 5000);
                 Packet result = promise.getResult();
                 if(result != null){
-                    Message message = MessageCodec.decode(result.getBody());
-                    return new Record<>(message.getHeader().getMsgId(), message.getHeader().getTopic(),
-                            message.getHeader().getPartition(), message.getHeader().getOffset(), message.getKey(), message.getValue(), -1);
+                    if(result.isBodyEmtpy()){
+                        return Record.EMPTY;
+                    } else{
+                        Message message = MessageCodec.decode(result.getBody());
+
+                        return new Record<>(message.getHeader().getMsgId(), message.getHeader().getTopic(),
+                                message.getHeader().getPartition(), message.getHeader().getOffset(), message.getKey(), message.getValue(), -1);
+                    }
                 }
             }
         } catch (Exception ex) {

@@ -75,7 +75,7 @@ public class Packet implements Serializable {
     }
 
     public boolean isBodyEmtpy(){
-        return this.body.length == 0;
+        return this.body == null || this.body.length == 0;
     }
 
     public int hashCode() {
