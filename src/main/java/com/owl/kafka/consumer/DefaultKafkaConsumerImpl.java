@@ -13,6 +13,7 @@ import com.owl.kafka.consumer.service.MessageListenerService;
 import com.owl.kafka.consumer.service.MessageListenerServiceRegistry;
 import com.owl.kafka.serializer.Serializer;
 import com.owl.kafka.util.CollectionUtils;
+import com.owl.kafka.util.Constants;
 import com.owl.kafka.util.Preconditions;
 import com.owl.kafka.util.StringUtils;
 import com.owl.kafka.metric.MonitorImpl;
@@ -41,7 +42,7 @@ public class DefaultKafkaConsumerImpl<K, V> implements Runnable, com.owl.kafka.c
 
     private final Thread worker = new Thread(this, "consumer-poll-worker");
 
-    private final com.owl.kafka.consumer.ConsumerConfig configs;
+    private final ConsumerConfig configs;
 
     private MessageListenerService messageListenerService;
 
@@ -94,10 +95,13 @@ public class DefaultKafkaConsumerImpl<K, V> implements Runnable, com.owl.kafka.c
         if (start.compareAndSet(false, true)) {
             if(useProxy){
                 Preconditions.checkArgument(messageListener instanceof AcknowledgeMessageListener, "using proxy, MessageListener must be AcknowledgeMessageListener");
-                defaultPullMessageImpl = new DefaultPullMessageImpl(messageListenerService);
-                defaultPullMessageImpl.start();
-//                defaultPushMessageImpl = new DefaultPushMessageImpl(messageListenerService);
-//                defaultPushMessageImpl.start();
+                if(ConsumerConfig.ProxyModel.PULL == configs.getProxyModel()){
+                    defaultPullMessageImpl = new DefaultPullMessageImpl(messageListenerService);
+                    defaultPullMessageImpl.start();
+                } else{
+                    defaultPushMessageImpl = new DefaultPushMessageImpl(messageListenerService);
+                    defaultPushMessageImpl.start();
+                }
             } else{
                 boolean isAssignTopicPartition = !CollectionUtils.isEmpty(configs.getTopicPartitions());
                 if(isAssignTopicPartition){
@@ -163,6 +167,7 @@ public class DefaultKafkaConsumerImpl<K, V> implements Runnable, com.owl.kafka.c
             throw new IllegalArgumentException("AutoCommitMessageListener must be auto commit");
         }
 
+        System.setProperty(Constants.PROXY_MODEL, configs.getProxyModel().name());
         //
         this.serviceRegistry = new MessageListenerServiceRegistry(this, messageListener);
         this.messageListenerService = this.serviceRegistry.getMessageListenerService(false);
@@ -267,6 +272,9 @@ public class DefaultKafkaConsumerImpl<K, V> implements Runnable, com.owl.kafka.c
                     consumer.unsubscribe();
                     consumer.close();
                 }
+            }
+            if(defaultPushMessageImpl != null){
+                defaultPushMessageImpl.close();
             }
             if(defaultPullMessageImpl != null){
                 defaultPullMessageImpl.close();

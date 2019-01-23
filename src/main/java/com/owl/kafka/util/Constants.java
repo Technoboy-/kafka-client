@@ -15,4 +15,6 @@ public interface Constants {
 
     int M_BYTES = K_BYTES * 1024;
 
+    String PROXY_MODEL = "proxy.model";
+
 }

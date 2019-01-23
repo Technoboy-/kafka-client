@@ -7,6 +7,7 @@ import com.owl.kafka.consumer.listener.MessageListener;
 import com.owl.kafka.util.CollectionUtils;
 import com.owl.kafka.consumer.ConsumerConfig;
 import com.owl.kafka.consumer.DefaultKafkaConsumerImpl;
+import com.owl.kafka.util.Constants;
 
 import java.lang.reflect.Constructor;
 
@@ -47,8 +48,12 @@ public class MessageListenerServiceRegistry<K, V> {
         int parallel = configs.getParallelism();
         if (messageListener instanceof AcknowledgeMessageListener) {
             if(useProxy){
-//                this.messageListenerService = new PushAcknowledgeMessageListenerService(this.consumer, messageListener);
-                this.messageListenerService = new PullAcknowledgeMessageListenerService(this.consumer, messageListener);
+                String proxyModel = System.getProperty(Constants.PROXY_MODEL);
+                if(ConsumerConfig.ProxyModel.PUSH == ConsumerConfig.ProxyModel.PUSH.valueOf(proxyModel)){
+                    this.messageListenerService = new PushAcknowledgeMessageListenerService(this.consumer, messageListener);
+                } else{
+                    this.messageListenerService = new PullAcknowledgeMessageListenerService(this.consumer, messageListener);
+                }
             } else if (partitionOrderly && isAssignTopicPartition) {
                 this.messageListenerService = new AssignPartitionOrderlyAcknowledgeMessageListenerService(this.consumer, messageListener);
             } else if(partitionOrderly){

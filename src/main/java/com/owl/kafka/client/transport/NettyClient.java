@@ -5,7 +5,9 @@ import com.owl.kafka.client.transport.codec.PacketDecoder;
 import com.owl.kafka.client.transport.codec.PacketEncoder;
 import com.owl.kafka.client.transport.handler.*;
 import com.owl.kafka.client.transport.protocol.Command;
+import com.owl.kafka.consumer.ConsumerConfig;
 import com.owl.kafka.consumer.service.MessageListenerService;
+import com.owl.kafka.util.Constants;
 import com.owl.kafka.util.NamedThreadFactory;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.ChannelFuture;
@@ -59,8 +61,13 @@ public class NettyClient {
     private void initHandler(MessageListenerService messageListenerService){
         this.dispatcher.register(Command.PONG, new PongMessageHandler());
         this.dispatcher.register(Command.VIEW_RESP, new ViewMessageHandler());
-        this.dispatcher.register(Command.PULL_RESP, new PullRespMessageHandler(messageListenerService));
-//        this.dispatcher.register(Command.PUSH, new PushMessageHandler(messageListenerService));
+        //
+        String proxyModel = System.getProperty(Constants.PROXY_MODEL);
+        if(ConsumerConfig.ProxyModel.PULL == ConsumerConfig.ProxyModel.PULL.valueOf(proxyModel)){
+            this.dispatcher.register(Command.PULL_RESP, new PullRespMessageHandler(messageListenerService));
+        } else{
+            this.dispatcher.register(Command.PUSH, new PushMessageHandler(messageListenerService));
+        }
         this.handler = new ClientHandler(this.dispatcher);
     }
 
