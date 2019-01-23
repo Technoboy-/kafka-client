@@ -49,15 +49,15 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
 
         if (!ch.isWritable()) {
             if (LOGGER.isWarnEnabled()) {
-                LOGGER.warn("{} is not writable, high water mask: {}, the number of flushed entries that are not written yet: {}.",
-                        new Object[]{ch, config.getWriteBufferHighWaterMark(), ch.unsafe().outboundBuffer().size()});
+                LOGGER.warn("{} is not writable, over high water level : {}",
+                        new Object[]{ch, config.getWriteBufferHighWaterMark()});
             }
 
             config.setAutoRead(false);
         } else {
             if (LOGGER.isWarnEnabled()) {
-                LOGGER.warn("{} is writable(rehabilitate), low water mask: {}, the number of flushed entries that are not written yet: {}.",
-                        new Object[]{ch, config.getWriteBufferLowWaterMark(), ch.unsafe().outboundBuffer().size()});
+                LOGGER.warn("{} is writable, to low water : {}",
+                        new Object[]{ch, config.getWriteBufferLowWaterMark()});
             }
 
             config.setAutoRead(true);
