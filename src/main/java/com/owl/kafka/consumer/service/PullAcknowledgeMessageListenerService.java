@@ -1,13 +1,13 @@
 package com.owl.kafka.consumer.service;
 
-import com.owl.kafka.client.ClientConfigs;
-import com.owl.kafka.client.service.ProcessQueue;
-import com.owl.kafka.client.service.PullStatus;
-import com.owl.kafka.client.transport.Connection;
-import com.owl.kafka.client.transport.exceptions.ChannelInactiveException;
-import com.owl.kafka.client.transport.message.Message;
-import com.owl.kafka.client.transport.message.Header;
-import com.owl.kafka.client.util.Packets;
+import com.owl.kafka.proxy.ClientConfigs;
+import com.owl.kafka.proxy.service.ProcessQueue;
+import com.owl.kafka.proxy.service.PullStatus;
+import com.owl.kafka.proxy.transport.Connection;
+import com.owl.kafka.proxy.transport.exceptions.ChannelInactiveException;
+import com.owl.kafka.proxy.transport.message.Message;
+import com.owl.kafka.proxy.transport.message.Header;
+import com.owl.kafka.proxy.util.Packets;
 import com.owl.kafka.consumer.DefaultKafkaConsumerImpl;
 import com.owl.kafka.consumer.Record;
 import com.owl.kafka.consumer.listener.AcknowledgeMessageListener;

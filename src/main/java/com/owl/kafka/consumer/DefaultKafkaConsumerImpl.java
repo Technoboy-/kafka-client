@@ -1,8 +1,8 @@
 package com.owl.kafka.consumer;
 
-import com.owl.kafka.client.DefaultPullMessageImpl;
-import com.owl.kafka.client.DefaultPushMessageImpl;
-import com.owl.kafka.client.zookeeper.KafkaZookeeperConfig;
+import com.owl.kafka.proxy.DefaultPullMessageImpl;
+import com.owl.kafka.proxy.DefaultPushMessageImpl;
+import com.owl.kafka.proxy.zookeeper.KafkaZookeeperConfig;
 import com.owl.kafka.consumer.exceptions.TopicNotExistException;
 import com.owl.kafka.consumer.listener.AcknowledgeMessageListener;
 import com.owl.kafka.consumer.listener.AutoCommitMessageListener;
