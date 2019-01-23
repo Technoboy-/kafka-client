@@ -4,7 +4,7 @@ import com.owl.kafka.client.service.InvokerPromise;
 import com.owl.kafka.client.transport.Connection;
 import com.owl.kafka.client.transport.message.Message;
 import com.owl.kafka.client.transport.protocol.Packet;
-import com.owl.kafka.client.util.MessageDecoder;
+import com.owl.kafka.client.util.MessageCodec;
 import com.owl.kafka.consumer.service.MessageListenerService;
 import com.owl.kafka.consumer.service.PullAcknowledgeMessageListenerService;
 import com.owl.kafka.util.NetUtils;
@@ -38,7 +38,7 @@ public class PullMessageHandler extends CommonMessageHandler {
                 invokerPromise.executeInvokeCallback();
             }
         }
-        List<Message> messages = MessageDecoder.decodes(packet.getBody());
+        List<Message> messages = MessageCodec.decodes(packet.getBody());
         this.messageListenerService.onMessage(connection, messages);
     }
 

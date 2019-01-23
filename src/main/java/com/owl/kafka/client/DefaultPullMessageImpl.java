@@ -6,7 +6,7 @@ import com.owl.kafka.client.transport.NettyClient;
 import com.owl.kafka.client.transport.Reconnector;
 import com.owl.kafka.client.transport.message.Message;
 import com.owl.kafka.client.transport.protocol.Packet;
-import com.owl.kafka.client.util.MessageDecoder;
+import com.owl.kafka.client.util.MessageCodec;
 import com.owl.kafka.client.util.Packets;
 import com.owl.kafka.client.zookeeper.ZookeeperClient;
 import com.owl.kafka.consumer.Record;
@@ -87,7 +87,7 @@ public class DefaultPullMessageImpl {
                 InvokerPromise promise = new InvokerPromise(msgId, 5000);
                 Packet result = promise.getResult();
                 if(result != null){
-                    Message message = MessageDecoder.decode(result.getBody());
+                    Message message = MessageCodec.decode(result.getBody());
                     return new Record<>(message.getHeader().getMsgId(), message.getHeader().getTopic(),
                             message.getHeader().getPartition(), message.getHeader().getOffset(), message.getKey(), message.getValue(), -1);
                 }

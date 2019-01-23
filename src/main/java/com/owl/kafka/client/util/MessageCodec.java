@@ -11,7 +11,21 @@ import java.util.List;
 /**
  * @Author: Tboy
  */
-public class MessageDecoder {
+public class MessageCodec {
+
+    public static byte[] encode(Message message){
+        Header header = message.getHeader();
+        byte[] headerInBytes = SerializerImpl.getFastJsonSerializer().serialize(header);
+        message.setHeaderInBytes(headerInBytes);
+        ByteBuffer buffer = ByteBuffer.allocate(message.getLength());
+        buffer.putInt(headerInBytes.length);
+        buffer.put(headerInBytes);
+        buffer.putInt(message.getKey().length);
+        buffer.put(message.getKey());
+        buffer.putInt(message.getValue().length);
+        buffer.put(message.getValue());
+        return buffer.array();
+    }
 
     public static Message decode(byte[] body){
         Message message = new Message();
