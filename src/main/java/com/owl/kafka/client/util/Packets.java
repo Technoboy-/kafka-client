@@ -4,7 +4,7 @@ import com.owl.kafka.client.service.IdService;
 import com.owl.kafka.client.service.PullStatus;
 import com.owl.kafka.client.transport.message.Message;
 import com.owl.kafka.client.transport.protocol.Command;
-import com.owl.kafka.client.transport.protocol.Header;
+import com.owl.kafka.client.transport.message.Header;
 import com.owl.kafka.client.transport.protocol.Packet;
 import com.owl.kafka.consumer.Record;
 import com.owl.kafka.serializer.SerializerImpl;

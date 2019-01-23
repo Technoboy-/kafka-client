@@ -1,4 +1,4 @@
-package com.owl.kafka.client.transport.protocol;
+package com.owl.kafka.client.transport.message;
 
 import com.owl.kafka.client.service.PullStatus;
 

@@ -42,7 +42,7 @@ public class KafkaClientTest {
             String value = String.valueOf(counter.getAndIncrement());
             SendResult sendResult = producer.sendSync("test-topic", System.currentTimeMillis() + "", value);
             LOG.info("sync send value: {}, result : {}", value, sendResult);
-            TimeUnit.MILLISECONDS.sleep(500);
+            TimeUnit.MILLISECONDS.sleep(50);
         }
 
         producer.flush();

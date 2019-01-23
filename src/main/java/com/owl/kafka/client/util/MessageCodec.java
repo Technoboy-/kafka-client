@@ -1,7 +1,7 @@
 package com.owl.kafka.client.util;
 
 import com.owl.kafka.client.transport.message.Message;
-import com.owl.kafka.client.transport.protocol.Header;
+import com.owl.kafka.client.transport.message.Header;
 import com.owl.kafka.serializer.SerializerImpl;
 
 import java.nio.ByteBuffer;

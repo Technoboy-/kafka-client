@@ -1,7 +1,5 @@
 package com.owl.kafka.client.transport.message;
 
-import com.owl.kafka.client.transport.protocol.Header;
-
 import java.io.Serializable;
 
 

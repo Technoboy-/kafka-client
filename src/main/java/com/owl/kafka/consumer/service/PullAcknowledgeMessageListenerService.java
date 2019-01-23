@@ -6,7 +6,7 @@ import com.owl.kafka.client.service.PullStatus;
 import com.owl.kafka.client.transport.Connection;
 import com.owl.kafka.client.transport.exceptions.ChannelInactiveException;
 import com.owl.kafka.client.transport.message.Message;
-import com.owl.kafka.client.transport.protocol.Header;
+import com.owl.kafka.client.transport.message.Header;
 import com.owl.kafka.client.util.Packets;
 import com.owl.kafka.consumer.DefaultKafkaConsumerImpl;
 import com.owl.kafka.consumer.Record;
