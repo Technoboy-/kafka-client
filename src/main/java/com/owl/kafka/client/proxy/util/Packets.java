@@ -10,6 +10,8 @@ import com.owl.kafka.client.proxy.transport.protocol.Packet;
 import com.owl.kafka.client.consumer.Record;
 import com.owl.kafka.client.serializer.SerializerImpl;
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufAllocator;
+import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.buffer.Unpooled;
 
 import java.nio.ByteBuffer;
@@ -27,7 +29,7 @@ public class Packets {
 
     private static final ByteBuf PING_BUF;
 
-    private static final ByteBuf PONE_BUF;
+    private static final ByteBufAllocator allocator = PooledByteBufAllocator.DEFAULT;
 
     static {
         ByteBuf ping = Unpooled.buffer();
@@ -38,15 +40,6 @@ public class Packets {
         ping.writeInt(0);
         ping.writeBytes(EMPTY_BODY);
         PING_BUF = Unpooled.unreleasableBuffer(ping).asReadOnly();
-        //
-        ByteBuf pong = Unpooled.buffer();
-        pong.writeByte(Packet.MAGIC);
-        pong.writeByte(Packet.VERSION);
-        pong.writeByte(Command.PONG.getCmd());
-        pong.writeLong(0);
-        pong.writeInt(0);
-        pong.writeBytes(EMPTY_BODY);
-        PONE_BUF = Unpooled.unreleasableBuffer(pong).asReadOnly();
     }
 
     public static ByteBuf pingContent(){
@@ -82,14 +75,15 @@ public class Packets {
         header.setSign(Header.Sign.PUSH.getSign());
         byte[] headerInBytes = SerializerImpl.getFastJsonSerializer().serialize(header);
         //
-        ByteBuffer buffer = ByteBuffer.allocate(4 + headerInBytes.length + 4 + 4);
-        buffer.putInt(headerInBytes.length);
-        buffer.put(headerInBytes);
-        buffer.putInt(0);
-        buffer.put(EMPTY_KEY);
-        buffer.putInt(0);
-        buffer.put(EMPTY_VALUE);
+        ByteBuf buffer = allocator.directBuffer(4 + headerInBytes.length + 4 + 4);
+        buffer.writeInt(headerInBytes.length);
+        buffer.writeBytes(headerInBytes);
+        buffer.writeInt(0);
+        buffer.writeBytes(EMPTY_KEY);
+        buffer.writeInt(0);
+        buffer.writeBytes(EMPTY_VALUE);
         ack.setBody(buffer.array());
+        buffer.release();
 
         return ack;
     }
@@ -103,14 +97,15 @@ public class Packets {
         header.setSign(Header.Sign.PULL.getSign());
         byte[] headerInBytes = SerializerImpl.getFastJsonSerializer().serialize(header);
         //
-        ByteBuffer buffer = ByteBuffer.allocate(4 + headerInBytes.length + 4 + 4);
-        buffer.putInt(headerInBytes.length);
-        buffer.put(headerInBytes);
-        buffer.putInt(0);
-        buffer.put(EMPTY_KEY);
-        buffer.putInt(0);
-        buffer.put(EMPTY_VALUE);
+        ByteBuf buffer = allocator.directBuffer(4 + headerInBytes.length + 4 + 4);
+        buffer.writeInt(headerInBytes.length);
+        buffer.writeBytes(headerInBytes);
+        buffer.writeInt(0);
+        buffer.writeBytes(EMPTY_KEY);
+        buffer.writeInt(0);
+        buffer.writeBytes(EMPTY_VALUE);
         ack.setBody(buffer.array());
+        buffer.release();
 
         return ack;
     }
@@ -123,14 +118,15 @@ public class Packets {
         Header header = new Header(msgId);
         byte[] headerInBytes = SerializerImpl.getFastJsonSerializer().serialize(header);
         //
-        ByteBuffer buffer = ByteBuffer.allocate(4 + headerInBytes.length + 4 + 4);
-        buffer.putInt(headerInBytes.length);
-        buffer.put(headerInBytes);
-        buffer.putInt(0);
-        buffer.put(EMPTY_KEY);
-        buffer.putInt(0);
-        buffer.put(EMPTY_VALUE);
+        ByteBuf buffer = allocator.directBuffer(4 + headerInBytes.length + 4 + 4);
+        buffer.writeInt(headerInBytes.length);
+        buffer.writeBytes(headerInBytes);
+        buffer.writeInt(0);
+        buffer.writeBytes(EMPTY_KEY);
+        buffer.writeInt(0);
+        buffer.writeBytes(EMPTY_VALUE);
         ack.setBody(buffer.array());
+        buffer.release();
 
         return ack;
     }
@@ -143,13 +139,13 @@ public class Packets {
         Header header = new Header(record.getTopic(), record.getPartition(), record.getOffset(), msgId);
         byte[] headerInBytes = SerializerImpl.getFastJsonSerializer().serialize(header);
 
-        ByteBuffer buffer = ByteBuffer.allocate(4 + headerInBytes.length + 4 + record.getKey().length + 4 + record.getValue().length);
-        buffer.putInt(headerInBytes.length);
-        buffer.put(headerInBytes);
-        buffer.putInt(record.getKey().length);
-        buffer.put(record.getKey());
-        buffer.putInt(record.getValue().length);
-        buffer.put(record.getValue());
+        ByteBuf buffer = allocator.directBuffer(4 + headerInBytes.length + 4 + record.getKey().length + 4 + record.getValue().length);
+        buffer.writeInt(headerInBytes.length);
+        buffer.writeBytes(headerInBytes);
+        buffer.writeInt(record.getKey().length);
+        buffer.writeBytes(record.getKey());
+        buffer.writeInt(record.getValue().length);
+        buffer.writeBytes(record.getValue());
 
         viewResp.setBody(buffer.array());
 
@@ -170,14 +166,15 @@ public class Packets {
         back.setCmd(Command.SEND_BACK.getCmd());
         back.setOpaque(IdService.I.getId());
         //
-        ByteBuffer buffer = ByteBuffer.allocate(message.getHeaderInBytes().length + 4 + 4 + 4);
-        buffer.putInt(message.getHeaderInBytes().length);
-        buffer.put(message.getHeaderInBytes());
-        buffer.putInt(0);
-        buffer.put(EMPTY_KEY);
-        buffer.putInt(0);
-        buffer.put(EMPTY_VALUE);
+        ByteBuf buffer = allocator.directBuffer(message.getHeaderInBytes().length + 4 + 4 + 4);
+        buffer.writeInt(message.getHeaderInBytes().length);
+        buffer.writeBytes(message.getHeaderInBytes());
+        buffer.writeInt(0);
+        buffer.writeBytes(EMPTY_KEY);
+        buffer.writeInt(0);
+        buffer.writeBytes(EMPTY_VALUE);
         back.setBody(buffer.array());
+        buffer.release();
 
         return back;
     }
@@ -198,14 +195,15 @@ public class Packets {
         //
         Header header = new Header(PullStatus.NO_NEW_MSG.getStatus());
         byte[] headerInBytes = SerializerImpl.getFastJsonSerializer().serialize(header);
-        ByteBuffer buffer = ByteBuffer.allocate(headerInBytes.length + 4 + 4 + 4);
-        buffer.putInt(headerInBytes.length);
-        buffer.put(headerInBytes);
-        buffer.putInt(0);
-        buffer.put(EMPTY_KEY);
-        buffer.putInt(0);
-        buffer.put(EMPTY_VALUE);
+        ByteBuf buffer = allocator.directBuffer(headerInBytes.length + 4 + 4 + 4);
+        buffer.writeInt(headerInBytes.length);
+        buffer.writeBytes(headerInBytes);
+        buffer.writeInt(0);
+        buffer.writeBytes(EMPTY_KEY);
+        buffer.writeInt(0);
+        buffer.writeBytes(EMPTY_VALUE);
         result.setBody(buffer.array());
+        buffer.release();
 
         return result;
     }
