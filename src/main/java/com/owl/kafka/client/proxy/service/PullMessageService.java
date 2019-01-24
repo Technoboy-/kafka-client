@@ -3,8 +3,9 @@ package com.owl.kafka.client.proxy.service;
 import com.owl.kafka.client.proxy.ClientConfigs;
 import com.owl.kafka.client.proxy.DefaultPullMessageImpl;
 import com.owl.kafka.client.proxy.transport.Address;
+import com.owl.kafka.client.proxy.transport.Connection;
+import com.owl.kafka.client.proxy.transport.ConnectionManager;
 import com.owl.kafka.client.proxy.transport.NettyClient;
-import com.owl.kafka.client.proxy.transport.Reconnector;
 import com.owl.kafka.client.proxy.transport.exceptions.ChannelInactiveException;
 import com.owl.kafka.client.proxy.transport.protocol.Packet;
 import com.owl.kafka.client.proxy.util.Packets;
@@ -14,10 +15,7 @@ import io.netty.channel.ChannelFutureListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 
 /**
  * @Author: Tboy
@@ -34,6 +32,8 @@ public class PullMessageService {
 
     private final int processQueueSize = ClientConfigs.I.getProcessQueueSize();
 
+    private final CopyOnWriteArraySet<Address> addresses = new CopyOnWriteArraySet<>();
+
     private final OffsetStore offsetStore = OffsetStore.I;
 
     public PullMessageService(NettyClient nettyClient){
@@ -46,28 +46,30 @@ public class PullMessageService {
         }, 3, 3, TimeUnit.SECONDS);
     }
 
-    public void pull(){
-        if(offsetStore.getCount() > 1000){
-            for(Address address : nettyClient.getReconnectors().keySet()){
-                pullLater(address);
-            }
-        } else{
-            for(Address address : nettyClient.getReconnectors().keySet()){
-                pullImmediately(address);
-            }
-        }
+    public void startPull(Address address){
+        this.addresses.add(address);
+        this.pullImmediately(address);
     }
 
-    public void pullImmediately(Address address){
+    public void stopPull(Address address){
+        this.addresses.remove(address);
+    }
+
+    private void pullImmediately(Address address){
+        if(!addresses.contains(address)){
+            LOGGER.warn("stop pull due to address : {} not register", address);
+            return;
+        }
         if(offsetStore.getCount() > processQueueSize){
-            LOGGER.error("flow control, pull later : {} for process queue count : {} , more than config  : {}",
+            LOGGER.warn("flow control, pull later : {} for process queue count : {} , more than config  : {}",
                     new Object[]{address, offsetStore.getCount(), processQueueSize});
             pullLater(address);
             return;
         }
-        Reconnector reconnector =  nettyClient.getReconnectors().get(address);
-        if(reconnector == null){
-            LOGGER.error("no Reconnector for : {}", address);
+        Connection connection = nettyClient.getConnectionManager().getConnection(address);
+        if(connection == null || !connection.isActive()){
+            LOGGER.warn("connection is inactive, pull laster", address);
+            pullLater(address);
             return;
         }
         long opaque = IdService.I.getId();
@@ -85,7 +87,7 @@ public class PullMessageService {
             }
         };
         try {
-            reconnector.getConnection().send(Packets.pullReq(opaque), new ChannelFutureListener() {
+            connection.send(Packets.pullReq(opaque), new ChannelFutureListener() {
                 @Override
                 public void operationComplete(ChannelFuture future) throws Exception {
                     Throwable ex = future.cause();
@@ -105,12 +107,12 @@ public class PullMessageService {
                 }
             });
         } catch (ChannelInactiveException ex) {
-            LOGGER.error("ChannelInactiveException", ex);
+            LOGGER.warn("ChannelInactiveException", ex);
             pullLater(address);
         }
     }
 
-    public void pullLater(Address address){
+    private void pullLater(Address address){
         scheduledExecutorService.schedule(new Runnable() {
             @Override
             public void run() {

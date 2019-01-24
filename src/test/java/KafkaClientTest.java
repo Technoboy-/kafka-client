@@ -39,9 +39,10 @@ public class KafkaClientTest {
 
         final AtomicBoolean alive = new AtomicBoolean(true);
         while (alive.get()) {
-            String value = String.valueOf(counter.getAndIncrement());
-            SendResult sendResult = producer.sendSync("test-topic", System.currentTimeMillis() + "", value);
-            LOG.info("sync send value: {}, result : {}", value, sendResult);
+            String key = String.valueOf(counter.getAndIncrement());
+            String value = String.valueOf(System.currentTimeMillis());
+            SendResult sendResult = producer.sendSync("test-topic", key, value);
+            LOG.info("sync send, result : {}",sendResult);
             TimeUnit.MILLISECONDS.sleep(50);
         }
 
@@ -370,7 +371,7 @@ public class KafkaClientTest {
                 String key = record.getKey();
                 String value = record.getValue();
 
-                LOG.info("received push message : partition : {}, value: {}, offset: {}.", new Object[]{partition, value, offset});
+                LOG.info("received message takes : {}.", (System.currentTimeMillis() - Long.valueOf(value)));
                 acknowledgment.acknowledge();
             }
         };

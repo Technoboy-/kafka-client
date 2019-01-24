@@ -1,6 +1,5 @@
-package com.owl.kafka.client.proxy.transport.handler;
+package com.owl.kafka.client.proxy.transport;
 
-import com.owl.kafka.client.proxy.transport.NettyConnection;
 import com.owl.kafka.client.proxy.util.Packets;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.ChannelFuture;
@@ -30,6 +29,8 @@ public abstract class ConnectionWatchDog extends ChannelInboundHandlerAdapter im
 
     private volatile boolean isReconnect = true;
 
+    private Connection connection;
+
     public ConnectionWatchDog(Bootstrap bootstrap, Timer timer, SocketAddress socketAddress){
         this.bootstrap = bootstrap;
         this.timer = timer;
@@ -39,7 +40,7 @@ public abstract class ConnectionWatchDog extends ChannelInboundHandlerAdapter im
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         LOGGER.info("connect to server : {} success", socketAddress);
         //do register
-        NettyConnection.attachChannel(ctx.channel());
+        connection = NettyConnection.attachChannel(ctx.channel());
         ctx.writeAndFlush(Packets.registerContent());
         ctx.fireChannelActive();
     }
@@ -71,6 +72,15 @@ public abstract class ConnectionWatchDog extends ChannelInboundHandlerAdapter im
 
     public boolean isReconnect() {
         return isReconnect;
+    }
+
+    public Connection getConnection() {
+        return connection;
+    }
+
+    public void close(){
+        this.setReconnect(false);
+        this.connection.close();
     }
 
     public void setReconnect(boolean reconnect) {

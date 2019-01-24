@@ -22,7 +22,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @Author: Tboy
@@ -37,7 +36,7 @@ public class NettyClient {
 
     private final HashedWheelTimer timer = new HashedWheelTimer(new NamedThreadFactory("connector.timer"));
 
-    private final ConcurrentHashMap<Address, Reconnector> reconnectors = new ConcurrentHashMap<>();
+    private final ConnectionManager connectionManager = new ConnectionManager();
 
     private Bootstrap bootstrap = new Bootstrap();
 
@@ -96,31 +95,26 @@ public class NettyClient {
             if(isSync){
                future.sync();
             }
-            reconnectors.put(address, new Reconnector(connectionWatchDog, future));
+            connectionManager.manage(address, connectionWatchDog);
         } catch (Throwable ex){
             throw new RuntimeException("Connects to [" + address + "] fails", ex);
         }
     }
 
-    public ConcurrentHashMap<Address, Reconnector> getReconnectors() {
-        return reconnectors;
+    public ConnectionManager getConnectionManager() {
+        return this.connectionManager;
     }
 
     public void disconnect(Address address){
         try {
-            Reconnector reconnector = reconnectors.remove(address);
-            if(reconnector != null){
-                reconnector.disconnect();
-            }
+            connectionManager.disconnect(address);
         } catch (Throwable ex){
             LOGGER.error("disconnect error", ex);
         }
     }
 
     public void close(){
-        for(Reconnector reconnector : reconnectors.values()){
-            reconnector.close();
-        }
+        this.connectionManager.close();
         if(workGroup != null){
             workGroup.shutdownGracefully();
         }

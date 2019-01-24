@@ -1,22 +1,23 @@
 package com.owl.kafka.client.proxy;
 
-import com.owl.kafka.client.proxy.service.*;
+import com.owl.kafka.client.consumer.Record;
+import com.owl.kafka.client.consumer.service.MessageListenerService;
+import com.owl.kafka.client.proxy.service.InvokerPromise;
+import com.owl.kafka.client.proxy.service.PullMessageService;
+import com.owl.kafka.client.proxy.service.RegistryListener;
+import com.owl.kafka.client.proxy.service.RegistryService;
 import com.owl.kafka.client.proxy.transport.Address;
+import com.owl.kafka.client.proxy.transport.Connection;
 import com.owl.kafka.client.proxy.transport.NettyClient;
-import com.owl.kafka.client.proxy.transport.Reconnector;
 import com.owl.kafka.client.proxy.transport.message.Message;
 import com.owl.kafka.client.proxy.transport.protocol.Packet;
 import com.owl.kafka.client.proxy.util.MessageCodec;
 import com.owl.kafka.client.proxy.util.Packets;
 import com.owl.kafka.client.proxy.zookeeper.ZookeeperClient;
-import com.owl.kafka.client.consumer.Record;
-import com.owl.kafka.client.consumer.service.MessageListenerService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * @Author: Tboy
@@ -50,10 +51,11 @@ public class DefaultPullMessageImpl {
                 switch (event){
                     case ADD:
                         nettyClient.connect(address, true);
-                        pullMessageService.pullImmediately(address);
+                        pullMessageService.startPull(address);
                         break;
                     case DELETE:
                         nettyClient.disconnect(address);
+                        pullMessageService.stopPull(address);
                         break;
                 }
             }
@@ -67,31 +69,18 @@ public class DefaultPullMessageImpl {
     }
 
     public Record<byte[], byte[]> view(long msgId){
+        Record result = Record.EMPTY;
         try {
             List<String> children = zookeeperClient.getChildren(String.format(ConfigLoader.ZOOKEEPER_CONSUMERS, ClientConfigs.I.getTopic() + "-dlq"));
-            Reconnector reconnector = null;
             for(String child : children){
                 Address address = Address.parse(child);
                 if(address != null){
-                    Set<Map.Entry<Address, Reconnector>> entries = nettyClient.getReconnectors().entrySet();
-                    for(Map.Entry<Address, Reconnector> entry : entries){
-                        if(entry.getKey().equals(address)){
-                            reconnector = entry.getValue();
-                            break;
-                        }
-                    }
-                }
-            }
-            if(reconnector != null){
-                reconnector.getConnection().send(Packets.viewReq(msgId));
-                InvokerPromise promise = new InvokerPromise(msgId, 5000);
-                Packet result = promise.getResult();
-                if(result != null){
-                    if(result.isBodyEmtpy()){
-                        return Record.EMPTY;
-                    } else{
-                        Message message = MessageCodec.decode(result.getBody());
-
+                    Connection connection = nettyClient.getConnectionManager().getConnection(address);
+                    connection.send(Packets.viewReq(msgId));
+                    InvokerPromise promise = new InvokerPromise(msgId, 5000);
+                    Packet packet = promise.getResult();
+                    if(packet != null && !packet.isBodyEmtpy()){
+                        Message message = MessageCodec.decode(packet.getBody());
                         return new Record<>(message.getHeader().getMsgId(), message.getHeader().getTopic(),
                                 message.getHeader().getPartition(), message.getHeader().getOffset(), message.getKey(), message.getValue(), -1);
                     }
@@ -100,7 +89,7 @@ public class DefaultPullMessageImpl {
         } catch (Exception ex) {
             LOGGER.error("view msgId : {}, error", msgId, ex);
         }
-        return null;
+        return result;
     }
 
     public void close(){
