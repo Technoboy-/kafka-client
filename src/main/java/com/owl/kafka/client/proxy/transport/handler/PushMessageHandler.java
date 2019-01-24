@@ -37,7 +37,7 @@ public class PushMessageHandler extends CommonMessageHandler {
             @Override
             public void onAcknowledge(Record record) {
                 try {
-                    connection.send(Packets.ack(record.getMsgId()));
+                    connection.send(Packets.ackPushReq(record.getMsgId()));
                 } catch (ChannelInactiveException ex) {
                     //in this case, we do not need to care about it, because push server has repush policy
                     LOGGER.error("ChannelInactiveException, closing the channel ", ex);

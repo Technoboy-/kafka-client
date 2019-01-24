@@ -34,6 +34,8 @@ public class PullMessageService {
 
     private final int processQueueSize = ClientConfigs.I.getProcessQueueSize();
 
+    private final OffsetStore offsetStore = OffsetStore.I;
+
     public PullMessageService(NettyClient nettyClient){
         this.nettyClient = nettyClient;
         this.scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
@@ -45,7 +47,7 @@ public class PullMessageService {
     }
 
     public void pull(){
-        if(ProcessQueue.I.getMessageCount() > 1000){
+        if(offsetStore.getCount() > 1000){
             for(Address address : nettyClient.getReconnectors().keySet()){
                 pullLater(address);
             }
@@ -57,9 +59,9 @@ public class PullMessageService {
     }
 
     public void pullImmediately(Address address){
-        if(ProcessQueue.I.getMessageCount() > processQueueSize){
+        if(offsetStore.getCount() > processQueueSize){
             LOGGER.error("flow control, pull later : {} for process queue count : {} , more than config  : {}",
-                    new Object[]{address, ProcessQueue.I.getMessageCount(), processQueueSize});
+                    new Object[]{address, offsetStore.getCount(), processQueueSize});
             pullLater(address);
             return;
         }

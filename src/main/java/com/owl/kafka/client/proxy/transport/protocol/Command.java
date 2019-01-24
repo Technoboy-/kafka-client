@@ -23,7 +23,9 @@ public enum Command {
 
     PULL_RESP(9),
 
-    SEND_BACK(10),
+    ACK_PULL(10),
+
+    SEND_BACK(11),
 
     UNKNOWN(-1);
 

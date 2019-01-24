@@ -55,6 +55,7 @@ public class Message implements Serializable {
     @Override
     public String toString() {
         return "Message{" +
+                "header=" + header +
                 "headerLength=" + headerInBytes.length +
                 ", keyLength==" + key.length +
                 ", valueLength==" + value.length +

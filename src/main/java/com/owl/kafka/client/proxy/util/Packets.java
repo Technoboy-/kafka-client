@@ -2,6 +2,7 @@ package com.owl.kafka.client.proxy.util;
 
 import com.owl.kafka.client.proxy.service.IdService;
 import com.owl.kafka.client.proxy.service.PullStatus;
+import com.owl.kafka.client.proxy.service.TopicPartitionOffset;
 import com.owl.kafka.client.proxy.transport.message.Message;
 import com.owl.kafka.client.proxy.transport.protocol.Command;
 import com.owl.kafka.client.proxy.transport.message.Header;
@@ -72,12 +73,34 @@ public class Packets {
         return unregister;
     }
 
-    public static Packet ack(long msgId){
+    public static Packet ackPushReq(long msgId){
         Packet ack = new Packet();
         ack.setCmd(Command.ACK.getCmd());
         ack.setOpaque(IdService.I.getId());
 
         Header header = new Header(msgId);
+        header.setSign(Header.Sign.PUSH.getSign());
+        byte[] headerInBytes = SerializerImpl.getFastJsonSerializer().serialize(header);
+        //
+        ByteBuffer buffer = ByteBuffer.allocate(4 + headerInBytes.length + 4 + 4);
+        buffer.putInt(headerInBytes.length);
+        buffer.put(headerInBytes);
+        buffer.putInt(0);
+        buffer.put(EMPTY_KEY);
+        buffer.putInt(0);
+        buffer.put(EMPTY_VALUE);
+        ack.setBody(buffer.array());
+
+        return ack;
+    }
+
+    public static Packet ackPullReq(TopicPartitionOffset topicPartitionOffset){
+        Packet ack = new Packet();
+        ack.setCmd(Command.ACK.getCmd());
+        ack.setOpaque(IdService.I.getId());
+
+        Header header = new Header(topicPartitionOffset.getTopic(), topicPartitionOffset.getPartition(), topicPartitionOffset.getOffset(), topicPartitionOffset.getMsgId());
+        header.setSign(Header.Sign.PULL.getSign());
         byte[] headerInBytes = SerializerImpl.getFastJsonSerializer().serialize(header);
         //
         ByteBuffer buffer = ByteBuffer.allocate(4 + headerInBytes.length + 4 + 4);

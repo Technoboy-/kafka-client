@@ -17,6 +17,8 @@ public class ClientConfigs extends ConfigLoader{
 
     static final String CLIENT_PROCESS_QUEUE_SIZE = "client.process.queue.size";
 
+    static final String CLIENT_CONSUME_BATCH_SIZE = "client.consume.batch.size";
+
     static final  String CLIENT_CONFIG_FILE = "proxy_client.properties";
 
     public static ClientConfigs I = new ClientConfigs(CLIENT_CONFIG_FILE);
@@ -39,6 +41,10 @@ public class ClientConfigs extends ConfigLoader{
 
     public int getParallelismNum(){
         return getInt(CLIENT_PARALLELISM_NUM, 1);
+    }
+
+    public int getConsumeBatchSize(){
+        return getInt(CLIENT_CONSUME_BATCH_SIZE, 2);
     }
 
     public int getProcessQueueSize(){

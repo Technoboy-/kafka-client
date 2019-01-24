@@ -1,18 +1,19 @@
 package com.owl.kafka.client.consumer.service;
 
-import com.owl.kafka.client.proxy.ClientConfigs;
-import com.owl.kafka.client.proxy.service.ProcessQueue;
-import com.owl.kafka.client.proxy.service.PullStatus;
-import com.owl.kafka.client.proxy.transport.Connection;
-import com.owl.kafka.client.proxy.transport.exceptions.ChannelInactiveException;
-import com.owl.kafka.client.proxy.transport.message.Message;
-import com.owl.kafka.client.proxy.transport.message.Header;
-import com.owl.kafka.client.proxy.util.Packets;
 import com.owl.kafka.client.consumer.DefaultKafkaConsumerImpl;
 import com.owl.kafka.client.consumer.Record;
 import com.owl.kafka.client.consumer.listener.AcknowledgeMessageListener;
 import com.owl.kafka.client.consumer.listener.MessageListener;
 import com.owl.kafka.client.metric.MonitorImpl;
+import com.owl.kafka.client.proxy.ClientConfigs;
+import com.owl.kafka.client.proxy.service.OffsetStore;
+import com.owl.kafka.client.proxy.service.PullStatus;
+import com.owl.kafka.client.proxy.transport.Connection;
+import com.owl.kafka.client.proxy.transport.exceptions.ChannelInactiveException;
+import com.owl.kafka.client.proxy.transport.message.Header;
+import com.owl.kafka.client.proxy.transport.message.Message;
+import com.owl.kafka.client.proxy.util.Packets;
+import com.owl.kafka.client.util.CollectionUtils;
 import com.owl.kafka.client.util.NamedThreadFactory;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.slf4j.Logger;
@@ -34,15 +35,17 @@ public class PullAcknowledgeMessageListenerService<K, V> implements MessageListe
 
     private final int parallelism = ClientConfigs.I.getParallelismNum();
 
-    private final int consumeBatchSize = 2;
+    private final int consumeBatchSize = ClientConfigs.I.getConsumeBatchSize();
 
     private final ThreadPoolExecutor consumeExecutor = new ThreadPoolExecutor(parallelism, parallelism, 60, TimeUnit.SECONDS, new LinkedBlockingQueue<>());
 
-    private final AcknowledgeMessageListener<K, V> messageListener;
-
     private final DefaultKafkaConsumerImpl<K, V> consumer;
 
+    private final AcknowledgeMessageListener<K, V> messageListener;
+
     private Connection connection;
+
+    private final OffsetStore offsetStore = OffsetStore.I;
 
     public PullAcknowledgeMessageListenerService(DefaultKafkaConsumerImpl<K, V> consumer, MessageListener<K, V> messageListener) {
         this.consumer = consumer;
@@ -57,19 +60,25 @@ public class PullAcknowledgeMessageListenerService<K, V> implements MessageListe
 
     public void onMessage(Connection connection, List<Message> messages) {
         this.connection = connection;
-        if(messages.size() < consumeBatchSize){
-            ConsumeRequest consumeRequest = new ConsumeRequest(messages);
+        final List<Message> newMessages = filter(messages);
+        if(CollectionUtils.isEmpty(newMessages)){
+            LOG.debug("no new msg");
+            return;
+        }
+        offsetStore.storeOffset(newMessages);
+        if(newMessages.size() < consumeBatchSize){
+            ConsumeRequest consumeRequest = new ConsumeRequest(newMessages);
             try {
                 this.consumeExecutor.submit(consumeRequest);
             } catch(RejectedExecutionException ex){
                 consumeLater(consumeRequest);
             }
         } else{
-            for(int total = 0; total < messages.size(); ){
+            for(int total = 0; total < newMessages.size(); ){
                 List<Message> msgList = new ArrayList<>(consumeBatchSize);
                 for(int i = 0; i < consumeBatchSize; i++, total++){
-                    if(total < messages.size()){
-                        msgList.add(messages.get(total));
+                    if(total < newMessages.size()){
+                        msgList.add(newMessages.get(total));
                     } else{
                         break;
                     }
@@ -78,13 +87,24 @@ public class PullAcknowledgeMessageListenerService<K, V> implements MessageListe
                 try {
                     this.consumeExecutor.submit(consumeRequest);
                 } catch (RejectedExecutionException e) {
-                    for (; total < messages.size(); total++) {
-                        msgList.add(messages.get(total));
+                    for (; total < newMessages.size(); total++) {
+                        msgList.add(newMessages.get(total));
                     }
                     this.consumeLater(consumeRequest);
                 }
             }
         }
+    }
+
+    private List<Message> filter(List<Message> messages){
+        List<Message> newMessages = new ArrayList<>(messages.size());
+        for(Message message : messages){
+            PullStatus pullStatus = PullStatus.of(message.getHeader().getPullStatus());
+            if(PullStatus.FOUND == pullStatus){
+                newMessages.add(message);
+            }
+        }
+        return newMessages;
     }
 
     private void consumeLater(ConsumeRequest request){
@@ -116,32 +136,20 @@ public class PullAcknowledgeMessageListenerService<K, V> implements MessageListe
         public void run() {
             for(Message message : messages){
                 long now = System.currentTimeMillis();
-                long msgId = -1;
                 try {
                     Header header = message.getHeader();
-                    PullStatus pullStatus = PullStatus.of(header.getPullStatus());
-                    msgId = header.getMsgId();
-                    ProcessQueue.I.put(msgId, message);
-                    switch (pullStatus){
-                        case FOUND:
-                            ConsumerRecord record = new ConsumerRecord(header.getTopic(), header.getPartition(), header.getOffset(), message.getKey(), message.getValue());
-                            final Record<K, V> r = consumer.toRecord(record);
-                            r.setMsgId(header.getMsgId());
-                            messageListener.onMessage(r, new AcknowledgeMessageListener.Acknowledgment() {
-                                @Override
-                                public void acknowledge() {
-                                    ProcessQueue.I.remove(header.getMsgId());
-                                }
-                            });
-                            break;
-                        case NO_NEW_MSG:
-                            LOG.debug("no new msg");
-                            break;
-                    }
+                    ConsumerRecord record = new ConsumerRecord(header.getTopic(), header.getPartition(), header.getOffset(), message.getKey(), message.getValue());
+                    final Record<K, V> r = consumer.toRecord(record);
+                    r.setMsgId(header.getMsgId());
+                    messageListener.onMessage(r, new AcknowledgeMessageListener.Acknowledgment() {
+                        @Override
+                        public void acknowledge() {
+                            processConsumeResult(r);
+                        }
+                    });
                 } catch (Throwable ex) {
                     MonitorImpl.getDefault().recordConsumeProcessErrorCount(1);
                     LOG.error("onMessage error", ex);
-                    ProcessQueue.I.remove(msgId);
                     sendBack(message);
                 } finally {
                     MonitorImpl.getDefault().recordConsumeProcessCount(1);
@@ -149,6 +157,10 @@ public class PullAcknowledgeMessageListenerService<K, V> implements MessageListe
                 }
             }
         }
+    }
+
+    private void processConsumeResult(final Record<K, V> record){
+        offsetStore.updateOffset(connection, record.getMsgId());
     }
 
     @Override
