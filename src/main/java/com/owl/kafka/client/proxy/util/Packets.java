@@ -76,15 +76,18 @@ public class Packets {
         byte[] headerInBytes = SerializerImpl.getFastJsonSerializer().serialize(header);
         //
         ByteBuf buffer = allocator.directBuffer(4 + headerInBytes.length + 4 + 4);
-        buffer.writeInt(headerInBytes.length);
-        buffer.writeBytes(headerInBytes);
-        buffer.writeInt(0);
-        buffer.writeBytes(EMPTY_KEY);
-        buffer.writeInt(0);
-        buffer.writeBytes(EMPTY_VALUE);
-        ack.setBody(buffer.array());
-        buffer.release();
-
+        try {
+            buffer.writeInt(headerInBytes.length);
+            buffer.writeBytes(headerInBytes);
+            buffer.writeInt(0);
+            buffer.writeBytes(EMPTY_KEY);
+            buffer.writeInt(0);
+            buffer.writeBytes(EMPTY_VALUE);
+            //
+            ack.setBody(buffer.array());
+        } finally {
+            buffer.release();
+        }
         return ack;
     }
 
@@ -98,15 +101,18 @@ public class Packets {
         byte[] headerInBytes = SerializerImpl.getFastJsonSerializer().serialize(header);
         //
         ByteBuf buffer = allocator.directBuffer(4 + headerInBytes.length + 4 + 4);
-        buffer.writeInt(headerInBytes.length);
-        buffer.writeBytes(headerInBytes);
-        buffer.writeInt(0);
-        buffer.writeBytes(EMPTY_KEY);
-        buffer.writeInt(0);
-        buffer.writeBytes(EMPTY_VALUE);
-        ack.setBody(buffer.array());
-        buffer.release();
-
+        try {
+            buffer.writeInt(headerInBytes.length);
+            buffer.writeBytes(headerInBytes);
+            buffer.writeInt(0);
+            buffer.writeBytes(EMPTY_KEY);
+            buffer.writeInt(0);
+            buffer.writeBytes(EMPTY_VALUE);
+            //
+            ack.setBody(buffer.array());
+        } finally {
+            buffer.release();
+        }
         return ack;
     }
 
@@ -119,14 +125,18 @@ public class Packets {
         byte[] headerInBytes = SerializerImpl.getFastJsonSerializer().serialize(header);
         //
         ByteBuf buffer = allocator.directBuffer(4 + headerInBytes.length + 4 + 4);
-        buffer.writeInt(headerInBytes.length);
-        buffer.writeBytes(headerInBytes);
-        buffer.writeInt(0);
-        buffer.writeBytes(EMPTY_KEY);
-        buffer.writeInt(0);
-        buffer.writeBytes(EMPTY_VALUE);
-        ack.setBody(buffer.array());
-        buffer.release();
+        try {
+            buffer.writeInt(headerInBytes.length);
+            buffer.writeBytes(headerInBytes);
+            buffer.writeInt(0);
+            buffer.writeBytes(EMPTY_KEY);
+            buffer.writeInt(0);
+            buffer.writeBytes(EMPTY_VALUE);
+            //
+            ack.setBody(buffer.array());
+        } finally {
+            buffer.release();
+        }
 
         return ack;
     }
@@ -140,15 +150,18 @@ public class Packets {
         byte[] headerInBytes = SerializerImpl.getFastJsonSerializer().serialize(header);
 
         ByteBuf buffer = allocator.directBuffer(4 + headerInBytes.length + 4 + record.getKey().length + 4 + record.getValue().length);
-        buffer.writeInt(headerInBytes.length);
-        buffer.writeBytes(headerInBytes);
-        buffer.writeInt(record.getKey().length);
-        buffer.writeBytes(record.getKey());
-        buffer.writeInt(record.getValue().length);
-        buffer.writeBytes(record.getValue());
-
-        viewResp.setBody(buffer.array());
-
+        try {
+            buffer.writeInt(headerInBytes.length);
+            buffer.writeBytes(headerInBytes);
+            buffer.writeInt(record.getKey().length);
+            buffer.writeBytes(record.getKey());
+            buffer.writeInt(record.getValue().length);
+            buffer.writeBytes(record.getValue());
+            //
+            viewResp.setBody(buffer.array());
+        } finally {
+            buffer.release();
+        }
         return viewResp;
     }
 
@@ -167,15 +180,18 @@ public class Packets {
         back.setOpaque(IdService.I.getId());
         //
         ByteBuf buffer = allocator.directBuffer(message.getHeaderInBytes().length + 4 + 4 + 4);
-        buffer.writeInt(message.getHeaderInBytes().length);
-        buffer.writeBytes(message.getHeaderInBytes());
-        buffer.writeInt(0);
-        buffer.writeBytes(EMPTY_KEY);
-        buffer.writeInt(0);
-        buffer.writeBytes(EMPTY_VALUE);
-        back.setBody(buffer.array());
-        buffer.release();
-
+        try {
+            buffer.writeInt(message.getHeaderInBytes().length);
+            buffer.writeBytes(message.getHeaderInBytes());
+            buffer.writeInt(0);
+            buffer.writeBytes(EMPTY_KEY);
+            buffer.writeInt(0);
+            buffer.writeBytes(EMPTY_VALUE);
+            //
+            back.setBody(buffer.array());
+        } finally {
+            buffer.release();
+        }
         return back;
     }
 
@@ -196,15 +212,18 @@ public class Packets {
         Header header = new Header(PullStatus.NO_NEW_MSG.getStatus());
         byte[] headerInBytes = SerializerImpl.getFastJsonSerializer().serialize(header);
         ByteBuf buffer = allocator.directBuffer(headerInBytes.length + 4 + 4 + 4);
-        buffer.writeInt(headerInBytes.length);
-        buffer.writeBytes(headerInBytes);
-        buffer.writeInt(0);
-        buffer.writeBytes(EMPTY_KEY);
-        buffer.writeInt(0);
-        buffer.writeBytes(EMPTY_VALUE);
-        result.setBody(buffer.array());
-        buffer.release();
-
+        try {
+            buffer.writeInt(headerInBytes.length);
+            buffer.writeBytes(headerInBytes);
+            buffer.writeInt(0);
+            buffer.writeBytes(EMPTY_KEY);
+            buffer.writeInt(0);
+            buffer.writeBytes(EMPTY_VALUE);
+            //
+            result.setBody(buffer.array());
+        } finally {
+            buffer.release();
+        }
         return result;
     }
 
