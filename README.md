@@ -40,7 +40,7 @@ public class ProducerExample {
         configs.put("compression.type", "none");
 
         // 构造 Producer
-        final KafkaProducer<String, String> producer = TTKafkaClient.createProducer(configs);
+        final KafkaProducer<String, String> producer = OwlKafkaClient.createProducer(configs);
 
         // 同步发送
         SendResult syncSendResult = producer.sendSync("test-topic", "test-key","test-msg");
@@ -151,7 +151,7 @@ public class AutoCommitConsumerExample {
         };
 
         // 构建KafkaConsumer，必须在setMessageListener后start
-        KafkaConsumer<String, String> consumer = TTKafkaClient.createConsumer(configs);
+        KafkaConsumer<String, String> consumer = OwlKafkaClient.createConsumer(configs);
         consumer.setMessageListener(messageListener);
         consumer.start();
 
@@ -240,7 +240,7 @@ public class AcknowledgeConsumerExample {
         };
 
         // 构建KafkaConsumer，必须在setMessageListener后start
-        KafkaConsumer<String, String> consumer = TTKafkaClient.createConsumer(configs);
+        KafkaConsumer<String, String> consumer = OwlKafkaClient.createConsumer(configs);
         consumer.setMessageListener(messageListener);
         consumer.start();
 
@@ -324,7 +324,7 @@ public class BatchAcknowledgeConsumerExample {
         };
 
         // 构建KafkaConsumer，必须在setMessageListener后start
-        KafkaConsumer<String, String> consumer = TTKafkaClient.createConsumer(configs);
+        KafkaConsumer<String, String> consumer = OwlKafkaClient.createConsumer(configs);
         consumer.setMessageListener(messageListener);
         consumer.start();
 
