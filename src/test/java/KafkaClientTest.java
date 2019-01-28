@@ -43,7 +43,7 @@ public class KafkaClientTest {
             String value = String.valueOf(System.currentTimeMillis());
             SendResult sendResult = producer.sendSync("test-topic", key, value);
             LOG.info("sync send, result : {}",sendResult);
-            TimeUnit.MILLISECONDS.sleep(50);
+            TimeUnit.MILLISECONDS.sleep(10);
         }
 
         producer.flush();
