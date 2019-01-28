@@ -1,5 +1,6 @@
 package com.owl.kafka.client.proxy.transport;
 
+import com.owl.kafka.client.proxy.transport.alloc.ByteBufferPool;
 import com.owl.kafka.client.proxy.transport.exceptions.ChannelInactiveException;
 import com.owl.kafka.client.proxy.transport.protocol.Command;
 import com.owl.kafka.client.proxy.transport.protocol.Packet;
@@ -25,6 +26,8 @@ public class NettyConnection implements Connection {
     private static final Logger LOGGER = LoggerFactory.getLogger(NettyConnection.class);
 
     private static final AttributeKey<NettyConnection> channelKey = AttributeKey.valueOf("channel.key");
+
+    private static ByteBufferPool bufferPool = ByteBufferPool.DEFAULT;
 
     private final Channel channel;
 
@@ -84,6 +87,8 @@ public class NettyConnection implements Connection {
             ChannelFuture future = this.channel.writeAndFlush(packet).addListener(new ChannelFutureListener(){
 
                 public void operationComplete(ChannelFuture future) throws Exception {
+                    bufferPool.release(packet.getBody());
+                    //
                     if(future.isSuccess()){
                         if(!isHeartbeat(packet)){
                             LOGGER.debug("send msg {} , to : {}, successfully", packet, NetUtils.getRemoteAddress(channel));

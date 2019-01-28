@@ -6,6 +6,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ReplayingDecoder;
 
+import java.nio.ByteBuffer;
 import java.util.List;
 
 /**
@@ -44,7 +45,7 @@ public class PacketDecoder extends ReplayingDecoder<PacketDecoder.State> {
                 Packet packet = new Packet();
                 packet.setCmd(packetHeader.getCmd());
                 packet.setOpaque(packetHeader.getOpaque());
-                packet.setBody(body);
+                packet.setBody(ByteBuffer.wrap(body));
                 out.add(packet);
                 //
                 checkpoint(State.MAGIC);

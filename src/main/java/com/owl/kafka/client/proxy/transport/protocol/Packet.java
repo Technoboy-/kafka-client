@@ -1,6 +1,7 @@
 package com.owl.kafka.client.proxy.transport.protocol;
 
 import java.io.Serializable;
+import java.nio.ByteBuffer;
 
 /**
  *
@@ -26,12 +27,10 @@ public class Packet implements Serializable {
     public static final int LENGTH = 1 + 1 + 1 + 8 + 4;
 
     public Packet(){
-        this.body = new byte[0];
     }
 
     public Packet(long opaque){
         this.opaque = opaque;
-        this.body = new byte[0];
     }
 
     private byte version;
@@ -40,7 +39,7 @@ public class Packet implements Serializable {
 
     private long opaque;
 
-    private byte[] body;
+    private ByteBuffer body;
 
     public byte getVersion() {
         return version;
@@ -66,20 +65,20 @@ public class Packet implements Serializable {
         this.opaque = opaque;
     }
 
-    public byte[] getBody() {
+    public ByteBuffer getBody() {
         return body;
     }
 
-    public void setBody(byte[] body) {
+    public void setBody(ByteBuffer body) {
         this.body = body;
     }
 
     public boolean isBodyEmtpy(){
-        return this.body == null || this.body.length == 0;
+        return this.body == null || this.body.limit() - this.body.position() == this.body.capacity();
     }
 
     public int getBodyLength(){
-        return this.body.length;
+        return this.body.remaining();
     }
 
     public int hashCode() {
@@ -104,7 +103,7 @@ public class Packet implements Serializable {
 
     @Override
     public String toString() {
-        return "Packet [cmd=" + cmd + ", opaque=" + opaque + ", bodyLen=" + (body == null ? 0 : body.length) + ", version=" + version + "]";
+        return "Packet [cmd=" + cmd + ", opaque=" + opaque + ", bodyLen=" + (body == null ? 0 : body.capacity()) + ", version=" + version + "]";
     }
 
 }

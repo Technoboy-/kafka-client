@@ -13,7 +13,7 @@ import java.util.List;
  */
 public class MessageCodec {
 
-    public static byte[] encode(Message message){
+    public static ByteBuffer encode(Message message){
         Header header = message.getHeader();
         byte[] headerInBytes = SerializerImpl.getFastJsonSerializer().serialize(header);
         message.setHeaderInBytes(headerInBytes);
@@ -24,13 +24,17 @@ public class MessageCodec {
         buffer.put(message.getKey());
         buffer.putInt(message.getValue().length);
         buffer.put(message.getValue());
-        return buffer.array();
+        return buffer;
     }
 
     public static Message decode(byte[] body){
+        ByteBuffer buffer = ByteBuffer.wrap(body);
+        return decode(buffer);
+    }
+
+    public static Message decode(ByteBuffer buffer){
         Message message = new Message();
 
-        ByteBuffer buffer = ByteBuffer.wrap(body);
         //
         int headerLength = buffer.getInt();
         byte[] headerInBytes = new byte[headerLength];
@@ -53,9 +57,13 @@ public class MessageCodec {
     }
 
     public static List<Message> decodes(byte[] body){
+        ByteBuffer buffer = ByteBuffer.wrap(body);
+        return decodes(buffer);
+    }
+
+    public static List<Message> decodes(ByteBuffer buffer){
         List<Message> messages = new ArrayList<>();
         //
-        ByteBuffer buffer = ByteBuffer.wrap(body);
         while(buffer.hasRemaining()){
             Message message = new Message();
             //

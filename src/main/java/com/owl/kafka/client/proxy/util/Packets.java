@@ -1,17 +1,16 @@
 package com.owl.kafka.client.proxy.util;
 
+import com.owl.kafka.client.consumer.Record;
+import com.owl.kafka.client.proxy.transport.alloc.ByteBufferPool;
 import com.owl.kafka.client.proxy.service.IdService;
 import com.owl.kafka.client.proxy.service.PullStatus;
 import com.owl.kafka.client.proxy.service.TopicPartitionOffset;
+import com.owl.kafka.client.proxy.transport.message.Header;
 import com.owl.kafka.client.proxy.transport.message.Message;
 import com.owl.kafka.client.proxy.transport.protocol.Command;
-import com.owl.kafka.client.proxy.transport.message.Header;
 import com.owl.kafka.client.proxy.transport.protocol.Packet;
-import com.owl.kafka.client.consumer.Record;
 import com.owl.kafka.client.serializer.SerializerImpl;
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufAllocator;
-import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.buffer.Unpooled;
 
 import java.nio.ByteBuffer;
@@ -21,11 +20,13 @@ import java.nio.ByteBuffer;
  */
 public class Packets {
 
-    private static byte[] EMPTY_BODY = new byte[0];
+    private static ByteBufferPool bufferPool = ByteBufferPool.DEFAULT;
 
-    private static byte[] EMPTY_KEY = new byte[0];
+    private static ByteBuffer EMPTY_BODY = ByteBuffer.allocate(0);
 
-    private static byte[] EMPTY_VALUE = new byte[0];
+    private static ByteBuffer EMPTY_KEY = ByteBuffer.allocate(0);
+
+    private static ByteBuffer EMPTY_VALUE = ByteBuffer.allocate(0);
 
     private static final ByteBuf PING_BUF;
 
@@ -38,6 +39,7 @@ public class Packets {
         ping.writeInt(0);
         ping.writeBytes(EMPTY_BODY);
         PING_BUF = Unpooled.unreleasableBuffer(ping).asReadOnly();
+
     }
 
     public static ByteBuf pingContent(){
@@ -73,7 +75,7 @@ public class Packets {
         header.setSign(Header.Sign.PUSH.getSign());
         byte[] headerInBytes = SerializerImpl.getFastJsonSerializer().serialize(header);
         //
-        ByteBuffer buffer = ByteBuffer.allocate(4 + headerInBytes.length + 4 + 4);
+        ByteBuffer buffer = bufferPool.allocate(4 + headerInBytes.length + 4 + 4, false);
         buffer.putInt(headerInBytes.length);
         buffer.put(headerInBytes);
         buffer.putInt(0);
@@ -81,7 +83,7 @@ public class Packets {
         buffer.putInt(0);
         buffer.put(EMPTY_VALUE);
         //
-        packet.setBody(buffer.array());
+        packet.setBody(buffer);
 
         return packet;
     }
@@ -95,7 +97,7 @@ public class Packets {
         header.setSign(Header.Sign.PULL.getSign());
         byte[] headerInBytes = SerializerImpl.getFastJsonSerializer().serialize(header);
         //
-        ByteBuffer buffer = ByteBuffer.allocate(4 + headerInBytes.length + 4 + 4);
+        ByteBuffer buffer = bufferPool.allocate(4 + headerInBytes.length + 4 + 4, false);
         buffer.putInt(headerInBytes.length);
         buffer.put(headerInBytes);
         buffer.putInt(0);
@@ -103,7 +105,7 @@ public class Packets {
         buffer.putInt(0);
         buffer.put(EMPTY_VALUE);
         //
-        packet.setBody(buffer.array());
+        packet.setBody(buffer);
 
         return packet;
     }
@@ -116,7 +118,7 @@ public class Packets {
         Header header = new Header(msgId);
         byte[] headerInBytes = SerializerImpl.getFastJsonSerializer().serialize(header);
         //
-        ByteBuffer buffer = ByteBuffer.allocate(4 + headerInBytes.length + 4 + 4);
+        ByteBuffer buffer = bufferPool.allocate(4 + headerInBytes.length + 4 + 4, false);
         buffer.putInt(headerInBytes.length);
         buffer.put(headerInBytes);
         buffer.putInt(0);
@@ -124,7 +126,7 @@ public class Packets {
         buffer.putInt(0);
         buffer.put(EMPTY_VALUE);
         //
-        packet.setBody(buffer.array());
+        packet.setBody(buffer);
 
         return packet;
     }
@@ -137,7 +139,7 @@ public class Packets {
         Header header = new Header(record.getTopic(), record.getPartition(), record.getOffset(), msgId);
         byte[] headerInBytes = SerializerImpl.getFastJsonSerializer().serialize(header);
 
-        ByteBuffer buffer = ByteBuffer.allocate(4 + headerInBytes.length + 4 + record.getKey().length + 4 + record.getValue().length);
+        ByteBuffer buffer = bufferPool.allocate(4 + headerInBytes.length + 4 + record.getKey().length + 4 + record.getValue().length, true);
         buffer.putInt(headerInBytes.length);
         buffer.put(headerInBytes);
         buffer.putInt(record.getKey().length);
@@ -145,7 +147,7 @@ public class Packets {
         buffer.putInt(record.getValue().length);
         buffer.put(record.getValue());
         //
-        viewResp.setBody(buffer.array());
+        viewResp.setBody(buffer);
 
         return viewResp;
     }
@@ -164,7 +166,7 @@ public class Packets {
         back.setCmd(Command.SEND_BACK.getCmd());
         back.setOpaque(IdService.I.getId());
         //
-        ByteBuffer buffer = ByteBuffer.allocate(message.getHeaderInBytes().length + 4 + 4 + 4);
+        ByteBuffer buffer = bufferPool.allocate(message.getHeaderInBytes().length + 4 + 4 + 4, false);
         buffer.putInt(message.getHeaderInBytes().length);
         buffer.put(message.getHeaderInBytes());
         buffer.putInt(0);
@@ -172,7 +174,7 @@ public class Packets {
         buffer.putInt(0);
         buffer.put(EMPTY_VALUE);
         //
-        back.setBody(buffer.array());
+        back.setBody(buffer);
 
         return back;
     }
@@ -193,7 +195,7 @@ public class Packets {
         //
         Header header = new Header(PullStatus.NO_NEW_MSG.getStatus());
         byte[] headerInBytes = SerializerImpl.getFastJsonSerializer().serialize(header);
-        ByteBuffer buffer = ByteBuffer.allocate(headerInBytes.length + 4 + 4 + 4);
+        ByteBuffer buffer = bufferPool.allocate(headerInBytes.length + 4 + 4 + 4, false);
         buffer.putInt(headerInBytes.length);
         buffer.put(headerInBytes);
         buffer.putInt(0);
@@ -201,7 +203,7 @@ public class Packets {
         buffer.putInt(0);
         buffer.put(EMPTY_VALUE);
         //
-        packet.setBody(buffer.array());
+        packet.setBody(buffer);
 
         return packet;
     }

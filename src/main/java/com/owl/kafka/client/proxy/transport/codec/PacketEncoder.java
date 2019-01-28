@@ -6,6 +6,8 @@ import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToByteEncoder;
 
+import java.nio.ByteBuffer;
+
 /**
  * @Author: Tboy
  */
@@ -20,8 +22,10 @@ public class PacketEncoder extends MessageToByteEncoder<Packet> {
         out.writeByte(Packet.VERSION);
         out.writeByte(msg.getCmd());
         out.writeLong(msg.getOpaque());
-        out.writeInt(msg.getBody().length);
-        out.writeBytes(msg.getBody());
+        ByteBuffer body = msg.getBody();
+        body.flip();
+        out.writeInt(body.limit());
+        out.writeBytes(body);
     }
 
 }
