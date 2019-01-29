@@ -91,4 +91,8 @@ public class PoolArena {
     boolean isTinyOrSmall(int normCapacity) {
         return (normCapacity & subpageOverflowMask) == 0;
     }
+
+    public static void main(String[] args) {
+        System.out.println(512 >>> 4);
+    }
 }

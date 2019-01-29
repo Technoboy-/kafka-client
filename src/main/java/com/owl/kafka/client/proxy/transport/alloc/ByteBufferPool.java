@@ -7,7 +7,7 @@ import java.nio.ByteBuffer;
  */
 public interface ByteBufferPool {
 
-    ByteBuffer allocate(int capacity, boolean direct);
+    ByteBuffer allocate(int capacity);
 
     void release(ByteBuffer buffer);
 

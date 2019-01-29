@@ -17,6 +17,8 @@ public class SimpleEnhancedByteBufferPool implements ByteBufferPool {
 
     private static final TreeMap<Integer, Arena> directBuffers = new TreeMap<>();
 
+    private static final boolean direct = Boolean.valueOf(System.getProperty("allocator.direct.buffer", "false"));
+
     private static final int MAX_ALLOCATE_SIZE = 16 * 1024 * 1024;
 
     static{
@@ -69,7 +71,7 @@ public class SimpleEnhancedByteBufferPool implements ByteBufferPool {
         return direct ? ByteBuffer.allocateDirect(capacity) : ByteBuffer.allocate(capacity);
     }
 
-    public synchronized ByteBuffer allocate(int capacity, boolean direct) {
+    public synchronized ByteBuffer allocate(int capacity) {
         Preconditions.checkArgument(capacity < MAX_ALLOCATE_SIZE, "allocate too large buffer : " + capacity + " , max : " + MAX_ALLOCATE_SIZE);
         TreeMap<Integer, Arena> treeMap = getBuffer(direct);
         ByteBuffer buffer = null;

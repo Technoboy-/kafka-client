@@ -75,7 +75,7 @@ public class Packets {
         header.setSign(Header.Sign.PUSH.getSign());
         byte[] headerInBytes = SerializerImpl.getFastJsonSerializer().serialize(header);
         //
-        ByteBuffer buffer = bufferPool.allocate(4 + headerInBytes.length + 4 + 4, false);
+        ByteBuffer buffer = bufferPool.allocate(4 + headerInBytes.length + 4 + 4);
         buffer.putInt(headerInBytes.length);
         buffer.put(headerInBytes);
         buffer.putInt(0);
@@ -97,7 +97,7 @@ public class Packets {
         header.setSign(Header.Sign.PULL.getSign());
         byte[] headerInBytes = SerializerImpl.getFastJsonSerializer().serialize(header);
         //
-        ByteBuffer buffer = bufferPool.allocate(4 + headerInBytes.length + 4 + 4, false);
+        ByteBuffer buffer = bufferPool.allocate(4 + headerInBytes.length + 4 + 4);
         buffer.putInt(headerInBytes.length);
         buffer.put(headerInBytes);
         buffer.putInt(0);
@@ -118,7 +118,7 @@ public class Packets {
         Header header = new Header(msgId);
         byte[] headerInBytes = SerializerImpl.getFastJsonSerializer().serialize(header);
         //
-        ByteBuffer buffer = bufferPool.allocate(4 + headerInBytes.length + 4 + 4, false);
+        ByteBuffer buffer = bufferPool.allocate(4 + headerInBytes.length + 4 + 4);
         buffer.putInt(headerInBytes.length);
         buffer.put(headerInBytes);
         buffer.putInt(0);
@@ -139,7 +139,7 @@ public class Packets {
         Header header = new Header(record.getTopic(), record.getPartition(), record.getOffset(), msgId);
         byte[] headerInBytes = SerializerImpl.getFastJsonSerializer().serialize(header);
 
-        ByteBuffer buffer = bufferPool.allocate(4 + headerInBytes.length + 4 + record.getKey().length + 4 + record.getValue().length, true);
+        ByteBuffer buffer = bufferPool.allocate(4 + headerInBytes.length + 4 + record.getKey().length + 4 + record.getValue().length);
         buffer.putInt(headerInBytes.length);
         buffer.put(headerInBytes);
         buffer.putInt(record.getKey().length);
@@ -166,7 +166,7 @@ public class Packets {
         back.setCmd(Command.SEND_BACK.getCmd());
         back.setOpaque(IdService.I.getId());
         //
-        ByteBuffer buffer = bufferPool.allocate(message.getHeaderInBytes().length + 4 + 4 + 4, false);
+        ByteBuffer buffer = bufferPool.allocate(message.getHeaderInBytes().length + 4 + 4 + 4);
         buffer.putInt(message.getHeaderInBytes().length);
         buffer.put(message.getHeaderInBytes());
         buffer.putInt(0);
@@ -195,7 +195,7 @@ public class Packets {
         //
         Header header = new Header(PullStatus.NO_NEW_MSG.getStatus());
         byte[] headerInBytes = SerializerImpl.getFastJsonSerializer().serialize(header);
-        ByteBuffer buffer = bufferPool.allocate(headerInBytes.length + 4 + 4 + 4, false);
+        ByteBuffer buffer = bufferPool.allocate(headerInBytes.length + 4 + 4 + 4);
         buffer.putInt(headerInBytes.length);
         buffer.put(headerInBytes);
         buffer.putInt(0);
