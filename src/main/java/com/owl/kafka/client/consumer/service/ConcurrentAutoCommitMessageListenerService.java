@@ -27,7 +27,7 @@ public class ConcurrentAutoCommitMessageListenerService<K, V> extends RebalanceM
 
     public ConcurrentAutoCommitMessageListenerService(DefaultKafkaConsumerImpl<K, V> consumer, MessageListener<K, V> listener) {
         int parallelism = consumer.getConfigs().getParallelism();
-        executor = new ThreadPoolExecutor(parallelism, parallelism, 1, TimeUnit.MINUTES, new LinkedBlockingQueue<>(consumer.getConfigs().getHandlerQueueSize()),
+        executor = new ThreadPoolExecutor(parallelism, parallelism, 1, TimeUnit.MINUTES, new ArrayBlockingQueue<>(consumer.getConfigs().getHandlerQueueSize()),
                 new NamedThreadFactory("concurrent-consumer-worker"), new CallerWaitPolicy());
         this.consumer = consumer;
         this.messageListener = (AutoCommitMessageListener)listener;
