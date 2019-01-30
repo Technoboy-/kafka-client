@@ -115,6 +115,7 @@ public class NettyClient {
 
     public void close(){
         this.connectionManager.close();
+        this.timer.stop();
         if(workGroup != null){
             workGroup.shutdownGracefully();
         }
