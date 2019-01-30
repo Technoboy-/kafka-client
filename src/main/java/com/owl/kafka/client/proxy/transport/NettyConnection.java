@@ -27,7 +27,7 @@ public class NettyConnection implements Connection {
 
     private static final AttributeKey<NettyConnection> channelKey = AttributeKey.valueOf("channel.key");
 
-    private static ByteBufferPool bufferPool = ByteBufferPool.DEFAULT;
+    private static final ByteBufferPool bufferPool = ByteBufferPool.DEFAULT;
 
     private final Channel channel;
 
