@@ -3,6 +3,8 @@ package com.owl.kafka.client.proxy.transport.codec;
 import com.owl.kafka.client.proxy.transport.protocol.Packet;
 import com.owl.kafka.client.proxy.transport.protocol.PacketHeader;
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufAllocator;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ReplayingDecoder;
 
@@ -45,7 +47,7 @@ public class PacketDecoder extends ReplayingDecoder<PacketDecoder.State> {
                 Packet packet = new Packet();
                 packet.setCmd(packetHeader.getCmd());
                 packet.setOpaque(packetHeader.getOpaque());
-                packet.setBody(ByteBuffer.wrap(body));
+                packet.setBody(Unpooled.wrappedBuffer(body));
                 out.add(packet);
                 //
                 checkpoint(State.MAGIC);

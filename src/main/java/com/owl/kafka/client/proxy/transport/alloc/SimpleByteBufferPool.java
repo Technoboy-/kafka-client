@@ -8,7 +8,7 @@ import java.util.TreeMap;
 /**
  * @Author: Tboy
  */
-public class SimpleByteBufferPool implements ByteBufferPool {
+public class SimpleByteBufferPool {
 
     private static final TreeMap<Key, ByteBuffer> heapBuffers = new TreeMap<>();
 

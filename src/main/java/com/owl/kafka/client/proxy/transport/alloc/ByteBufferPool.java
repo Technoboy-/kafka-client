@@ -1,15 +1,15 @@
 package com.owl.kafka.client.proxy.transport.alloc;
 
-import java.nio.ByteBuffer;
+import io.netty.buffer.ByteBuf;
 
 /**
  * @Author: Tboy
  */
 public interface ByteBufferPool {
 
-    ByteBuffer allocate(int capacity);
+    ByteBuf allocate(int capacity);
 
-    void release(ByteBuffer buffer);
+    void release(ByteBuf buffer);
 
-    ByteBufferPool DEFAULT = new SimpleByteBufferPool();
+    ByteBufferPool DEFAULT = new NettyByteBufferPool();
 }

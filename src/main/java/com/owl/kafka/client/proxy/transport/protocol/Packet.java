@@ -1,7 +1,8 @@
 package com.owl.kafka.client.proxy.transport.protocol;
 
+import io.netty.buffer.ByteBuf;
+
 import java.io.Serializable;
-import java.nio.ByteBuffer;
 
 /**
  *
@@ -39,7 +40,7 @@ public class Packet implements Serializable {
 
     private long opaque;
 
-    private ByteBuffer body;
+    private ByteBuf body;
 
     public byte getVersion() {
         return version;
@@ -65,20 +66,21 @@ public class Packet implements Serializable {
         this.opaque = opaque;
     }
 
-    public ByteBuffer getBody() {
+
+    public ByteBuf getBody() {
         return body;
     }
 
-    public void setBody(ByteBuffer body) {
+    public void setBody(ByteBuf body) {
         this.body = body;
     }
 
     public boolean isBodyEmtpy(){
-        return this.body == null || this.body.limit() - this.body.position() == this.body.capacity();
+        return this.body == null || this.body.readableBytes() == 0;
     }
 
     public int getBodyLength(){
-        return this.body.remaining();
+        return this.body.readableBytes();
     }
 
     public int hashCode() {
@@ -103,7 +105,7 @@ public class Packet implements Serializable {
 
     @Override
     public String toString() {
-        return "Packet [cmd=" + cmd + ", opaque=" + opaque + ", bodyLen=" + (body == null ? 0 : body.capacity()) + ", version=" + version + "]";
+        return "Packet [cmd=" + cmd + ", opaque=" + opaque + ", bodyLen=" + (body == null ? 0 : body.readableBytes()) + ", version=" + version + "]";
     }
 
 }

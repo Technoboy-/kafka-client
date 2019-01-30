@@ -22,10 +22,8 @@ public class PacketEncoder extends MessageToByteEncoder<Packet> {
         out.writeByte(Packet.VERSION);
         out.writeByte(msg.getCmd());
         out.writeLong(msg.getOpaque());
-        ByteBuffer body = msg.getBody();
-        body.flip();
-        out.writeInt(body.limit());
-        out.writeBytes(body);
+        out.writeInt(msg.getBody().readableBytes());
+        out.writeBytes(msg.getBody());
     }
 
 }

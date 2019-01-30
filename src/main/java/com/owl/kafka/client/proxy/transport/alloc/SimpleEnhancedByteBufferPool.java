@@ -11,7 +11,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 /**
  * @Author: Tboy
  */
-public class SimpleEnhancedByteBufferPool implements ByteBufferPool {
+public class SimpleEnhancedByteBufferPool{
 
     private static final TreeMap<Integer, Arena> heapBuffers = new TreeMap<>();
 
