@@ -11,12 +11,17 @@ import com.owl.kafka.client.producer.KafkaProducer;
 import com.owl.kafka.client.producer.ProducerConfig;
 import com.owl.kafka.client.producer.SendResult;
 import com.owl.kafka.client.serializer.SerializerImpl;
+import com.owl.kafka.client.util.NamedThreadFactory;
+import io.netty.util.HashedWheelTimer;
+import io.netty.util.Timeout;
+import io.netty.util.TimerTask;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
@@ -31,19 +36,28 @@ public class KafkaClientTest {
 
     @Test
     public void testSyncProducer() throws Exception {
+        final AtomicBoolean alive = new AtomicBoolean(true);
+        HashedWheelTimer timer = new HashedWheelTimer(new NamedThreadFactory("producer-thread" + new Random().nextInt(10)));
+        timer.newTimeout(new TimerTask() {
+            @Override
+            public void run(Timeout timeout) throws Exception {
+                alive.compareAndSet(true, false);
+            }
+        }, 20, TimeUnit.MINUTES);
         AtomicLong counter = new AtomicLong(1);
         ProducerConfig configs = new ProducerConfig("localhost:9092");
         configs.setKeySerializer(SerializerImpl.getFastJsonSerializer());
         configs.setValueSerializer(SerializerImpl.getFastJsonSerializer());
         KafkaProducer<String, String> producer = OwlKafkaClient.createProducer(configs);
 
-        final AtomicBoolean alive = new AtomicBoolean(true);
         while (alive.get()) {
             String key = String.valueOf(counter.getAndIncrement());
             String value = String.valueOf(System.currentTimeMillis());
             SendResult sendResult = producer.sendSync("test-topic", key, value);
-            LOG.info("sync send, result : {}",sendResult);
-            TimeUnit.MILLISECONDS.sleep(10);
+            if(counter.get() % 10000 == 0){
+                LOG.info("sync send, result : {}",sendResult);
+            }
+            TimeUnit.MILLISECONDS.sleep(15);
         }
 
         producer.flush();
@@ -371,7 +385,10 @@ public class KafkaClientTest {
                 String key = record.getKey();
                 String value = record.getValue();
 
-                LOG.info("received message takes : {}.", (System.currentTimeMillis() - Long.valueOf(value)));
+                long takes = (System.currentTimeMillis() - Long.valueOf(value));
+                if(takes > 5){
+                    LOG.info("received message takes : {} ms", takes);
+                }
                 acknowledgment.acknowledge();
             }
         };
