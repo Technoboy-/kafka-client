@@ -123,6 +123,7 @@ public class DefaultKafkaConsumerImpl<K, V> implements Runnable, com.owl.kafka.c
                 worker.setUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
                     public void uncaughtException(Thread t, Throwable e) {
                         LOG.error("Uncaught exceptions in " + worker.getName() + ": ", e);
+                        close();
                     }
                 });
                 worker.start();

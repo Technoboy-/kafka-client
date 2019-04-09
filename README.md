@@ -21,24 +21,6 @@ public class ProducerExample {
         // value 序列化器，必须要传入
         configs.setValueSerializer(SerializerImpl.getStringSerializer());
 
-        // ack类型，-1，0，1
-        configs.setAcks("1");
-
-        // retry
-        configs.setRetries(1);
-
-        // batch size
-        configs.setBatchSize(16384);
-
-        // linger.ms
-        configs.setLingerMs(1000);
-
-        // 单个连接最大未响应请求数
-        configs.setMaxInflightRequestPerConnection(5);
-
-        // 通过put方式设置其他属性
-        configs.put("compression.type", "none");
-
         // 构造 Producer
         final KafkaProducer<String, String> producer = OwlKafkaClient.createProducer(configs);
 
@@ -70,12 +52,15 @@ public class ProducerExample {
     }
 }
 ```
-**注意事项**
-1. KafkaProducer为线程安全的。
-2. retries与max.in.flight.requests.per.connection配置项与re-order问题，如果retries > 0，max.in.flight.requests.per.connection > 1时，如果发送失败，message会重试发送，此时在远程的broker的partition可能会出现re-order情况（producer后发送的数据先写入成功，重试的message后写入成功），如果必须要保证投递的顺序性，max.in.flight.requests.per.connection设置为1，retry > 0。
-3. acks与吞吐，acks=-1 会保证数据每次produce后所有ISR副本均同步成功，但会极大的影响吞吐，如果对数据可靠有很高的要求，配置为-1，否则建议维持默认值。
-4. batch.size与linger.ms配置项与延迟吞吐的选择，默认情形producer发送的messge会立即发送，如果配置了linger.ms，则会将message放到batch中，当batch到达batch.size或batch存活了linger.ms时，发送batch。
-5. 对于kafka原生的属性设置，可通过put方法设置。默认只封装了常用属性。
+**参数说明**
+```
+//对于常用的属性，进行了封装:
+configs.setAcks("1");
+configs.setRetries(1);
+configs.setBatchSize(16384);
+//对于不常用的属性，通过put方式设置:
+configs.put("compression.type", "none");
+```
 
 #### 四. Consumer
 对于消费者，提供自动提交offset和手动提交offset。对于自动提交offset，通过参数可以实现单线程消费自动提交offset，多线程消费自动提交offset，分区有序消费自动提交offset。对于手动提交，通过参数，可以实现单线程消费手动提交offset，分区有序手动提交offset。两种方式，都通过设置listener模式回调业务。
@@ -110,26 +95,10 @@ public class AutoCommitConsumerExample {
 
         // value 反序列化器，必须指定
         configs.setValueSerializer(SerializerImpl.getStringSerializer());
-
-        // 是否自动提交
+        
+        //
         configs.setAutoCommit(true);
 
-        // 自动提交间隔
-        configs.setAutoCommitInterval(5000);
-
-        // offset 重置策略
-        configs.setAutoOffsetReset("latest");
-
-        /* 如果要求并发处理，配置如下选项 */
-        // 设置并发处理的线程数，增加该值可以增加处理能力
-        configs.setParallelism(2);
-
-        /* 如果要求分区有序性，配置如下选项 */
-        // 指定是否分区有序性消费，消费线程数为当前consumer分配的分区数，如发生rebalance，内部会自动增加或减少线程数。
-        configs.setPartitionOrderly(true);
-
-        // 指定 kafka consumer配置项
-        configs.put("max.poll.records", "500");
         // 创建一个封装用户处理逻辑的MessageListener，注意该对象必须是无状态的
         MessageListener<String, String> messageListener = new AutoCommitMessageListener<String, String>() {
             @Override
@@ -160,6 +129,15 @@ public class AutoCommitConsumerExample {
         }));
     }
 }
+```
+**参数说明**
+```
+//对于常用的属性，进行了封装:
+configs.setAutoCommit(true);
+configs.setAutoCommitInterval(5000);
+
+//对于不常用的属性，通过put方式设置
+configs.put("max.poll.records", "500");
 ```
 **注意事项**
 1. KafkaConsumer为线程安全。
@@ -197,24 +175,6 @@ public class AcknowledgeConsumerExample {
 
         // value 反序列化器，必须指定
         configs.setValueSerializer(SerializerImpl.getStringSerializer());
-
-        // 必须设置自动提交为false
-        configs.setAutoCommit(false);
-
-        // offset 重置策略
-        configs.setAutoOffsetReset("latest");
-
-        // 设置每次commit前处理的batch size
-        configs.setAcknowledgeCommitBatchSize(10000);
-
-        // 设置commit最长提交间隔, 单位秒，如果在该间隔时间内没有commit，会自动触发一次commit
-        configs.setAcknowledgeCommitInterval(30);
-
-        // 指定是否分区有序性消费，消费线程数为当前consumer分配的分区数，否则为单线程处理
-        configs.setPartitionOrderly(true);
-
-         // 指定 kafka consumer配置项
-        configs.put(consumer, "500");
 
         // 创建一个封装用户处理逻辑的MessageListener
         MessageListener<String, String> messageListener = new AcknowledgeMessageListener<String, String>() {
@@ -284,27 +244,6 @@ public class BatchAcknowledgeConsumerExample {
 
         // value 反序列化器，必须指定
         configs.setValueSerializer(SerializerImpl.serializerImpl());
-
-        // 必须设置自动提交为false
-        configs.setAutoCommit(false);
-
-        // offset 重置策略
-        configs.setAutoOffsetReset("latest");
-
-        // 设置每次commit前处理的batch size
-        configs.setAcknowledgeCommitBatchSize(1000);
-
-        // 设置commit最长提交间隔, 单位秒，如果在该间隔时间内没有commit，会自动触发一次commit
-        configs.setAcknowledgeCommitInterval(30);
-
-        // 设置收到一组消息间隔时间。
-        configs.setBatchConsumeTime(3);
-
-        // 设置收到一组消息的大小。
-        configs.setBatchConsumeSize(100);
-
-        // 指定 kafka consumer配置项
-        configs.put("max.poll.records", "500");
 
         // 创建一个封装用户处理逻辑的MessageListener
         MessageListener<String, String> messageListener = new BatchAcknowledgeMessageListener<String, String>() {
