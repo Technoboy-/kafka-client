@@ -1,6 +1,8 @@
 package com.owl.kafka.client.producer;
 
 
+import com.owl.kafka.client.metric.MetricsMonitor;
+
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
@@ -8,6 +10,8 @@ import java.util.concurrent.TimeUnit;
  * @Author: Tboy
  */
 public interface KafkaProducer<K, V> {
+
+    void setMetricsMonitor(MetricsMonitor metricsMonitor);
 
     //
     SendResult sendSync(String topic, V value);

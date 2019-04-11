@@ -4,7 +4,6 @@ import com.owl.kafka.client.consumer.listener.AcknowledgeMessageListener;
 import com.owl.kafka.client.consumer.listener.MessageListener;
 import com.owl.kafka.client.consumer.DefaultKafkaConsumerImpl;
 import com.owl.kafka.client.consumer.Record;
-import com.owl.kafka.client.metric.MonitorImpl;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,15 +15,12 @@ public class AssignAcknowledgeMessageListenerService<K, V> extends CommonAcknowl
 
     private static final Logger LOG = LoggerFactory.getLogger(AssignAcknowledgeMessageListenerService.class);
 
-    private final DefaultKafkaConsumerImpl<K, V> consumer;
-
     private final AcknowledgeMessageListener<K, V> messageListener;
 
     public AssignAcknowledgeMessageListenerService(DefaultKafkaConsumerImpl<K, V> consumer, MessageListener<K, V> messageListener) {
         super(consumer);
-        this.consumer = consumer;
         this.messageListener = (AcknowledgeMessageListener)messageListener;
-        MonitorImpl.getDefault().recordConsumeHandlerCount(1);
+        consumer.getMetricsMonitor().recordConsumeHandlerCount(1);
     }
 
     @Override
@@ -39,11 +35,11 @@ public class AssignAcknowledgeMessageListenerService<K, V> extends CommonAcknowl
                 }
             });
         } catch (Throwable ex) {
-            MonitorImpl.getDefault().recordConsumeProcessErrorCount(1);
+            consumer.getMetricsMonitor().recordConsumeProcessErrorCount(1);
             LOG.error("onMessage error", ex);
         } finally {
-            MonitorImpl.getDefault().recordConsumeProcessCount(1);
-            MonitorImpl.getDefault().recordConsumeProcessTime(System.currentTimeMillis() - now);
+            consumer.getMetricsMonitor().recordConsumeProcessCount(1);
+            consumer.getMetricsMonitor().recordConsumeProcessTime(System.currentTimeMillis() - now);
         }
     }
 
@@ -51,6 +47,6 @@ public class AssignAcknowledgeMessageListenerService<K, V> extends CommonAcknowl
     public void close() {
         super.close();
         LOG.debug("AssignAcknowledgeMessageListenerService stop.");
-        MonitorImpl.getDefault().recordConsumeHandlerCount(-1);
+        consumer.getMetricsMonitor().recordConsumeHandlerCount(-1);
     }
 }

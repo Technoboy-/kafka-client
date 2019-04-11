@@ -3,18 +3,7 @@ package com.owl.kafka.client.metric;
 /**
  * @Author: Tboy
  */
-public class ConsoleMonitor implements Monitor {
-
-
-    private Collector collector;
-
-    public ConsoleMonitor(String path, boolean enable){
-        if(enable){
-            collector = new Collector(this);
-            collector.start();
-        }
-    }
-
+public class NoopMetricsMonitor implements MetricsMonitor {
     @Override
     public void recordProduceSendCount(int count) {
 
@@ -72,11 +61,6 @@ public class ConsoleMonitor implements Monitor {
 
     @Override
     public void recordConsumeHandlerCount(int count) {
-
-    }
-
-    @Override
-    public void stat() {
 
     }
 }

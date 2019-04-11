@@ -1,5 +1,7 @@
 package com.owl.kafka.client.consumer;
 
+import com.owl.kafka.client.metric.MetricsMonitor;
+import com.owl.kafka.client.metric.NoopMetricsMonitor;
 import com.owl.kafka.client.proxy.DefaultPullMessageImpl;
 import com.owl.kafka.client.proxy.DefaultPushMessageImpl;
 import com.owl.kafka.client.proxy.zookeeper.KafkaZookeeperConfig;
@@ -16,7 +18,6 @@ import com.owl.kafka.client.util.CollectionUtils;
 import com.owl.kafka.client.util.Constants;
 import com.owl.kafka.client.util.Preconditions;
 import com.owl.kafka.client.util.StringUtils;
-import com.owl.kafka.client.metric.MonitorImpl;
 import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.serialization.ByteArrayDeserializer;
@@ -56,6 +57,8 @@ public class DefaultKafkaConsumerImpl<K, V> implements Runnable, com.owl.kafka.c
 
     private DefaultPullMessageImpl defaultPullMessageImpl;
 
+    private Optional<MetricsMonitor> metricsMonitor = Optional.empty();
+
     public DefaultKafkaConsumerImpl(com.owl.kafka.client.consumer.ConsumerConfig configs) {
         this.configs = configs;
         keySerializer = configs.getKeySerializer();
@@ -84,7 +87,6 @@ public class DefaultKafkaConsumerImpl<K, V> implements Runnable, com.owl.kafka.c
         Preconditions.checkArgument(keySerializer != null , "keySerializer should not be null");
         Preconditions.checkArgument(valueSerializer != null , "valueSerializer should not be null");
         Preconditions.checkArgument(messageListener != null , "messageListener should not be null");
-        Preconditions.checkArgument(messageListenerService != null, "messageListener implementation error");
 
         Preconditions.checkArgument(configs.getAcknowledgeCommitBatchSize() > 0, "AcknowledgeCommitBatchSize should be greater than 0");
         Preconditions.checkArgument(configs.getBatchConsumeSize() > 0, "BatchConsumeSize should be greater than 0");
@@ -93,6 +95,11 @@ public class DefaultKafkaConsumerImpl<K, V> implements Runnable, com.owl.kafka.c
         boolean useProxy = configs.isUseProxy();
 
         if (start.compareAndSet(false, true)) {
+            //
+            System.setProperty(Constants.PROXY_MODEL, configs.getProxyModel().name());
+            this.serviceRegistry = new MessageListenerServiceRegistry(this, messageListener);
+            this.messageListenerService = this.serviceRegistry.getMessageListenerService(false);
+            //
             if(useProxy){
                 Preconditions.checkArgument(messageListener instanceof AcknowledgeMessageListener, "using proxy, MessageListener must be AcknowledgeMessageListener");
                 if(ConsumerConfig.ProxyModel.PULL == configs.getProxyModel()){
@@ -167,11 +174,7 @@ public class DefaultKafkaConsumerImpl<K, V> implements Runnable, com.owl.kafka.c
                 && (messageListener instanceof AutoCommitMessageListener)) {
             throw new IllegalArgumentException("AutoCommitMessageListener must be auto commit");
         }
-
-        System.setProperty(Constants.PROXY_MODEL, configs.getProxyModel().name());
         //
-        this.serviceRegistry = new MessageListenerServiceRegistry(this, messageListener);
-        this.messageListenerService = this.serviceRegistry.getMessageListenerService(false);
         this.messageListener = messageListener;
     }
 
@@ -198,8 +201,8 @@ public class DefaultKafkaConsumerImpl<K, V> implements Runnable, com.owl.kafka.c
                 LOG.error(builder.toString(), ex);
                 close();
             }
-            MonitorImpl.getDefault().recordConsumePollTime(System.currentTimeMillis() - now);
-            MonitorImpl.getDefault().recordConsumePollCount(1);
+            getMetricsMonitor().recordConsumePollTime(System.currentTimeMillis() - now);
+            getMetricsMonitor().recordConsumePollCount(1);
 
             if (LOG.isTraceEnabled() && records != null && !records.isEmpty()) {
                 LOG.trace("Received: " + records.count() + " records");
@@ -214,6 +217,7 @@ public class DefaultKafkaConsumerImpl<K, V> implements Runnable, com.owl.kafka.c
     }
 
     public void commit(Map<TopicPartition, OffsetAndMetadata> highestOffsetRecords) {
+        long now = System.currentTimeMillis();
         synchronized (consumer) {
             consumer.commitAsync(highestOffsetRecords, new OffsetCommitCallback() {
                 @Override
@@ -227,6 +231,8 @@ public class DefaultKafkaConsumerImpl<K, V> implements Runnable, com.owl.kafka.c
                 LOG.debug("commit offset : {}", highestOffsetRecords);
             }
         }
+        getMetricsMonitor().recordCommitCount(1L);
+        getMetricsMonitor().recordCommitTime(System.currentTimeMillis() - now);
     }
 
     private void invokeMessageService(ConsumerRecords<byte[], byte[]> records) {
@@ -236,7 +242,7 @@ public class DefaultKafkaConsumerImpl<K, V> implements Runnable, com.owl.kafka.c
             if (LOG.isTraceEnabled()) {
                 LOG.trace("Processing " + record);
             }
-            MonitorImpl.getDefault().recordConsumeRecvCount(1);
+            getMetricsMonitor().recordConsumeRecvCount(1);
 
             try {
                 messageListenerService.onMessage(record);
@@ -244,6 +250,20 @@ public class DefaultKafkaConsumerImpl<K, V> implements Runnable, com.owl.kafka.c
                 LOG.error("onMessage error", ex);
             }
         }
+    }
+
+    public MetricsMonitor getMetricsMonitor() {
+        if(!this.metricsMonitor.isPresent()){
+            setMetricsMonitor(new NoopMetricsMonitor());
+        }
+        return this.metricsMonitor.get();
+    }
+
+    public void setMetricsMonitor(MetricsMonitor metricsMonitor) {
+        if (this.metricsMonitor.isPresent()) {
+            throw new IllegalArgumentException("MetricsMonitor already set");
+        }
+        this.metricsMonitor = Optional.of(metricsMonitor);
     }
 
     public ConsumerConfig getConfigs() {

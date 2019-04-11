@@ -1,14 +1,16 @@
 package com.owl.kafka.client.producer;
 
+import com.owl.kafka.client.metric.MetricsMonitor;
+import com.owl.kafka.client.metric.NoopMetricsMonitor;
 import com.owl.kafka.client.serializer.Serializer;
 import com.owl.kafka.client.util.Preconditions;
-import com.owl.kafka.client.metric.MonitorImpl;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -31,6 +33,8 @@ public class DefaultKafkaProducerImpl<K, V> implements KafkaProducer<K, V> {
     private Serializer keySerializer;
 
     private Serializer valueSerializer;
+
+    private Optional<MetricsMonitor> metricsMonitor = Optional.empty();
 
     public DefaultKafkaProducerImpl(ProducerConfig configs) {
         this.configs = configs;
@@ -62,11 +66,11 @@ public class DefaultKafkaProducerImpl<K, V> implements KafkaProducer<K, V> {
         try {
             return doSend(topic, partition, key, value, null).get();
         } catch (Exception ex) {
-            MonitorImpl.getDefault().recordProduceSendError(1);
+            getMetricsMonitor().recordProduceSendError(1);
             throw new RuntimeException(ex);
         } finally {
-            MonitorImpl.getDefault().recordProduceSendCount(1);
-            MonitorImpl.getDefault().recordProduceSendTime(System.currentTimeMillis() - now);
+            getMetricsMonitor().recordProduceSendCount(1);
+            getMetricsMonitor().recordProduceSendTime(System.currentTimeMillis() - now);
         }
     }
 
@@ -83,11 +87,11 @@ public class DefaultKafkaProducerImpl<K, V> implements KafkaProducer<K, V> {
         try {
             return doSend(topic, partition, key, value, callback);
         } catch (Exception ex) {
-            MonitorImpl.getDefault().recordProduceSendError(1);
+            getMetricsMonitor().recordProduceSendError(1);
             throw new RuntimeException(ex);
         } finally {
-            MonitorImpl.getDefault().recordProduceSendCount(1);
-            MonitorImpl.getDefault().recordProduceSendTime(System.currentTimeMillis() - now);
+            getMetricsMonitor().recordProduceSendCount(1);
+            getMetricsMonitor().recordProduceSendTime(System.currentTimeMillis() - now);
         }
     }
 
@@ -155,6 +159,20 @@ public class DefaultKafkaProducerImpl<K, V> implements KafkaProducer<K, V> {
                 return new SendResult(recordMetadata.partition(), recordMetadata.offset());
             }
         };
+    }
+
+    public MetricsMonitor getMetricsMonitor() {
+        if(!this.metricsMonitor.isPresent()){
+            setMetricsMonitor(new NoopMetricsMonitor());
+        }
+        return this.metricsMonitor.get();
+    }
+
+    public void setMetricsMonitor(MetricsMonitor metricsMonitor) {
+        if (this.metricsMonitor.isPresent()) {
+            throw new IllegalArgumentException("MetricsMonitor already set");
+        }
+        this.metricsMonitor = Optional.of(metricsMonitor);
     }
 
     @Override

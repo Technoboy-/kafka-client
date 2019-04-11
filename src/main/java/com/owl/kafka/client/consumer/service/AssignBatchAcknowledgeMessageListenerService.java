@@ -5,7 +5,6 @@ import com.owl.kafka.client.consumer.listener.BatchAcknowledgeMessageListener;
 import com.owl.kafka.client.consumer.listener.MessageListener;
 import com.owl.kafka.client.consumer.DefaultKafkaConsumerImpl;
 import com.owl.kafka.client.consumer.Record;
-import com.owl.kafka.client.metric.MonitorImpl;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,7 +39,7 @@ public class AssignBatchAcknowledgeMessageListenerService<K, V> extends CommonAc
         this.batchConsumeSize = consumer.getConfigs().getBatchConsumeSize();
         this.batchConsumeTime = TimeUnit.SECONDS.toMillis(consumer.getConfigs().getBatchConsumeTime());
         this.container = new ArrayList<>(this.batchConsumeSize);
-        MonitorImpl.getDefault().recordConsumeHandlerCount(1);
+        consumer.getMetricsMonitor().recordConsumeHandlerCount(1);
     }
 
     @Override
@@ -64,11 +63,11 @@ public class AssignBatchAcknowledgeMessageListenerService<K, V> extends CommonAc
             lastConsumeTime = System.currentTimeMillis();
         } catch (Throwable ex) {
             semaphore.release();
-            MonitorImpl.getDefault().recordConsumeProcessErrorCount(this.batchConsumeSize);
+            consumer.getMetricsMonitor().recordConsumeProcessErrorCount(this.batchConsumeSize);
             LOG.error("onMessage error", ex);
         } finally {
-            MonitorImpl.getDefault().recordConsumeProcessCount(1);
-            MonitorImpl.getDefault().recordConsumeProcessTime(System.currentTimeMillis() - now);
+            consumer.getMetricsMonitor().recordConsumeProcessCount(1);
+            consumer.getMetricsMonitor().recordConsumeProcessTime(System.currentTimeMillis() - now);
         }
     }
 
@@ -76,6 +75,6 @@ public class AssignBatchAcknowledgeMessageListenerService<K, V> extends CommonAc
     public void close() {
         super.close();
         LOG.debug("AssignBatchAcknowledgeMessageListenerService stop.");
-        MonitorImpl.getDefault().recordConsumeHandlerCount(-1);
+        consumer.getMetricsMonitor().recordConsumeHandlerCount(-1);
     }
 }

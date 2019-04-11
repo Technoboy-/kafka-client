@@ -6,6 +6,8 @@ import com.owl.kafka.client.consumer.listener.AcknowledgeMessageListener;
 import com.owl.kafka.client.consumer.listener.AutoCommitMessageListener;
 import com.owl.kafka.client.consumer.listener.BatchAcknowledgeMessageListener;
 import com.owl.kafka.client.consumer.listener.MessageListener;
+import com.owl.kafka.client.metric.ConsumerFileMetricsMonitor;
+import com.owl.kafka.client.metric.ProducerFileMetricsMonitor;
 import com.owl.kafka.client.producer.Callback;
 import com.owl.kafka.client.producer.KafkaProducer;
 import com.owl.kafka.client.producer.ProducerConfig;
@@ -49,14 +51,13 @@ public class KafkaClientTest {
         configs.setKeySerializer(SerializerImpl.getFastJsonSerializer());
         configs.setValueSerializer(SerializerImpl.getFastJsonSerializer());
         KafkaProducer<String, String> producer = OwlKafkaClient.createProducer(configs);
+        producer.setMetricsMonitor(new ProducerFileMetricsMonitor("producer-stat.log"));
 
         while (alive.get()) {
             String key = String.valueOf(counter.getAndIncrement());
             String value = String.valueOf(System.currentTimeMillis());
             SendResult sendResult = producer.sendSync("test-topic", key, value);
-            if(counter.get() % 10000 == 0){
-                LOG.info("sync send, result : {}",sendResult);
-            }
+            LOG.info("sync send, result : {}",sendResult);
             TimeUnit.MILLISECONDS.sleep(15);
         }
 
@@ -120,8 +121,8 @@ public class KafkaClientTest {
     @Test
     public void testAutoCommitConsumer() throws Exception {
         ConsumerConfig configs = new ConsumerConfig("localhost:9092", "test-topic","test-group");
-        configs.setKeySerializer(SerializerImpl.serializerImpl());
-        configs.setValueSerializer(SerializerImpl.serializerImpl());
+        configs.setKeySerializer(SerializerImpl.getFastJsonSerializer());
+        configs.setValueSerializer(SerializerImpl.getFastJsonSerializer());
         configs.setAutoCommit(true);
         configs.put("auto.commit.interval.ms", "5000");
         configs.put("auto.offset.reset", "latest");
@@ -136,14 +137,15 @@ public class KafkaClientTest {
                 String key = record.getKey();
                 String value = record.getValue();
 
-                LOG.info("partition : {}, value = {}", new Object[]{partition, value});
+                LOG.info("received message {} ", value);
             }
         };
         KafkaConsumer<String, String> consumer = OwlKafkaClient.createConsumer(configs);
+        consumer.setMetricsMonitor(new ConsumerFileMetricsMonitor("consumer-stat.log"));
         consumer.setMessageListener(messageListener);
         consumer.start();
 
-        TimeUnit.SECONDS.sleep(100);
+        TimeUnit.MINUTES.sleep(10);
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             consumer.close(); //程序关闭时调用。
@@ -153,8 +155,8 @@ public class KafkaClientTest {
     @Test
     public void testConcurrentAutoCommitConsumer() throws Exception {
         ConsumerConfig configs = new ConsumerConfig("localhost:9092", "test-topic","test-group");
-        configs.setKeySerializer(SerializerImpl.serializerImpl());
-        configs.setValueSerializer(SerializerImpl.serializerImpl());
+        configs.setKeySerializer(SerializerImpl.getFastJsonSerializer());
+        configs.setValueSerializer(SerializerImpl.getFastJsonSerializer());
         configs.setAutoCommit(true);
         configs.put("auto.commit.interval.ms", "5000");
         configs.setParallelism(2);
@@ -174,6 +176,7 @@ public class KafkaClientTest {
             }
         };
         KafkaConsumer<String, String> consumer = OwlKafkaClient.createConsumer(configs);
+        consumer.setMetricsMonitor(new ConsumerFileMetricsMonitor("consumer-stat.log"));
         consumer.setMessageListener(messageListener);
         consumer.start();
 
@@ -351,7 +354,10 @@ public class KafkaClientTest {
                 String key = record.getKey();
                 String value = record.getValue();
 
-                LOG.info(Thread.currentThread().getName() + " , partition : {}, value: {}, offset: {}.", new Object[]{partition, value, offset});
+                long takes = (System.currentTimeMillis() - Long.valueOf(value));
+                if(takes > 5){
+                    LOG.info("received message takes : {} ms", takes);
+                }
                 acknowledgment.acknowledge();
             }
         };
@@ -373,7 +379,7 @@ public class KafkaClientTest {
         configs.setValueSerializer(SerializerImpl.getFastJsonSerializer());
         configs.setAutoCommit(false);
         configs.put("auto.offset.reset", "latest");
-        configs.setUseProxy(true);
+        configs.setUseProxy(false);
 //        configs.setProxyModel(ConsumerConfig.ProxyModel.PUSH);
         MessageListener<String, String> messageListener = new AcknowledgeMessageListener<String, String>() {
             @Override

@@ -3,7 +3,6 @@ package com.owl.kafka.client.consumer.service;
 import com.owl.kafka.client.consumer.listener.AutoCommitMessageListener;
 import com.owl.kafka.client.consumer.listener.MessageListener;
 import com.owl.kafka.client.consumer.DefaultKafkaConsumerImpl;
-import com.owl.kafka.client.metric.MonitorImpl;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,7 +21,7 @@ public class AutoCommitMessageListenerService<K, V> extends RebalanceMessageList
     public AutoCommitMessageListenerService(DefaultKafkaConsumerImpl<K, V> consumer, MessageListener<K, V> listener) {
         this.consumer = consumer;
         this.messageListener = (AutoCommitMessageListener)listener;
-        MonitorImpl.getDefault().recordConsumeHandlerCount(1);
+        consumer.getMetricsMonitor().recordConsumeHandlerCount(1);
     }
 
     public void onMessage(ConsumerRecord<byte[], byte[]> record) {
@@ -30,11 +29,11 @@ public class AutoCommitMessageListenerService<K, V> extends RebalanceMessageList
         try {
             this.messageListener.onMessage(consumer.toRecord(record));
         } catch (Throwable ex) {
-            MonitorImpl.getDefault().recordConsumeProcessErrorCount(1);
+            consumer.getMetricsMonitor().recordConsumeProcessErrorCount(1);
             LOG.error("onMessage error", ex);
         } finally {
-            MonitorImpl.getDefault().recordConsumeProcessCount(1);
-            MonitorImpl.getDefault().recordConsumeProcessTime(System.currentTimeMillis() - now);
+            consumer.getMetricsMonitor().recordConsumeProcessCount(1);
+            consumer.getMetricsMonitor().recordConsumeProcessTime(System.currentTimeMillis() - now);
         }
     }
 

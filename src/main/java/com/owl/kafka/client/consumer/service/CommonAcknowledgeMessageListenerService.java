@@ -3,7 +3,6 @@ package com.owl.kafka.client.consumer.service;
 import com.owl.kafka.client.util.NamedThreadFactory;
 import com.owl.kafka.client.consumer.DefaultKafkaConsumerImpl;
 import com.owl.kafka.client.consumer.Record;
-import com.owl.kafka.client.metric.MonitorImpl;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.TopicPartition;
 import org.slf4j.Logger;
@@ -64,7 +63,6 @@ public abstract class CommonAcknowledgeMessageListenerService<K, V> implements M
 
         @Override
         public void run() {
-            long now = System.currentTimeMillis();
             try {
                 final Map<TopicPartition, OffsetAndMetadata> pre = latestOffsetMap;
                 latestOffsetMap = new ConcurrentHashMap<>();
@@ -74,9 +72,6 @@ public abstract class CommonAcknowledgeMessageListenerService<K, V> implements M
                 consumer.commit(pre);
             } catch (Throwable ex) {
                 LOG.error("Commit consumer offset error.", ex);
-            } finally {
-                MonitorImpl.getDefault().recordCommitCount(1L);
-                MonitorImpl.getDefault().recordCommitTime(System.currentTimeMillis() - now);
             }
         }
     }

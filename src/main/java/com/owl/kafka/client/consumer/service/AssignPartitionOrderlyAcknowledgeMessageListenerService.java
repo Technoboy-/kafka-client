@@ -2,7 +2,6 @@ package com.owl.kafka.client.consumer.service;
 
 import com.owl.kafka.client.consumer.listener.MessageListener;
 import com.owl.kafka.client.consumer.DefaultKafkaConsumerImpl;
-import com.owl.kafka.client.metric.MonitorImpl;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.TopicPartition;
 import org.slf4j.Logger;
@@ -25,14 +24,11 @@ public class AssignPartitionOrderlyAcknowledgeMessageListenerService<K, V> exten
 
     private final ConcurrentMap<TopicPartition, TopicPartitionHandler> handlers;
 
-    private final DefaultKafkaConsumerImpl<K, V> consumer;
-
     public AssignPartitionOrderlyAcknowledgeMessageListenerService(DefaultKafkaConsumerImpl<K, V> consumer,
                                                                    MessageListener<K, V> messageListener) {
         super(consumer, messageListener);
-        this.consumer = consumer;
         this.handlers =  new ConcurrentHashMap<>();
-        MonitorImpl.getDefault().recordConsumeHandlerCount(0);
+        consumer.getMetricsMonitor().recordConsumeHandlerCount(0);
     }
 
     @Override
@@ -46,7 +42,7 @@ public class AssignPartitionOrderlyAcknowledgeMessageListenerService<K, V> exten
     public void close() {
         for (TopicPartitionHandler handler : handlers.values()) {
             handler.stop();
-            MonitorImpl.getDefault().recordConsumeHandlerCount(-1);
+            consumer.getMetricsMonitor().recordConsumeHandlerCount(-1);
         }
         super.close();
     }
@@ -60,9 +56,9 @@ public class AssignPartitionOrderlyAcknowledgeMessageListenerService<K, V> exten
             if (preHandler != null) {
                 // can not be happened.
                 preHandler.stop();
-                MonitorImpl.getDefault().recordConsumeHandlerCount(-1);
+                consumer.getMetricsMonitor().recordConsumeHandlerCount(-1);
             } else {
-                MonitorImpl.getDefault().recordConsumeHandlerCount(1);
+                consumer.getMetricsMonitor().recordConsumeHandlerCount(1);
             }
             return handler;
         }

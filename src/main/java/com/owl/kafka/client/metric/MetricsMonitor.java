@@ -1,12 +1,10 @@
 package com.owl.kafka.client.metric;
 
-import com.owl.kafka.client.spi.MonitorConfig;
 
 /**
  * @Author: Tboy
  */
-@MonitorConfig(value = "file", name = "kafka-stat.log", enable = true)
-public interface Monitor {
+public interface MetricsMonitor {
 
     void recordProduceSendCount(int count);
 
@@ -32,5 +30,4 @@ public interface Monitor {
 
     void recordConsumeHandlerCount(int count);
 
-    void stat();
 }

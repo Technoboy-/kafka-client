@@ -5,7 +5,6 @@ import com.owl.kafka.client.consumer.listener.MessageListener;
 import com.owl.kafka.client.util.CallerWaitPolicy;
 import com.owl.kafka.client.util.NamedThreadFactory;
 import com.owl.kafka.client.consumer.DefaultKafkaConsumerImpl;
-import com.owl.kafka.client.metric.MonitorImpl;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,7 +30,7 @@ public class ConcurrentAutoCommitMessageListenerService<K, V> extends RebalanceM
                 new NamedThreadFactory("concurrent-consumer-worker"), new CallerWaitPolicy());
         this.consumer = consumer;
         this.messageListener = (AutoCommitMessageListener)listener;
-        MonitorImpl.getDefault().recordConsumeHandlerCount(parallelism);
+        consumer.getMetricsMonitor().recordConsumeHandlerCount(parallelism);
     }
 
     @Override
@@ -58,11 +57,11 @@ public class ConcurrentAutoCommitMessageListenerService<K, V> extends RebalanceM
             try {
                 messageListener.onMessage(consumer.toRecord(record));
             } catch (Throwable ex) {
-                MonitorImpl.getDefault().recordConsumeProcessErrorCount(1);
+                consumer.getMetricsMonitor().recordConsumeProcessErrorCount(1);
                 LOG.error("onMessage error", ex);
             } finally {
-                MonitorImpl.getDefault().recordConsumeProcessCount(1);
-                MonitorImpl.getDefault().recordConsumeProcessTime(System.currentTimeMillis() - now);
+                consumer.getMetricsMonitor().recordConsumeProcessCount(1);
+                consumer.getMetricsMonitor().recordConsumeProcessTime(System.currentTimeMillis() - now);
             }
         }
     }

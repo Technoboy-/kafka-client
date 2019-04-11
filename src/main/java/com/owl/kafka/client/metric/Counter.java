@@ -23,7 +23,7 @@ public class Counter {
         counter.decrementAndGet();
     }
 
-    public long count(){
+    public long getCount(){
         long current = counter.get();
         long count = current - pre;
         pre = current;

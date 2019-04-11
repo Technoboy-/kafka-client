@@ -5,7 +5,6 @@ import com.owl.kafka.client.consumer.listener.BatchAcknowledgeMessageListener;
 import com.owl.kafka.client.consumer.listener.MessageListener;
 import com.owl.kafka.client.consumer.DefaultKafkaConsumerImpl;
 import com.owl.kafka.client.consumer.Record;
-import com.owl.kafka.client.metric.MonitorImpl;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,7 +39,7 @@ public class BatchAcknowledgeMessageListenerService<K, V> extends RebalanceAckno
         this.batchConsumeSize = consumer.getConfigs().getBatchConsumeSize();
         this.batchConsumeTime = TimeUnit.SECONDS.toMillis(consumer.getConfigs().getBatchConsumeTime());
         this.container = new ArrayList<>(this.batchConsumeSize);
-        MonitorImpl.getDefault().recordConsumeHandlerCount(1);
+        consumer.getMetricsMonitor().recordConsumeHandlerCount(1);
     }
 
     @Override
@@ -66,11 +65,11 @@ public class BatchAcknowledgeMessageListenerService<K, V> extends RebalanceAckno
             lastConsumeTime = System.currentTimeMillis();
         } catch (Throwable ex) {
             semaphore.release();
-            MonitorImpl.getDefault().recordConsumeProcessErrorCount(this.batchConsumeSize);
+            consumer.getMetricsMonitor().recordConsumeProcessErrorCount(this.batchConsumeSize);
             LOG.error("onMessage error", ex);
         } finally {
-            MonitorImpl.getDefault().recordConsumeProcessCount(this.batchConsumeSize);
-            MonitorImpl.getDefault().recordConsumeProcessTime(System.currentTimeMillis() - now);
+            consumer.getMetricsMonitor().recordConsumeProcessCount(this.batchConsumeSize);
+            consumer.getMetricsMonitor().recordConsumeProcessTime(System.currentTimeMillis() - now);
         }
     }
 

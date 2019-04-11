@@ -4,7 +4,6 @@ import com.owl.kafka.client.consumer.DefaultKafkaConsumerImpl;
 import com.owl.kafka.client.consumer.Record;
 import com.owl.kafka.client.consumer.listener.AcknowledgeMessageListener;
 import com.owl.kafka.client.consumer.listener.MessageListener;
-import com.owl.kafka.client.metric.MonitorImpl;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,7 +22,7 @@ public class PushAcknowledgeMessageListenerService<K, V> implements MessageListe
     public PushAcknowledgeMessageListenerService(DefaultKafkaConsumerImpl<K, V> consumer, MessageListener<K, V> messageListener) {
         this.consumer = consumer;
         this.messageListener = (AcknowledgeMessageListener)messageListener;
-        MonitorImpl.getDefault().recordConsumeHandlerCount(1);
+        this.consumer.getMetricsMonitor().recordConsumeHandlerCount(1);
     }
 
     @Override
@@ -43,11 +42,11 @@ public class PushAcknowledgeMessageListenerService<K, V> implements MessageListe
                 }
             });
         } catch (Throwable ex) {
-            MonitorImpl.getDefault().recordConsumeProcessErrorCount(1);
+            consumer.getMetricsMonitor().recordConsumeProcessErrorCount(1);
             LOG.error("onMessage error", ex);
         } finally {
-            MonitorImpl.getDefault().recordConsumeProcessCount(1);
-            MonitorImpl.getDefault().recordConsumeProcessTime(System.currentTimeMillis() - now);
+            this.consumer.getMetricsMonitor().recordConsumeProcessCount(1);
+            this.consumer.getMetricsMonitor().recordConsumeProcessTime(System.currentTimeMillis() - now);
         }
     }
 

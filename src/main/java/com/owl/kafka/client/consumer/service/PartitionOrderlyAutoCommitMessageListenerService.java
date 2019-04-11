@@ -3,7 +3,6 @@ package com.owl.kafka.client.consumer.service;
 import com.owl.kafka.client.consumer.listener.AutoCommitMessageListener;
 import com.owl.kafka.client.consumer.listener.MessageListener;
 import com.owl.kafka.client.consumer.DefaultKafkaConsumerImpl;
-import com.owl.kafka.client.metric.MonitorImpl;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.TopicPartition;
 import org.slf4j.Logger;
@@ -41,7 +40,7 @@ public class PartitionOrderlyAutoCommitMessageListenerService<K, V> extends Reba
             if (!partitions.contains(partition)) {
                 handlers.get(partition).stop();
                 handlers.remove(partition);
-                MonitorImpl.getDefault().recordConsumeHandlerCount(-1);
+                consumer.getMetricsMonitor().recordConsumeHandlerCount(-1);
             }
         }
     }
@@ -63,7 +62,7 @@ public class PartitionOrderlyAutoCommitMessageListenerService<K, V> extends Reba
                 // can not be happened.
                 preHandler.stop();
             } else {
-                MonitorImpl.getDefault().recordConsumeHandlerCount(1);
+                consumer.getMetricsMonitor().recordConsumeHandlerCount(1);
             }
             return handler;
         }
@@ -126,12 +125,12 @@ public class PartitionOrderlyAutoCommitMessageListenerService<K, V> extends Reba
                 } catch (InterruptedException iex) {
                     LOG.error("InterruptedException onMessage ", iex);
                 } catch (Throwable ex) {
-                    MonitorImpl.getDefault().recordConsumeProcessErrorCount(1);
+                    consumer.getMetricsMonitor().recordConsumeProcessErrorCount(1);
                     LOG.error("onMessage error", ex);
                 } finally {
                     if (now > 0) {
-                        MonitorImpl.getDefault().recordConsumeProcessCount(1);
-                        MonitorImpl.getDefault().recordConsumeProcessTime(System.currentTimeMillis() - now);
+                        consumer.getMetricsMonitor().recordConsumeProcessCount(1);
+                        consumer.getMetricsMonitor().recordConsumeProcessTime(System.currentTimeMillis() - now);
                     }
                 }
             }

@@ -2,7 +2,6 @@ package com.owl.kafka.client.consumer.service;
 
 import com.owl.kafka.client.consumer.listener.MessageListener;
 import com.owl.kafka.client.consumer.DefaultKafkaConsumerImpl;
-import com.owl.kafka.client.metric.MonitorImpl;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.TopicPartition;
 import org.slf4j.Logger;
@@ -23,13 +22,10 @@ public class PartitionOrderlyAcknowledgeMessageListenerService<K, V> extends Ack
 
     private final ConcurrentMap<TopicPartition, TopicPartitionHandler> handlers;
 
-    private final DefaultKafkaConsumerImpl<K, V> consumer;
-
     public PartitionOrderlyAcknowledgeMessageListenerService(DefaultKafkaConsumerImpl<K, V> consumer,
                                                              MessageListener<K, V> messageListener) {
         super(consumer, messageListener);
-        this.consumer = consumer;
-        MonitorImpl.getDefault().recordConsumeHandlerCount(-1);
+        consumer.getMetricsMonitor().recordConsumeHandlerCount(-1);
         this.handlers =  new ConcurrentHashMap<>();
     }
 
@@ -40,7 +36,7 @@ public class PartitionOrderlyAcknowledgeMessageListenerService<K, V> extends Ack
             if (!partitions.contains(partition)) {
                 handlers.get(partition).stop();
                 handlers.remove(partition);
-                MonitorImpl.getDefault().recordConsumeHandlerCount(-1);
+                consumer.getMetricsMonitor().recordConsumeHandlerCount(-1);
             }
         }
     }
@@ -70,7 +66,7 @@ public class PartitionOrderlyAcknowledgeMessageListenerService<K, V> extends Ack
                 // can not be happened.
                 preHandler.stop();
             } else {
-                MonitorImpl.getDefault().recordConsumeHandlerCount(1);
+                consumer.getMetricsMonitor().recordConsumeHandlerCount(1);
             }
             return handler;
         }
