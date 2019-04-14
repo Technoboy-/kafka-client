@@ -274,7 +274,6 @@ public class BatchAcknowledgeConsumerExample {
 }
 ```
 
-#####消费者扩展参数说明：
 |参数|说明|
 |:----:|:----:|
 |acknowledgeCommitBatchSize|手动提交批量的大小|
