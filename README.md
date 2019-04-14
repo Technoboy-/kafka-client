@@ -62,6 +62,8 @@ configs.setBatchSize(16384);
 configs.put("compression.type", "none");
 ```
 
+
+
 #### 四. Consumer
 对于消费者，提供自动提交offset和手动提交offset。对于自动提交offset，通过参数可以实现单线程消费自动提交offset，多线程消费自动提交offset，分区有序消费自动提交offset。对于手动提交，通过参数，可以实现单线程消费手动提交offset，分区有序手动提交offset。两种方式，都通过设置listener模式回调业务。
 ```java
@@ -273,6 +275,17 @@ public class BatchAcknowledgeConsumerExample {
     }
 }
 ```
+#####消费者扩展参数说明：
+|参数|说明|
+|:----:|:----:|
+|acknowledgeCommitBatchSize|手动提交批量的大小|
+|acknowledgeCommitInterval|手动提交的间隔时间|
+|partitionOrderly|设置是否为分区有序消费|
+|parallelism|并发消费的线程数|
+|handlerQueueSize|内存缓冲队列的大小|
+|batchConsumeSize|batch模式消费下，每次消息的批量大小|
+|batchConsumeTime|batch模式消费下，每次消费消息的间隔时间|
+   
 
 **注意事项**
 1. KafkaConsumer为线程安全。
@@ -284,7 +297,16 @@ public class BatchAcknowledgeConsumerExample {
 3. ByteArraySerializer为空实现，当consumer/producer的key或value为byte数组时，请使用此序列化方式。
 4. 如想实现其他序列化方式，实现Serializer接口即可。
 
-#### 六. 注意项
+#### 六. Metrics
+1. 可以通过KafkaProducer，KafkaConsumer设置MetricsMonitor,支持ProducerFileMetricsMonitor和ConsumerFileMetricsMonitor。
+```
+producer.setMetricsMonitor(new ProducerFileMetricsMonitor("producer-stat.log"));
+consumer.setMetricsMonitor(new ConsumerFileMetricsMonitor("consumer-stat.log"));
+```
+2. 可通过metrics进行本地化的监控：如监控业务处理时间或调优：如小包传输，增大拉取数量。
+<img src="docs/static_files/metrics-monitor.jpg"/>
+
+#### 七. 注意项
 1. MessageListener 接口必须保证是无状态的，内部会有多个线程同时调用onMessage方法。
 2. MessageListener#onMessage方法使用时必须要做异常捕获与处理，在抛出throwable后不会停止整个处理流程。
 3. AutoCommitMessageListener不适合对数据可靠性要求非常高的处理场景，在日志数据等容忍少量丢失的情况下可以使用该类型，如果不要求分区有序性，建议使用AutoCommitMessageListener同时配置多个处理线程，能保证每个处理线程负载相同。
