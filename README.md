@@ -274,6 +274,17 @@ public class BatchAcknowledgeConsumerExample {
 }
 ```
 
+#####消费者扩展参数说明：
+|参数|说明|
+|:----:|:----:|
+|acknowledgeCommitBatchSize|手动提交批量的大小|
+|acknowledgeCommitInterval|手动提交的间隔时间|
+|partitionOrderly|设置是否为分区有序消费|
+|parallelism|并发消费的线程数|
+|handlerQueueSize|内存缓冲队列的大小|
+|batchConsumeSize|batch模式消费下，每次消息的批量大小|
+|batchConsumeTime|batch模式消费下，每次消费消息的间隔时间|
+
 **注意事项**
 1. KafkaConsumer为线程安全。
 2. 设置setPartitionOrderly(true)后，内部消费线程数为当前consumer获取的分区数。 当kafka发生relance后，线程数会随着新分配的分区进行增加或减少。
