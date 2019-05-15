@@ -54,8 +54,8 @@ public abstract class CommonAcknowledgeMessageListenerService<K, V> implements M
     private void toOffsetMap(Record<K, V> record){
         TopicPartition topicPartition = new TopicPartition(record.getTopic(), record.getPartition());
         OffsetAndMetadata offsetAndMetadata = latestOffsetMap.get(topicPartition);
-        if (offsetAndMetadata == null || record.getOffset() > offsetAndMetadata.offset()) {
-            latestOffsetMap.put(topicPartition, new OffsetAndMetadata(record.getOffset()));
+        if (offsetAndMetadata == null || record.getOffset() >= offsetAndMetadata.offset()) {
+            latestOffsetMap.put(topicPartition, new OffsetAndMetadata(record.getOffset() + 1));
         }
     }
 
